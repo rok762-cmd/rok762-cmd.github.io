@@ -1172,9 +1172,9 @@ function cutList(j=job){const door=doorById(j.doorId)||{kind:'none',name:'-'},ro
   const hn=lv.filter(l=>l.kind==='door').reduce((a,l)=>a+hingesPer(l.h),0);add('경첩 (댐퍼)','',`철물`,hn,'');
   obstacleIssues(j).forEach(is=>is.hits.forEach(hh=>add(`${hh.tag} 설비 가공`,`${is.o.w} × ${is.o.h}`,OBS[is.o.type].label,1,`좌${is.o.x} · 바닥${is.o.z}에서 · ${hh.part}`)));
   return rows}
-function obsOffset(g){return g.cut+g.sL}
+function obsOffset(g){return g.mirrored?g.sL:g.cut+g.sL}
 function fillerZones(g){if(g.cat!=='kitchen')return[[0,g.H]];const up=g.rows.find(r=>r.zone==='upper');return up?[[0,850],[up.z0,g.H]]:[[0,850]]}
-function obstacleIssues(j=job){const out=[];(j.obstacles||[]).forEach(o=>{const fi=j.faces.findIndex(f=>f.key===o.face);if(fi<0)return;const g=geom(j,fi),off=obsOffset(g),hits=[];
+function obstacleIssues(j=job){const out=[];(j.obstacles||[]).forEach(o=>{const fi=j.faces.findIndex(f=>f.key===o.face);if(fi<0)return;const g=gview(j,fi),off=obsOffset(g),hits=[];
     const ov=(ax,aw,az,ah)=>o.x<ax+aw&&o.x+o.w>ax&&o.z<az+ah&&o.z+o.h>az;
     g.rows.forEach(row=>rowAll(row).forEach((m,i)=>{const top=row.zone==='lower'?850:m.z1;if(ov(off+m.x,m.w,m.z0,top-m.z0)){
       const tag=`${g.island?'I':g.face}-${row.zone==='upper'?'U':row.zone==='lower'?'L':'M'}${i+1}`;hits.push({tag,label:`${FACE_NAME(g.face)} ${row.zone==='upper'?'상부 ':row.zone==='lower'?'하부 ':''}${i+1}번째 칸 (${TYPES[m.t]?.label||''})`,part:'뒷판'})}}));
@@ -1238,7 +1238,7 @@ function techMiddoor(g,k){let s=Rc(0,0,g.Wm,g.Hm,'box')+Rc(0,g.Hm-60,g.Wm,60,'th
     if(p.t==='mfixed')s+=TX(p.x+p.w/2,zb+p.h*.5,'FIX',11*k,'class="t" text-anchor="middle"')});
   return s+Lc(-150,0,g.Wm+150,0,'gnd')}
 function techExterior(g,door,k){let s='';if(g.cat==='middoor')return techMiddoor(g,k);
-  g.rows.forEach(row=>{const bx_=Math.max(row.off||0,...(row.corners||[]).filter(c=>c.ghost).map(c=>c.x+c.w));s+=Rc(bx_,row.z0,g.Wm-bx_,row.z1-row.z0,'box');rowAll(row).forEach(m=>{const lay=layout(m);if(door?.kind==='none'||!lay.zones.some(z=>z.kind==='door'))s+=techModule(m,k,false)})});
+  g.rows.forEach(row=>{const gh_=(row.corners||[]).filter(c=>c.ghost),bx_=Math.max(row.off||0,...gh_.filter(c=>c.x+c.w/2<g.Wm/2).map(c=>c.x+c.w)),bx2_=Math.min(g.Wm-(row.offR||0),...gh_.filter(c=>c.x+c.w/2>=g.Wm/2).map(c=>c.x));s+=Rc(bx_,row.z0,bx2_-bx_,row.z1-row.z0,'box');rowAll(row).forEach(m=>{const lay=layout(m);if(door?.kind==='none'||!lay.zones.some(z=>z.kind==='door'))s+=techModule(m,k,false)})});
   if(g.pl)s+=Rc(0,0,g.Wm,g.pl,'thin');
   if(!g.island){if(g.fin==='filler'){fillerZones(g).forEach(([a,b])=>{if(g.sL)s+=Rc(-g.sL,a,g.sL,b-a,'ln');if(g.sR)s+=Rc(g.Wm,a,g.sR,b-a,'ln')});s+=Rc(-g.sL,g.Hm,g.Wm+g.sL+g.sR,g.H-g.Hm,'ln')}
     else{s+=Lc(-g.sL,g.H,g.Wm+g.sR,g.H,'dash')}s+=Lc(-g.sL,0,-g.sL,g.H,'dash')+Lc(g.Wm+g.sR,0,g.Wm+g.sR,g.H,'dash')}
@@ -1381,7 +1381,14 @@ function leafCust(P,d,l,j){let s='';const glassy=['glass','satin','fluted'].incl
   s+=R(l.x,l.zb,l.w,l.h,`fill="${solidFill(P,d)}" stroke="${shade(base,-.3)}" stroke-width="5"`);
   if(l.kind==='slide'){const hx=l.layer?l.x+40:l.x+l.w-54;s+=R(hx,l.zb+l.h*.42,14,600,`fill="${shade(base,-.45)}" opacity=".7"`);return s}
   return s+handleCust(l,j,d)}
-function sceneSVG(j,{open=false,caption=true,px=1600,fi=j.fi,bare=false}={}){const g=geom(j,fi),fc_=j.faces[fi]||j.faces[0],d=doorById(j.doorId)||DEFAULT_DOORS[7],P='s'+uid(),W=g.Wm;
+
+/* ---------- 정면에서 본 방향 (B면 좌우 반전 보정) ---------- */
+const isMir=(j,fi)=>{const f=j.faces[fi];return!!f&&f.key==='B'&&j.cat!=='middoor'&&['L','U','Lisland','II'].includes(j.layout)};
+const swLR=v=>v==='L'?'R':v==='R'?'L':v;
+function gview(j=job,fi=j.fi){const g=geom(j,fi);if(!isMir(j,fi))return g;const W=g.Wm,mx=m=>({...m,x:W-m.x-m.w,side:swLR(m.side),spacer:swLR(m.spacer)});
+  const rows=g.rows.map(r=>({...r,corners:(r.corners||[]).map(mx),mods:r.mods.map(m=>({...mx(m),hinge:swLR(m.hinge)})),fill:(r.fill||[]).map(mx),hinge:(r.hinge||[]).map(swLR),clash:(r.clash||[]).map(c=>({...c,x:W-c.x})),offR:r.off||0,off:0}));
+  return{...g,rows,sL:g.sR,sR:g.sL,mirrored:true,talls:(g.talls||[]).map(t=>({...t,x:W-t.x-t.w})),tx0:g.tw?W-g.tx0-g.tw:0,lidW:0,tbl:g.tbl?{...g.tbl,x0:W-g.tbl.x0-g.tbl.w}:null}}
+function sceneSVG(j,{open=false,caption=true,px=1600,fi=j.fi,bare=false}={}){const g=gview(j,fi),fc_=j.faces[fi]||j.faces[0],d=doorById(j.doorId)||DEFAULT_DOORS[7],P='s'+uid(),W=g.Wm;
   const WH=g.island?1500:g.H,mx=Math.max(320,W*.16),topZ=WH+90,floor=230,cap=caption&&!bare?Math.round((W+g.ext+2*mx)*.13):0,vbX=-mx-g.side,vbW=W+g.ext+g.side+2*mx,vbY=-topZ,vbH=topZ+floor+cap;
   const body=d.kind==='none'?d.color:'#ECE9E3',bodyP={...d,kind:'hinged'};
   let defs=finishDefs(P,d)+
@@ -1465,7 +1472,7 @@ function placeView(area,title,extW,extH,draw){const s=Math.min((area.w-140)/extW
   const sc=Math.max(5,Math.round(1/(s*.3)*(typeof paperSel!=='undefined'&&paperSel==='A4'?420/297:1)*1.04/5)*5),pp=typeof paperSel!=='undefined'?paperSel:'A3';
   return`<text x="${area.x}" y="${area.y+16}" font-size="15" class="hd">${esc(title)}</text><text x="${area.x+area.w}" y="${area.y+16}" font-size="12" class="lb" text-anchor="end">축척 약 1:${sc} (${pp})</text>`+
     `<g transform="translate(${f(ox)},${f(oy)}) scale(${s.toFixed(5)})">${draw(k)}</g>`}
-function drawingSVG(j=job,fi=j.fi){const g=geom(j,fi),fc_=j.faces[fi]||j.faces[0],d=doorById(j.doorId)||{name:'-',kind:'none'},W=1400,H=990;
+function drawingSVG(j=job,fi=j.fi){const g=gview(j,fi),fc_=j.faces[fi]||j.faces[0],d=doorById(j.doorId)||{name:'-',kind:'none'},W=1400,H=990;
   let s=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="${FONT}"><style>${PAPER_CSS}</style><rect width="${W}" height="${H}" fill="#fff"/>`;
   s+=`<rect x="16" y="16" width="${W-32}" height="${H-32}" class="fr" stroke-width="2"/><text x="36" y="50" font-size="22" class="hd">제작 도면 · ${esc(CATS[g.cat].name)} · ${LAYOUTS[j.layout]}${j.faces.length>1?' · '+FACE_NAME(g.face):''}</text>`;
   s+=`<text x="${W-36}" y="50" font-size="13" class="lb" text-anchor="end">No. ${esc(j.docNo)} · 실측일 ${esc(j.customer.date)} · 단위 mm</text><line x1="16" y1="64" x2="${W-16}" y2="64" class="fr"/>`;
@@ -1746,7 +1753,7 @@ async function snap3D(j){try{await load3D();const T3=THREE,ren=new T3.WebGLRende
   const r=Math.max(sz.x,sz.z,2.4)*1.05+.8,th={I:0,niche:0,L:Math.PI/4,Lisland:Math.PI/4,U:0,island:.35,II:Math.PI/2}[j.layout]??0,ph=j.layout==='II'?.8:.4,cam=new T3.PerspectiveCamera(36,1300/820,.3,60);
   cam.position.set(tg.x+r*Math.sin(th)*Math.cos(ph),tg.y+r*Math.sin(ph),tg.z+r*Math.cos(th)*Math.cos(ph));cam.lookAt(tg);ren.render(scene,cam);const u=ren.domElement.toDataURL('image/jpeg',.9);
   grp.traverse(o=>{o.geometry&&o.geometry.dispose()});ren.dispose();return{u,w:1300,h:820}}catch(e){return null}}
-async function proposalPage(j=job){const W=1400,H=990,g=geom(j,j.fi),d=doorById(j.doorId)||{name:'-',kind:'none',color:'#ECE9E3'},q=quote(j),c=j.cat==='kitchen'?counterById(j.counterId):null,P='p'+uid();
+async function proposalPage(j=job){const W=1400,H=990,g=gview(j,j.fi),d=doorById(j.doorId)||{name:'-',kind:'none',color:'#ECE9E3'},q=quote(j),c=j.cat==='kitchen'?counterById(j.counterId):null,P='p'+uid();
   let hero=null;if(j.cat==='kitchen')hero=await snap3D(j);
   if(!hero){const s=sceneSVG(j,{fi:j.fi,caption:false,px:1300});const hh=+s.match(/height="(\d+)"/)[1];hero={u:'data:image/svg+xml;base64,'+u8b64(s),w:1300,h:hh}}
   const hx=36,hy=78,hw=840,hh=500,sc=Math.min(hw/hero.w,hh/hero.h),iw=hero.w*sc,ih=hero.h*sc;
@@ -1899,7 +1906,7 @@ function workTriSVG(j,k,X=p=>p){const t=workTri(j);if(!t||!t.legs||t.legs.length
 
 /* ---------- 전기·설비 도면 ---------- */
 const EL={C2:{l:'상판 2구 콘센트',c:'#1E56D0'},S16:{l:'가전 콘센트 (16A)',c:'#1E56D0'},DS:{l:'전용 콘센트 (220V 전용선)',c:'#B4520F'},SW:{l:'조명 스위치',c:'#555'},PSU:{l:'조명 전원 (SMPS)',c:'#7A3FB0'},HW:{l:'온수',c:'#D0312D'},CW:{l:'냉수',c:'#1E77D0'},D:{l:'배수',c:'#333'},AW:{l:'가전 급수',c:'#1E77D0'},G:{l:'가스 밸브',c:'#C8A000'}};
-function elecPoints(j=job,fi=j.fi){const g=geom(j,fi),pts=[],add=(t,x,z,n)=>pts.push({t,x:Math.round(x),z:Math.round(z),n});if(g.cat==='middoor')return{g,pts};
+function elecPoints(j=job,fi=j.fi){const g=gview(j,fi),pts=[],add=(t,x,z,n)=>pts.push({t,x:Math.round(x),z:Math.round(z),n});if(g.cat==='middoor')return{g,pts};
   const ap=allApps(j),hasDW=ap.some(x=>x.a.kind==='dw'),lp=lightPlan(j);
   g.rows.forEach(row=>{const ms=row.mods;
     if(g.cat==='kitchen'&&row.zone==='lower'){let lastC=-9e9;
@@ -2316,7 +2323,7 @@ let sheetCb=null;
 function thumbSVG(plan){const g=geom(job,job.fi,plan.rows);const pad=60,vbW=g.Wm+pad*2,vbH=g.H+pad*2,k=vbW/150;
   return`<svg class="tech" viewBox="${-pad} ${-(g.H+pad)} ${vbW} ${vbH}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${techInterior(g,k).replace(/<text[^>]*>[^<]*<\/text>/g,'')}</svg>`}
 function rowKey(){const row=cf().rows[job.sel.row];return job.cat==='kitchen'?'kitchen_'+row.zone:job.cat}
-function step2(){const plans=plansFor(job.cat),g=geom();if(!cf().rows[job.sel.row]||!cf().rows[job.sel.row].mods[job.sel.i])job.sel={row:0,i:0};
+function step2(){const plans=plansFor(job.cat),g=gview(job,job.fi),mir=isMir(job,job.fi);if(!cf().rows[job.sel.row]||!cf().rows[job.sel.row].mods[job.sel.i])job.sel={row:0,i:0};
   const pad=140,padT=300,vbW=g.Wm+g.ext+pad*2+120,vbH=g.H+padT+pad+(g.rows.length>1?120:0),k=vbW/820;
   let ed=techInterior(g,k)+obsTech(g,k);{const dr=doorById(job.doorId);if(dr?.kind==='hinged')ed+=`<g opacity=".5">${leaves(g,dr).filter(l=>l.kind==='door').map(hingeMarks).join('')}</g>`;g.rows.forEach(r=>r.clash.forEach(c=>ed+=`<circle cx="${f(c.x)}" cy="${f(-c.z)}" r="${f(26*k)}" fill="${c.lvl==='bad'?'#E5484D':'#F59E0B'}"/>`+TX(c.x,c.z-9*k,'!',22*k,'fill="#fff" font-weight="700" text-anchor="middle"')))}if(g.cat==='kitchen'&&!ed.includes('식탁'))ed+=techTable(g,k);const top=g.rows[g.rows.length-1];
   if(g.cat==='middoor')midPanels(g).forEach(p=>ed+=dimH(p.x,p.x+p.w,g.Hm+50*k,`${Math.round(p.w)}`,k,g.Hm));else top.mods.forEach(m=>ed+=dimH(m.x,m.x+m.w,g.H+50*k,`${m.w}`,k,top.z1));
@@ -2347,7 +2354,7 @@ function step2(){const plans=plansFor(job.cat),g=geom();if(!cf().rows[job.sel.ro
         ${ty.n!=null?`<div><div class="label">${ty.nl} 수</div><div class="stepper"><button type="button" class="btn sm" data-act="mod-n" data-d="-1" aria-label="줄이기">−</button><span class="v">${m.n}</span><button type="button" class="btn sm" data-act="mod-n" data-d="1" aria-label="늘리기">+</button></div></div>`:''}
         ${row.zone==='upper'?`<div><div class="label">하단 올림 (상부장 아래선에서 위로) · 지금 ${gm.raise}mm${m.t==='hood'?` · 상판에서 ${gm.z0-850}mm`:''}</div><div class="toolbar" style="margin:0"><div class="stepper"><button type="button" class="btn sm" data-act="raise" data-d="-10" aria-label="10mm 내리기">−</button><input class="input mono" style="width:84px;min-height:36px;text-align:center" id="raiseIn" inputmode="numeric" data-change="raise" value="${gm.raise}" aria-label="올림 mm"><button type="button" class="btn sm" data-act="raise" data-d="10" aria-label="10mm 올리기">+</button></div>${[0,50,100,150].map(v=>`<button type="button" class="chip" style="min-height:36px" data-act="raise-set" data-v="${v}" aria-pressed="${gm.raise===v}">${v}</button>`).join('')}</div><p class="hint" style="margin:4px 0 0">도면에서 선택한 칸의 아래 손잡이(주황 막대)를 끌어 올려도 됩니다.</p></div>`:''}
         ${sec('more','문 방향·손잡이·조명·가전·요청',[modApps(m).map(x=>x.a.name).join(', '),m.lights?.length?'조명':'',m.note?'요청 있음':''].filter(Boolean).join(' · ')||'기본',`
-        ${(()=>{const dr=doorById(job.doorId),gr=g.rows[job.sel.row],hs=gr.hinge?.[job.sel.i];if(dr?.kind!=='hinged'||!(hs==='L'||hs==='R'))return'';return`<div><div class="label">문 여는 방향 (경첩) · 지금 ${hs==='L'?'왼쪽':'오른쪽'} 경첩</div><div class="seg">${[['','자동'],['L','왼쪽 경첩'],['R','오른쪽 경첩']].map(([v,l])=>`<button type="button" data-act="mod-hinge" data-v="${v}" aria-pressed="${(m.hinge||'')===v}">${l}</button>`).join('')}</div></div>`})()}
+        ${(()=>{const dr=doorById(job.doorId),gr=g.rows[job.sel.row],hs=gr.hinge?.[job.sel.i];if(dr?.kind!=='hinged'||!(hs==='L'||hs==='R'))return'';return`<div><div class="label">문 여는 방향 (경첩) · 지금 ${hs==='L'?'왼쪽':'오른쪽'} 경첩</div><div class="seg">${[['','자동'],['L','왼쪽 경첩'],['R','오른쪽 경첩']].map(([v,l])=>`<button type="button" data-act="mod-hinge" data-v="${mir?swLR(v):v}" aria-pressed="${(m.hinge||'')===(mir?swLR(v):v)}">${l}</button>`).join('')}</div></div>`})()}
         ${(()=>{const o=lightOpts(job.cat,row.zone,gm);if(!o.length)return'';const cur=m.lights||[];return`<div><div class="label">조명 <span class="hint">· ${CCT[job.lt.cct][0]} · ${CTRL[job.lt.ctrl]}</span></div><div class="chips">${o.map(t=>`<button type="button" class="chip" data-act="lt-toggle" data-t="${t}" aria-pressed="${cur.includes(t)}">${LT[t].label}</button>`).join('')}</div></div>`})()}
         ${doorById(job.doorId)?.kind==='hinged'&&layout(gm).zones.length?`<div class="field"><label for="modH">이 칸 손잡이</label><select class="input" id="modH" data-change="mod-handle">${handleOpts(m.handleId,'기본 (③ 도어·마감 설정)')}</select></div>`:''}
         ${MOD_APPS[m.t]?appUI(m,gm):''}
@@ -2360,8 +2367,8 @@ function step2(){const plans=plansFor(job.cat),g=geom();if(!cf().rows[job.sel.ro
           ${a.kind==='sink'||cs.some(x=>x.a.kind==='sink')?`<div class="toolbar" style="margin:0"><span class="hint" style="min-width:64px">수전 구멍</span><div class="seg">${Object.entries(FAUCET).map(([k2,l])=>`<button type="button" data-act="cut-faucet" data-v="${k2}" aria-pressed="${p.faucet===k2}">${l}</button>`).join('')}</div></div>`:''}</div>`})()}
         <div class="field"><label for="modNote">이 칸 고객 요청 <span class="hint">· 제작지시서에 들어감</span></label><input class="input" id="modNote" data-change="mod-note" value="${esc(m.note||'')}" placeholder="예: 안쪽 선반 높이 조절형, 콘센트 타공"></div>
         `)}
-        <div class="btn-grid"><button type="button" class="btn sm" data-act="mod-add" data-side="0">← 왼쪽에 칸 추가</button><button type="button" class="btn sm" data-act="mod-add" data-side="1">오른쪽에 칸 추가 →</button>
-          <button type="button" class="btn sm" data-act="mod-move" data-d="-1" ${job.sel.i<1?'disabled':''}>◀ 왼쪽으로 옮기기</button><button type="button" class="btn sm" data-act="mod-move" data-d="1" ${job.sel.i>=row.mods.length-1?'disabled':''}>오른쪽으로 옮기기 ▶</button>
+        <div class="btn-grid"><button type="button" class="btn sm" data-act="mod-add" data-side="${mir?1:0}">← 왼쪽에 칸 추가</button><button type="button" class="btn sm" data-act="mod-add" data-side="${mir?0:1}">오른쪽에 칸 추가 →</button>
+          <button type="button" class="btn sm" data-act="mod-move" data-d="${mir?1:-1}" ${(mir?job.sel.i>=row.mods.length-1:job.sel.i<1)?'disabled':''}>◀ 왼쪽으로 옮기기</button><button type="button" class="btn sm" data-act="mod-move" data-d="${mir?-1:1}" ${(mir?job.sel.i<1:job.sel.i>=row.mods.length-1)?'disabled':''}>오른쪽으로 옮기기 ▶</button>
           <button type="button" class="btn sm" data-act="mod-split">반으로 나누기</button><button type="button" class="btn sm" data-act="mod-even">이 줄 칸 폭 똑같이</button><button type="button" class="btn sm danger" data-act="mod-del" ${row.mods.length<2?'disabled':''}>이 칸 삭제</button></div>
         ${sec('plansave','내 플랜으로 저장',cf().edited?'수정 중':'',`<div><div class="save-row"><input class="input" id="planName" placeholder="예: 안방 4칸 서랍강화" value="${cf().edited?'':''}"><button type="button" class="btn primary" data-act="plan-save">저장</button></div>
           ${cf().edited?`<button type="button" class="btn sm quiet" style="margin-top:6px" data-act="plan-reset">원래 플랜으로 되돌리기</button>`:''}</div>`)}
