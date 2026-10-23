@@ -1220,6 +1220,17 @@ function sinkUI(m,gm){const sinks=(catalog.apps||[]).filter(a=>a.kind==='sink'&&
   ${cur?`<p class="hint" style="margin:0">${esc(cur.name)} · 외경 ${cur.w}×${cur.d}×${cur.h}${cur.cw?` · 타공 ${cur.cw}×${cur.cd}`:''} · ${won(cur.price)}원<br>이 볼에 필요한 싱크장 폭 <b>${need}mm 이상</b> · 지금 ${gm.w}mm ${gm.w<need?'<b class="st-bad">좁음</b>':'<span class="st-ok">OK</span>'}</p>`:''}
   <div class="toolbar" style="margin:0;flex-wrap:wrap"><span class="hint" style="min-width:64px">배관 위치</span><input class="input mono" style="width:96px;min-height:36px;text-align:center" inputmode="numeric" data-change="sink-pipe" value="${pc}" placeholder="mm" aria-label="배관 중심 위치 mm"><span class="hint">${FACE_NAME(face)} 벽 <b>왼쪽 끝</b>에서 배관(급·배수) 가운데까지</span></div>
   ${pipes.length?(fi.length?`<div class="issue"><span><b class="st-bad">싱크장이 배관 위치와 안 맞아요</b></span><button type="button" class="btn sm" data-act="obs-fit" data-id="${pipes[0].id}">싱크를 배관 위로 옮기기</button></div>`:'<p class="hint st-ok" style="margin:0">배관이 싱크장 안에 들어와 있습니다</p>'):'<p class="hint" style="margin:0">배관 위치를 넣으면 싱크장이 그 위로 자동으로 옮겨집니다</p>'}</div>`}
+const QOBS={water:{w:200,z:100,h:400,l:'배관 (급·배수)',hint:'싱크장이 이 위치로 옮겨집니다'},dist:{w:450,z:0,h:400,l:'보일러 분배기',hint:'분배기가 장 한 칸 안에 들어가게 칸 폭을 맞춥니다'}};
+function pipeUI(g){const face=g.face,types=job.cat==='kitchen'?['water','dist']:['dist'];
+  return`<div class="side-card" style="display:grid;gap:8px;padding:12px"><div class="label" style="margin:0">배관·분배기 위치 <span class="hint">· ${FACE_NAME(face)} 벽 <b>왼쪽 끝</b>에서 가운데까지 mm</span></div>
+  ${types.map(t=>{const q=QOBS[t],o=(job.obstacles||[]).find(x=>x.face===face&&x.type===t),c=o?Math.round(o.x+o.w/2):'',p=o?fitPlan(job,o):null;
+    return`<div style="display:grid;gap:4px"><div class="toolbar" style="margin:0;flex-wrap:wrap"><span style="min-width:110px;font-size:13px"><span class="tag" style="background:${OBS[t].color}">${OBS[t].label}</span></span>
+      <input class="input mono" style="width:86px;min-height:36px;text-align:center" inputmode="numeric" data-change="obs-quick" data-t="${t}" value="${c}" placeholder="위치" aria-label="${q.l} 위치 mm">
+      ${t==='dist'?`<span class="hint">폭</span><input class="input mono" style="width:70px;min-height:36px;text-align:center" inputmode="numeric" data-change="obs-quick-w" data-t="${t}" value="${o?o.w:q.w}" aria-label="분배기 폭 mm">`:''}
+      ${o?`<button type="button" class="btn sm quiet danger" data-act="obs-del" data-id="${o.id}">지우기</button>`:''}</div>
+      <span class="hint">${!o?q.hint:!p?(t==='water'?'이 면에 싱크장이 없습니다':'이 위치에는 맞출 장이 없습니다 (코너·가전 뒤)'):p.ok?`<span class="st-ok">✔ ${t==='water'?'배관이 싱크장 안에 있습니다':'분배기가 한 칸 안에 들어가 있습니다'}</span>`:`<b class="st-bad">${fitMsg(o)}</b> <button type="button" class="btn sm" data-act="obs-fit" data-id="${o.id}">${t==='water'?'싱크를 배관 위로':'한 칸에 맞추기'}</button>`}</span></div>`}).join('')}</div>`}
+function quickObs(t,face,center,w){const q=QOBS[t];let o=job.obstacles.find(x=>x.face===face&&x.type===t);if(!(center>0)){if(o)job.obstacles=job.obstacles.filter(x=>x!==o);return null}
+  if(!o){o={id:uid(),face,type:t,z:q.z,w:q.w,h:q.h,note:q.l+' (직접 입력)',auto:true};job.obstacles.push(o)}if(w>0)o.w=Math.round(w);o.x=Math.max(0,Math.round(center-o.w/2));return o}
 function cookUI(m,gm){const L=(catalog.apps||[]).filter(a=>a.kind==='cooktop'&&a.w).sort((x,y)=>(x.fuel===y.fuel?0:x.fuel==='gas'?1:-1)||(x.kw||0)-(y.kw||0));if(!L.length)return'';const cur=modApps(m).find(x=>x.a.kind==='cooktop')?.a,need=cur?cookNeed(cur):0,nd=utilNeeds();
   return`<div class="side-card" style="display:grid;gap:10px;padding:12px"><div class="label" style="margin:0">쿡탑 선택 <span class="hint">· 크기·전력에 맞춰 칸 폭과 전기 공사를 판단합니다</span></div>
   <div class="chips">${L.map(a=>`<button type="button" class="chip" data-act="cook-pick" data-id="${a.id}" aria-pressed="${cur?.id===a.id}">${esc(a.tag||a.name)}&nbsp;<b>${a.fuel==='gas'?'가스':a.kw+'kW'}</b></button>`).join('')}</div>
@@ -2427,6 +2438,7 @@ function step2(){const plans=plansFor(job.cat),g=gview(job,job.fi),mir=isMir(job
       <div class="inspector">
         <p class="hint" style="margin:0">칸 폭은 5mm 단위로 나눕니다 · ${finishText(g)}</p>
         ${(()=>{const bad=obstacleIssues().filter(x=>!x.ok&&x.o.face===g.face);return bad.length?`<div class="issue">${bad.map(x=>`<span><b class="st-bad">${OBS[x.o.type].label}</b> → ${x.hits.map(h=>h.label).join(', ')}<br><span class="hint">${OBS[x.o.type].tip}</span></span>`).join('')}</div>`:''})()}
+        ${job.cat!=='middoor'?pipeUI(g):''}
         ${fitIssues(job,g.face).map(x=>`<div class="issue"><span><b class="st-bad">${fitMsg(x.o)}</b><br><span class="hint">${x.o.type==='water'?'배관이 싱크장 밖에 있으면 옆 칸 뒷판·바닥을 크게 따내야 합니다':'분배기는 장 한 칸 안에 쏙 들어가야 점검문 하나로 열어 볼 수 있습니다'}</span></span><button type="button" class="btn sm" data-act="obs-fit" data-id="${x.o.id}">${x.o.type==='water'?'싱크를 배관 위로':'한 칸에 맞추기'}</button></div>`).join('')}
         ${job.cat==='kitchen'?khBrief(g):''}${g.pl&&job.cat!=='kitchen'?`<div><div class="label">걸레받이 높이 (${plRange(job.cat)[0]}~${plRange(job.cat)[1]}mm · 모든 면)</div><div class="stepper"><button type="button" class="btn sm" data-act="plinth" data-d="-5" aria-label="5mm 낮추기" ${g.pl<=plRange(job.cat)[0]?'disabled':''}>−</button><span class="v">${g.pl}</span><button type="button" class="btn sm" data-act="plinth" data-d="5" aria-label="5mm 높이기" ${g.pl>=plRange(job.cat)[1]?'disabled':''}>+</button></div></div>`:''}
         ${g.rows.length>1?`<div><div class="label">줄</div><div class="seg">${cf().rows.map((r,ri)=>`<button type="button" data-act="mod-sel" data-row="${ri}" data-i="0" aria-pressed="${ri===job.sel.row}">${r.zone==='upper'?'상부장':'하부장'}</button>`).join('')}</div></div>`:''}
@@ -3217,6 +3229,9 @@ document.addEventListener('change',async e=>{const t=e.target,c=t.dataset.change
   if(c==='cfill'){const v=t.value.trim();job.corner.fill=v===''?null:clamp(Math.round(+v)||0,0,300);render();return}
   if(c==='unit-price'){const u=unitById(t.dataset.id);if(u){u.price=Math.max(0,Math.round(+t.value)||0);saveCatalog()}return}
   if(c==='cleg'){const v=Math.round(+t.value);if(v>=400&&v<=1500)job.corner[t.dataset.k]=v;render()}
+  if(c==='obs-quick'||c==='obs-quick-w'){const face=cf().key,tt=t.dataset.t,ex=job.obstacles.find(x=>x.face===face&&x.type===tt);let o;
+    if(c==='obs-quick')o=quickObs(tt,face,+t.value,ex?.w);else{if(!ex){render();return}o=quickObs(tt,face,ex.x+ex.w/2,+t.value)}
+    if(o){const p=fitPlan(job,o);toast(p&&!p.ok?applyFit(job,o):p?.ok?(tt==='water'?'배관이 이미 싱크장 안에 있습니다':'분배기가 이미 한 칸 안에 있습니다'):'위치를 저장했습니다')}render();return}
   if(c==='kh-in'){job.kh={...khOf(job),[t.dataset.k]:+t.value||''};render();return}
   if(c==='sink-pipe'){const v=Math.round(+t.value);const face=cf().key;let o=job.obstacles.find(x=>x.face===face&&x.type==='water');if(!(v>0)){if(o&&o.auto)job.obstacles=job.obstacles.filter(x=>x!==o);render();return}
     if(!o){o={id:uid(),face,type:'water',z:100,w:200,h:400,note:'싱크 배관 (직접 입력)',auto:true};job.obstacles.push(o)}o.x=Math.max(0,v-o.w/2);const p=fitPlan(job,o);toast(p&&!p.ok?applyFit(job,o):'배관이 이미 싱크장 안에 있습니다');render();return}
