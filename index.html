@@ -671,6 +671,7 @@ const LAYOUTS={I:'일자형',L:'ㄱ자형',U:'ㄷ자형',island:'아일랜드형
 const OBS={dist:{label:'보일러 분배기',color:'#E5484D',tip:'바닥판·걸레받이 따내기, 해당 칸에 점검문 필요'},water:{label:'수도 (급·배수)',color:'#2F6BFF',tip:'뒷판·바닥판 타공 필요'},
   boiler:{label:'보일러',color:'#B4520F',tip:'장으로 덮지 말고 보일러 가림장(통풍 루버)이나 비움 검토'},access:{label:'점검구',color:'#8E4EC6',tip:'해당 칸 뒷판에 점검문 가공 필요'},
   gas:{label:'가스 배관·계량기',color:'#D6409F',tip:'가스 배관 이격 확인, 뒷판 따내기 필요'},elec:{label:'콘센트·스위치',color:'#12A594',tip:'뒷판 타공 또는 전기 위치 이동'},
+  supply:{label:'급수 밸브',color:'#3E63DD',tip:'뒷판 타공 · 식세기·정수기 분기 가능'},drain:{label:'배수구',color:'#0D74CE',tip:'바닥판·뒷판 타공 · 식세기·음식물처리기 배수 연결'},
   window:{label:'창문',color:'#0090FF',tip:'상부장·키큰장 설치 불가 구간, 높이 조정 필요'},etc:{label:'기타',color:'#6F6E77',tip:'현장 확인 필요'}};
 const CAT_LAYOUTS={kitchen:['I','L','U','island','Lisland'],shoe:['I','II','L','U','niche'],closet:['I','L','niche'],dress:['I','L','U','II'],middoor:['I'],storage:['I'],storage:['I'],laundry:['I','niche','L'],single:['I']};
 const LAYOUT_FACES={I:['A'],L:['A','B'],U:['A','B','C'],island:['A','I'],Lisland:['A','B','I'],II:['A','B'],niche:['A']};
@@ -1263,7 +1264,33 @@ function sinkUI(m,gm){const sinks=(catalog.apps||[]).filter(a=>a.kind==='sink'&&
   <div class="toolbar" style="margin:0;flex-wrap:wrap"><span class="hint" style="min-width:64px">배관 위치</span><input class="input mono" style="width:96px;min-height:36px;text-align:center" inputmode="numeric" data-change="sink-pipe" value="${pc}" placeholder="mm" aria-label="배관 중심 위치 mm"><span class="hint">${FACE_NAME(face)} 벽 <b>왼쪽 끝</b>에서 배관(급·배수) 가운데까지</span></div>
   ${pipes.length?(fi.length?`<div class="issue"><span><b class="st-bad">싱크장이 배관 위치와 안 맞아요</b></span><button type="button" class="btn sm" data-act="obs-fit" data-id="${pipes[0].id}">싱크를 배관 위로 옮기기</button></div>`:'<p class="hint st-ok" style="margin:0">배관이 싱크장 안에 들어와 있습니다</p>'):'<p class="hint" style="margin:0">배관 위치를 넣으면 싱크장이 그 위로 자동으로 옮겨집니다</p>'}</div>`}
 const QOBS={water:{w:200,z:100,h:400,l:'배관 (급·배수)',hint:'싱크장이 이 위치로 옮겨집니다'},dist:{w:450,z:0,h:400,l:'보일러 분배기',hint:'분배기가 장 한 칸 안에 들어가게 칸 폭을 맞춥니다'}};
-function pipeUI(g){const face=g.face,types=job.cat==='kitchen'?['water','dist']:['dist'];
+const UTIL=[
+  {g:'보일러 분배기',items:[2,3,4,5,6,8,10].map(n=>({k:'dist'+n,t:'dist',name:`분배기 ${n}구`,w:150+50*n,h:350,z:0}))},
+  {g:'물',items:[{k:'water',t:'water',name:'싱크 배관 (급·배수)',w:200,h:400,z:100},{k:'supply',t:'supply',name:'급수 밸브 (냉·온)',w:200,h:100,z:450},{k:'drainW',t:'drain',name:'벽 배수구 Ø50',w:100,h:100,z:350},{k:'drainF',t:'drain',name:'바닥 배수구 Ø50',w:120,h:60,z:0}]},
+  {g:'전기',items:[{k:'outLo',t:'elec',name:'콘센트 2구 (장 안)',w:120,h:70,z:300},{k:'outHi',t:'elec',name:'콘센트 2구 (상판 위)',w:120,h:70,z:1100},{k:'outInd',t:'elec',name:'인덕션 전용 (32A)',w:100,h:100,z:300},{k:'outHood',t:'elec',name:'후드 콘센트',w:120,h:70,z:2050}]},
+  {g:'가스',items:[{k:'gasV',t:'gas',name:'가스 밸브',w:100,h:100,z:550}]}];
+const UTILK=Object.fromEntries(UTIL.flatMap(x=>x.items).map(x=>[x.k,x]));
+const obsName=o=>o.name||(OBS[o.type]||OBS.etc).label;
+function dwCheck(j=job){const out=[];j.faces.forEach((f,fi)=>{const g=gview(j,fi),off=obsOffset(g),lo=g.rows.find(r=>r.zone==='lower');if(!lo)return;lo.mods.forEach(m=>{if(m.t!=='dw')return;const x0=m.x+off,x1=x0+m.w,cx=(x0+x1)/2,ob=(j.obstacles||[]).filter(o=>o.face===f.key),dist=o=>Math.max(0,Math.max(x0-(o.x+o.w),o.x-x1));
+    const el=ob.filter(o=>o.type==='elec'&&o.z<900),wa=ob.filter(o=>['water','supply'].includes(o.type)),dr=ob.filter(o=>['water','drain'].includes(o.type)),near=a=>a.length?Math.min(...a.map(dist)):null,msgs=[];
+    const de=near(el),dw_=near(wa),dd=near(dr);
+    if(de==null)msgs.push(['bad','장 안 콘센트가 없어요 · 옆 싱크장 안에 2구 콘센트를 두세요']);else if(el.some(o=>o.x<x1&&o.x+o.w>x0))msgs.push(['warn','콘센트가 식세기 바로 뒤에 있어요 · 제품에 눌리니 옆 칸(싱크장)으로 옮기세요']);else if(de>1100)msgs.push(['warn',`콘센트까지 ${Math.round(de)}mm · 전원선(약 1.5m)이 모자랄 수 있어요`]);else msgs.push(['ok',`콘센트 ${Math.round(de)}mm 옆 · 좋아요`]);
+    if(dw_==null&&dd==null)msgs.push(['bad','급수·배수 위치가 없어요 · 싱크 배관이나 급수 밸브·배수구를 놓으세요']);else{const d=Math.max(dw_??0,dd??0);msgs.push(d>2000?['warn',`급·배수까지 ${Math.round(d)}mm · 호스 연장이 필요할 수 있어요 (권장 2.5m 이내)`]:['ok',`급·배수까지 ${Math.round(d)}mm · 호스 길이 안이에요`])}
+    out.push({face:f.key,x0,w:m.w,msgs})})});return out}
+function pipeUI(g){const face=g.face,ob=(job.obstacles||[]).filter(o=>o.face===face),sel=ob.find(o=>o.id===job.obsSel)||null,dwc=job.cat==='kitchen'?dwCheck().filter(x=>x.face===face):[];
+  const st={bad:'st-bad',warn:'st-bad',ok:'st-ok'};
+  const list=ob.map(o=>{const c=OBS[o.type]||OBS.etc,p=['dist','water'].includes(o.type)?fitPlan(job,o):null,on=sel===o;
+    return`<div style="display:grid;gap:6px;padding:8px;border:1px solid ${on?'#2F6BFF':'var(--line,#e5e5e5)'};border-radius:10px"><div class="toolbar" style="margin:0;flex-wrap:wrap"><button type="button" class="chip" data-act="obs-sel" data-id="${o.id}" aria-pressed="${on}"><span class="dot" style="background:${c.color}"></span>${esc(obsName(o))}</button><span class="hint mono">가운데 ${Math.round(o.x+o.w/2)} · 높이 ${o.z} · ${o.w}×${o.h}</span><button type="button" class="btn sm quiet danger" data-act="obs-del" data-id="${o.id}">지우기</button></div>
+      ${on?`<div class="toolbar" style="margin:0;flex-wrap:wrap"><span class="hint" style="min-width:44px">옮기기</span>${[[-100,'◀◀100'],[-10,'◀10'],[10,'10▶'],[100,'100▶▶']].map(([v,l])=>`<button type="button" class="btn sm" data-act="obs-nudge" data-id="${o.id}" data-v="${v}">${l}</button>`).join('')}${o.type!=='dist'?`<button type="button" class="btn sm" data-act="obs-nudge" data-id="${o.id}" data-z="50">▲50</button><button type="button" class="btn sm" data-act="obs-nudge" data-id="${o.id}" data-z="-50">▼50</button>`:''}</div>
+      <div class="toolbar" style="margin:0;flex-wrap:wrap">${[['cx','가운데',Math.round(o.x+o.w/2)],['z','바닥에서',o.z],['w','폭',o.w],['h','높이',o.h]].map(([k,l,v])=>`<span class="hint">${l}</span><input class="input mono" style="width:76px;min-height:34px;text-align:center" inputmode="numeric" data-change="obs-in" data-id="${o.id}" data-k="${k}" value="${v}">`).join('')}</div>`:''}
+      ${p?(p.ok?`<span class="hint st-ok">✔ ${o.type==='water'?'배관이 싱크장 안에 있습니다':'분배기가 한 칸 안에 들어가 있습니다'}</span>`:`<span class="hint"><b class="st-bad">${fitMsg(o)}</b> <button type="button" class="btn sm" data-act="obs-fit" data-id="${o.id}">${o.type==='water'?'싱크를 배관 위로':'한 칸에 맞추기'}</button></span>`):''}</div>`}).join('');
+  return`<div class="side-card" style="display:grid;gap:10px;padding:12px"><div class="label" style="margin:0">설비 놓기 <span class="hint">· ${FACE_NAME(face)} 벽 · 누르면 고른 칸 가운데에 놓이고, 도면에서 끌어 옮겨요</span></div>
+    ${UTIL.map(gr=>`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center"><span class="hint" style="min-width:72px">${gr.g}</span>${gr.items.map(it=>`<button type="button" class="chip" data-act="obs-add" data-k="${it.k}"><span class="dot" style="background:${(OBS[it.t]||OBS.etc).color}"></span>${it.name.replace('보일러 ','')}</button>`).join('')}</div>`).join('')}
+    <span class="hint">분배기 폭은 일반 제품 기준 대략값(4구 약 350mm)이에요. 현장에서 재서 폭을 고쳐 넣으세요.</span>
+    ${list||'<span class="hint">아직 놓은 설비가 없어요.</span>'}
+    ${dwc.map(x=>`<div style="display:grid;gap:4px;padding:8px;border-radius:10px;background:var(--surface-2,#f5f5f3)"><b style="font-size:13px">식기세척기 칸 (왼쪽 끝 ${Math.round(x.x0)})</b>${x.msgs.map(([l,t])=>`<span class="hint ${st[l]}">${l==='ok'?'✔':'⚠'} ${t}</span>`).join('')}</div>`).join('')}
+    ${job.cat==='kitchen'&&!dwc.length?'<span class="hint">식기세척기 칸을 넣으면 콘센트·급배수 거리를 자동으로 확인해 드려요.</span>':''}</div>`}
+function pipeUI_old(g){const face=g.face,types=job.cat==='kitchen'?['water','dist']:['dist'];
   return`<div class="side-card" style="display:grid;gap:8px;padding:12px"><div class="label" style="margin:0">배관·분배기 위치 <span class="hint">· ${FACE_NAME(face)} 벽 <b>왼쪽 끝</b>에서 가운데까지 mm</span></div>
   ${types.map(t=>{const q=QOBS[t],o=(job.obstacles||[]).find(x=>x.face===face&&x.type===t),c=o?Math.round(o.x+o.w/2):'',p=o?fitPlan(job,o):null;
     return`<div style="display:grid;gap:4px"><div class="toolbar" style="margin:0;flex-wrap:wrap"><span style="min-width:110px;font-size:13px"><span class="tag" style="background:${OBS[t].color}">${OBS[t].label}</span></span>
@@ -1593,8 +1620,8 @@ function sceneSVG(j,{open=false,caption=true,px=1600,fi=j.fi,bare=false}={}){con
   const hpx=Math.round(px*vbH/vbW);
   return`<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${hpx}" viewBox="${f(vbX)} ${f(vbY)} ${f(vbW)} ${f(vbH)}" font-family="${FONT}"><defs>${defs}</defs>${s}</svg>`}
 function obsTech(g,k,j=job,live=false){let s='';const off=obsOffset(g);obstacleIssues(j).filter(x=>x.o.face===g.face).forEach(({o,ok})=>{const c=OBS[o.type]||OBS.etc,x=o.x-off;let t='';
-  t+=R(x,o.z,o.w,o.h,`fill="${c.color}" fill-opacity="${ok?.06:.16}" stroke="${c.color}" stroke-width="${live?2.4:1.6}" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"`);
-  t+=TX(x+o.w/2,o.z+o.h+6*k,`${c.label}${ok?'':' · 걸림'}${live?' ⇔':''}`,Math.max(8*k,Math.min(10*k,o.w/4)),`fill="${c.color}" text-anchor="middle" font-weight="600" data-obslbl="1"`);
+  t+=R(x,o.z,o.w,o.h,`fill="${c.color}" fill-opacity="${ok?.06:.16}" stroke="${c.color}" stroke-width="${live?(job.obsSel===o.id?4:2.4):1.6}" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"`);
+  t+=TX(x+o.w/2,o.z+o.h+6*k,`${obsName(o)}${ok?'':' · 걸림'}${live?' ⇔':''}`,Math.max(8*k,Math.min(10*k,o.w/4)),`fill="${c.color}" text-anchor="middle" font-weight="600" data-obslbl="1"`);
   if(live)t+=R(x-20*k,o.z-20*k,o.w+40*k,o.h+60*k,`fill="transparent" data-drag="obs" data-id="${o.id}" style="cursor:move;touch-action:none"`);
   s+=live?`<g data-obsg="${o.id}">${t}</g>`:t});return s}
 function swatchSVG(d){const P='w'+uid();let s='';
@@ -3163,8 +3190,8 @@ document.addEventListener('pointerdown',e=>{const hnd=e.target.closest?.('[data-
   dragO={o,x:e.clientX,y:e.clientY,mm:1/ctm.a,g:svg.querySelector(`g[data-obsg="${o.id}"]`),dx:0,dz:0,moved:false};dragO.lbl=dragO.g?.querySelector('[data-obslbl]');try{hnd.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault()});
 document.addEventListener('pointermove',e=>{if(!dragO)return;const D=dragO,dx=(e.clientX-D.x)*D.mm,dy=(e.clientY-D.y)*D.mm;if(!D.moved&&Math.hypot(e.clientX-D.x,e.clientY-D.y)<6)return;D.moved=true;const f0=job.faces.find(f=>f.key===D.o.face),L=+f0?.len||3000,H=+job.dims.H||2400;
   const nx=clamp(Math.round((D.o.x+dx)/10)*10,0,Math.max(0,L-D.o.w)),nz=D.o.type==='dist'?D.o.z:clamp(Math.round((D.o.z-dy)/10)*10,0,Math.max(0,H-D.o.h));D.dx=nx-D.o.x;D.dz=nz-D.o.z;D.g?.setAttribute('transform',`translate(${D.dx} ${-D.dz})`);
-  if(D.lbl)D.lbl.textContent=`${(OBS[D.o.type]||OBS.etc).label} · 가운데 ${Math.round(nx+D.o.w/2)}mm`});
-document.addEventListener('pointerup',()=>{if(!dragO)return;const D=dragO;dragO=null;if(!D.moved){render();return}D.o.x+=D.dx;D.o.z+=D.dz;if(['dist','water'].includes(D.o.type)){const p=fitPlan(job,D.o);toast(p&&!p.ok?applyFit(job,D.o):p?.ok?`${(OBS[D.o.type]||OBS.etc).label} 위치를 옮겼습니다 · 장과 잘 맞습니다`:'위치를 옮겼습니다')}else toast('위치를 옮겼습니다');render()});
+  if(D.lbl)D.lbl.textContent=`${obsName(D.o)} · 가운데 ${Math.round(nx+D.o.w/2)}mm`});
+document.addEventListener('pointerup',()=>{if(!dragO)return;const D=dragO;dragO=null;job.obsSel=D.o.id;if(!D.moved){render();return}D.o.x+=D.dx;D.o.z+=D.dz;if(['dist','water'].includes(D.o.type)){const p=fitPlan(job,D.o);toast(p&&!p.ok?applyFit(job,D.o):p?.ok?`${obsName(D.o)} 위치를 옮겼습니다 · 장과 잘 맞습니다`:'위치를 옮겼습니다')}else toast('위치를 옮겼습니다');render()});
 let lastClash=[];
 function clashUI(){if(isMD(job.cat))return'';const all=clashIssues();lastClash=all;const n=all.filter(x=>x.lvl==='bad'||x.lvl==='warn').length,fx=all.some(x=>x.fix&&(x.lvl==='bad'||x.lvl==='warn'));
   const tag={bad:['문제','st-bad'],warn:['주의','st-bad'],info:['참고','hint'],ok:['자동 적용','st-ok']};
@@ -3381,7 +3408,9 @@ const ACT={
   'sink-size':b=>{const m=cf().rows[job.sel.row].mods[job.sel.i],a=appById(b.dataset.id);if(!a)return;const cur=modApps(m),old=cur.find(x=>x.a.kind==='sink');m.apps=[...cur.filter(x=>x.a.kind!=='sink').map(x=>({id:x.id,own:x.own})),{id:a.id,own:old?.own||'co'}];cf().edited=true;
     const need=sinkNeed(a),gm=geom().rows[job.sel.row].mods[job.sel.i];let msg=`싱크볼 ${a.w}로 바꿨습니다`;if(gm&&gm.w<need){setModWidth(job.sel.row,job.sel.i,need);msg+=` · 싱크장 ${need}mm로 넓힘`}
     const pipe=(job.obstacles||[]).find(o=>o.face===cf().key&&o.type==='water');if(pipe){const p=fitPlan(job,pipe);if(p&&!p.ok&&!p.fail){applyFit(job,pipe);msg+=' · 배관 위치에 맞춤'}}toast(msg);render()},
-  'obs-nudge':b=>{const o=(job.obstacles||[]).find(x=>x.id===b.dataset.id);if(!o)return;const f0=job.faces.find(f=>f.key===o.face),L=+f0?.len||3000;o.x=clamp((+o.x||0)+ +b.dataset.v,0,Math.max(0,L-o.w));if(['dist','water'].includes(o.type)){const p=fitPlan(job,o);if(p&&!p.ok)toast(applyFit(job,o))}render()},
+  'obs-add':b=>{const it=UTILK[b.dataset.k];if(!it)return;const face=cf().key,g=gview(job,job.fi),off=obsOffset(g),gm=g.rows[job.sel.row]?.mods[job.sel.i],L=+cf().len||3000,cx=gm?gm.x+off+gm.w/2:L/2;const o={id:uid(),face,type:it.t,name:it.name,z:it.z,w:it.w,h:it.h,x:clamp(Math.round(cx-it.w/2),0,Math.max(0,L-it.w)),note:it.name,auto:true};for(let n=0;n<8&&(job.obstacles||[]).some(q=>q.face===face&&q.x<o.x+o.w&&q.x+q.w>o.x&&q.z<o.z+o.h&&q.z+q.h>o.z);n++){const nx=o.x+o.w+60;if(nx+o.w>L)break;o.x=nx}job.obstacles.push(o);job.obsSel=o.id;if(['dist','water'].includes(o.type)){const p=fitPlan(job,o);if(p&&!p.ok)toast(applyFit(job,o));else toast(`${it.name}를 놓았습니다 · 도면에서 끌어 옮기세요`)}else toast(`${it.name}를 놓았습니다 · 도면에서 끌어 옮기세요`);render()},
+  'obs-sel':b=>{job.obsSel=job.obsSel===b.dataset.id?null:b.dataset.id;render()},
+  'obs-nudge':b=>{const o=(job.obstacles||[]).find(x=>x.id===b.dataset.id);if(!o)return;const f0=job.faces.find(f=>f.key===o.face),L=+f0?.len||3000;if(b.dataset.z){o.z=clamp((+o.z||0)+ +b.dataset.z,0,Math.max(0,(+job.dims.H||2400)-o.h));render();return}o.x=clamp((+o.x||0)+ +b.dataset.v,0,Math.max(0,L-o.w));if(['dist','water'].includes(o.type)){const p=fitPlan(job,o);if(p&&!p.ok)toast(applyFit(job,o))}render()},
   'obs-del':b=>{job.obstacles=job.obstacles.filter(x=>x.id!==b.dataset.id);render()},
   layout:b=>{setLayout(b.dataset.v);recomputeDims();render()},
   face:b=>{job.fi=+b.dataset.i;job.sel={row:0,i:0};pending=null;render()},
@@ -3929,6 +3958,9 @@ document.addEventListener('change',async e=>{const t=e.target,c=t.dataset.change
   if(c==='cfill'){const v=t.value.trim();job.corner.fill=v===''?null:clamp(Math.round(+v)||0,0,300);render();return}
   if(c==='unit-price'){const u=unitById(t.dataset.id);if(u){u.price=Math.max(0,Math.round(+t.value)||0);saveCatalog()}return}
   if(c==='cleg'){const v=Math.round(+t.value);if(v>=400&&v<=1500)job.corner[t.dataset.k]=v;render()}
+  if(c==='obs-in'){const o=(job.obstacles||[]).find(x=>x.id===t.dataset.id);if(!o)return;const v=Math.round(+t.value),k=t.dataset.k,L=+job.faces.find(f=>f.key===o.face)?.len||3000;if(!(v>=0)){render();return}
+    if(k==='cx')o.x=clamp(v-Math.round(o.w/2),0,Math.max(0,L-o.w));else if(k==='z')o.z=clamp(v,0,3000);else if(k==='w'&&v>=20){const c0=o.x+o.w/2;o.w=v;o.x=clamp(Math.round(c0-v/2),0,Math.max(0,L-v))}else if(k==='h'&&v>=20)o.h=v;
+    if(['dist','water'].includes(o.type)){const p=fitPlan(job,o);if(p&&!p.ok)toast(applyFit(job,o))}render();return}
   if(c==='obs-quick'||c==='obs-quick-w'){const face=cf().key,tt=t.dataset.t,ex=job.obstacles.find(x=>x.face===face&&x.type===tt);let o;
     if(c==='obs-quick')o=quickObs(tt,face,+t.value,ex?.w);else{if(!ex){render();return}o=quickObs(tt,face,ex.x+ex.w/2,+t.value)}
     if(o){const p=fitPlan(job,o);toast(p&&!p.ok?applyFit(job,o):p?.ok?(tt==='water'?'배관이 이미 싱크장 안에 있습니다':'분배기가 이미 한 칸 안에 있습니다'):'위치를 저장했습니다')}render();return}
