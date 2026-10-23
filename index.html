@@ -805,8 +805,12 @@ const DEFAULT_SUPPORTS=[
   {id:'s5',name:'뒷면 수납장 (얕은 장)',type:'cabinet',color:'',price:300000}];
 const APP_KIND={sink:'싱크볼',faucet:'수전',cooktop:'쿡탑',hood:'후드',dw:'식기세척기',wash:'세탁기',oven:'오븐',dryer:'식기건조대',etc:'기타 부속'};
 const DEFAULT_APPS=[
-  {id:'a1',kind:'sink',name:'사각 언더싱크볼 700',w:700,h:220,d:450,price:150000},{id:'a2',kind:'sink',name:'사각 언더싱크볼 860',w:860,h:220,d:460,price:180000},
-  {id:'a15',kind:'sink',name:'사각 싱크볼 450 (소형·보조)',w:450,h:200,d:400,price:90000},{id:'a16',kind:'sink',name:'사각 언더싱크볼 600',w:600,h:220,d:450,price:120000},{id:'a17',kind:'sink',name:'사각 언더싱크볼 800',w:800,h:220,d:460,price:165000},{id:'a18',kind:'sink',name:'대형 언더싱크볼 900',w:900,h:230,d:480,price:200000},{id:'a19',kind:'sink',name:'와이드 싱크볼 1000',w:1000,h:230,d:480,price:240000},{id:'a20',kind:'sink',name:'2구 싱크볼 1200',w:1200,h:220,d:480,price:300000},
+  {id:'a1',kind:'sink',tag:'일반',name:'사각 언더싱크볼 700',w:700,h:220,d:450,price:150000},{id:'a2',kind:'sink',tag:'일반',name:'사각 언더싱크볼 860',w:860,h:220,d:460,price:180000},
+  {id:'b1',kind:'sink',tag:'SQSR500',name:'백조 사각볼 SQSR500 (소형·보조)',w:550,h:230,d:450,cw:508,cd:408,price:230000},{id:'b2',kind:'sink',tag:'SQSR630',name:'백조 사각볼 SQSR630',w:630,h:245,d:450,cw:588,cd:408,price:260000},
+  {id:'b3',kind:'sink',tag:'SQSR730',name:'백조 사각볼 SQSR730',w:730,h:245,d:450,cw:688,cd:408,price:350000},{id:'b4',kind:'sink',tag:'SQSR780',name:'백조 사각볼 SQSR780',w:830,h:235,d:450,cw:788,cd:408,price:250000},
+  {id:'b5',kind:'sink',tag:'SDS850 엠보',name:'백조 엠보 언더볼 SDS850',w:850,h:200,d:515,cw:822,cd:487,price:200000},{id:'b6',kind:'sink',tag:'리젠스 860',name:'리젠스 엠보 사각볼 GQE8603',w:860,h:230,d:515,cw:786,cd:473,cab:900,price:220000},
+  {id:'b7',kind:'sink',tag:'깜뽀르테860',name:'백조 깜뽀르테 860',w:860,h:200,d:464,cw:828,cd:432,price:650000},{id:'b8',kind:'sink',tag:'SQSR900',name:'백조 사각볼 SQSR900 (대형)',w:900,h:250,d:460,cw:856,cd:416,price:380000},
+  {id:'b9',kind:'sink',tag:'깜뽀르테960',name:'백조 깜뽀르테 960 (대형)',w:960,h:200,d:464,cw:928,cd:432,price:725000},{id:'b10',kind:'sink',tag:'LSD1200 2구',name:'백조 레이온 2구볼 LSD1200 (스텐 상판 일체)',w:1200,h:290,d:550,cw:1160,cd:510,cab:1200,price:300000},
   {id:'a3',kind:'faucet',name:'원홀 거위목 수전',w:0,h:0,d:0,price:90000},{id:'a4',kind:'etc',name:'싱크대 음식물처리기',w:0,h:0,d:0,price:450000},
   {id:'a5',kind:'cooktop',name:'인덕션 3구 빌트인',w:580,h:60,d:510,price:650000,fuel:'elec',kw:7.4},{id:'a6',kind:'cooktop',name:'하이브리드 3구 (인덕션2+하이라이트1)',w:590,h:60,d:520,price:590000,fuel:'elec',kw:6.4},{id:'a14',kind:'cooktop',name:'가스쿡탑 3구 빌트인',w:600,h:60,d:510,price:320000,fuel:'gas',kw:0},
   {id:'a7',kind:'hood',name:'슬림 히든 후드 600',w:600,h:150,d:300,price:230000},{id:'a8',kind:'hood',name:'침니 후드 900',w:900,h:700,d:500,price:380000,style:'chimney'},
@@ -831,7 +835,7 @@ function loadCatalog(){const c=store.get(CK);const d=defaultCatalog();if(!c)retu
 let catalog=loadCatalog();
 function upgradeCatalog(){if((catalog.ver||0)<2){DEFAULT_COUNTERS.forEach(c=>{if(!catalog.counters.some(x=>x.id===c.id))catalog.counters.push(clone(c))});catalog.counters.forEach(c=>{if(!c.type)c.type=ctType(c)});catalog.ver=2}if((catalog.ver||0)<3){catalog.units=catalog.units||[];DEFAULT_UNITS.forEach(u=>{if(!catalog.units.some(x=>x.id===u.id))catalog.units.push(clone(u))});catalog.ver=3}if((catalog.ver||0)<4){catalog.handles=catalog.handles||[];DEFAULT_HANDLES.forEach(h=>{if(!catalog.handles.some(x=>x.id===h.id))catalog.handles.push(clone(h))});catalog.ver=4}if((catalog.ver||0)<6){['d1','d2','d3','t1','t2'].forEach(id=>{const d=catalog.doors.find(x=>x.id===id);if(d&&!d.cats.includes('laundry'))d.cats.push('laundry')});}
   if((catalog.ver||0)<7){['d1','d2','d3','d4','t1','t2'].forEach(id=>{const d=catalog.doors.find(x=>x.id===id);if(d&&!d.cats.includes('single'))d.cats.push('single')});catalog.prices.body=catalog.prices.body||{};if(catalog.prices.body.single==null)catalog.prices.body.single=90000;catalog.prices.body=catalog.prices.body||{};if(catalog.prices.body.laundry==null)catalog.prices.body.laundry=95000}
-  if((catalog.ver||0)<5){DEFAULT_DOORS.filter(d=>d.tex==='tambour').forEach(d=>{if(!catalog.doors.some(x=>x.id===d.id))catalog.doors.push(clone(d))});catalog.ver=5}if((catalog.ver||0)<7)catalog.ver=7;if((catalog.ver||0)<8){catalog.apps=catalog.apps||[];DEFAULT_APPS.filter(a=>a.kind==='sink').forEach(a=>{if(!catalog.apps.some(x=>x.id===a.id))catalog.apps.push(clone(a))});catalog.ver=8}}
+  if((catalog.ver||0)<5){DEFAULT_DOORS.filter(d=>d.tex==='tambour').forEach(d=>{if(!catalog.doors.some(x=>x.id===d.id))catalog.doors.push(clone(d))});catalog.ver=5}if((catalog.ver||0)<7)catalog.ver=7;if((catalog.ver||0)<9){catalog.apps=(catalog.apps||[]).filter(x=>!['a15','a16','a17','a18','a19','a20'].includes(x.id));DEFAULT_APPS.filter(a=>a.kind==='sink').forEach(a=>{const x=catalog.apps.find(x=>x.id===a.id);if(!x)catalog.apps.push(clone(a));else if(!x.tag&&(a.id==='a1'||a.id==='a2'))x.tag=a.tag});catalog.ver=9}}
 upgradeCatalog();
 const syncBoard=()=>{T=clamp(+catalog.prices.board||20,9,40)};syncBoard();
 const plRange=cat=>PL_RANGE[cat]||[0,0];
@@ -852,7 +856,7 @@ const appById=id=>(catalog.apps||[]).find(a=>a.id===id);
 const tileById=id=>(catalog.tiles||[]).find(t=>t.id===id);
 function modApps(m){const list=m.apps===undefined?(MOD_DEFAULT_APPS[m.t]||[]).map(id=>({id,own:'co'})):m.apps;return list.map(x=>({...x,a:appById(x.id)})).filter(x=>x.a)}
 const FAUCET={back:'뒤 가운데',left:'뒤 왼쪽',right:'뒤 오른쪽',none:'구멍 없음'};
-function cutPos(m,a){const fg=m.cutFront!=null&&m.cutFront!==''?+m.cutFront:(a.kind==='sink'?80:60),dx=+m.cutDx||0;return{dx,fg,cw:a.w-20,cd:a.d-20,faucet:m.faucet||'back'}}
+function cutPos(m,a){const fg=m.cutFront!=null&&m.cutFront!==''?+m.cutFront:(a.kind==='sink'?80:60),dx=+m.cutDx||0;return{dx,fg,cw:+a.cw||a.w-20,cd:+a.cd||a.d-20,faucet:m.faucet||'back'}}
 function cutTxt(m,a){const p=cutPos(m,a);return`칸 중심${p.dx?(p.dx>0?' 오른쪽 '+p.dx:' 왼쪽 '+(-p.dx)):''} · 앞에서 ${p.fg}${a.kind==='sink'?` · 수전 ${FAUCET[p.faucet]}`:''}`}
 const trucks=()=>catalog.trucks&&catalog.trucks.length?catalog.trucks:(catalog.trucks=clone(DEFAULT_TRUCKS));
 function loadLen(j){return j.faces.reduce((a,f,fi)=>{const g=geom(j,fi);return a+g.Wm*(g.rows.some(r=>r.zone==='upper')&&g.rows.some(r=>r.zone==='lower')?1.6:1)},0)}
@@ -860,7 +864,7 @@ function truckAuto(j){const L=loadLen(j),T=trucks().slice().sort((a,b)=>(+a.maxL
 function shipFee(j){const km=+j.customer?.km||0,auto=truckAuto(j),tr=trucks().find(t=>t.id===j.truck)||auto,n=Math.max(1,+j.truckN||1);let unit,tier;
   if(km>70){unit=(+tr.over||0)+Math.ceil(km-70)*(+tr.perKm||0);tier='70km 넘음'}else if(km>50){unit=+tr.t70||0;tier='50~70km'}else if(km>30){unit=+tr.t50||0;tier='30~50km'}else{unit=+tr.t30||0;tier='30km 이하'}
   return{km,tr,n,unit,tier,auto:!j.truck,autoTr:auto,total:unit*n}}
-function appFit(m){const out=[];modApps(m).forEach(({a})=>{if(['sink','cooktop'].includes(a.kind)&&a.w&&m.w){const p=cutPos(m,a);if(Math.abs(p.dx)+p.cw/2>m.w/2-T)out.push(`${a.name} 타공이 칸 밖으로 ${Math.round(Math.abs(p.dx)+p.cw/2-(m.w/2-T))}mm 나갑니다 · 좌우 이동을 줄이세요`)}});modApps(m).forEach(({a})=>{const need=a.kind==='sink'?a.w+2*T+40:a.kind==='cooktop'?a.w+20:['dw','wash','oven'].includes(a.kind)?a.w+(a.kind==='oven'?2*T:0):a.kind==='dryer'?a.w+2*T:0;if(need&&m.w<need)out.push(`${a.name}은(는) 폭 ${need}mm 이상 필요 (지금 ${m.w})`)});return out}
+function appFit(m){const out=[];modApps(m).forEach(({a})=>{if(['sink','cooktop'].includes(a.kind)&&a.w&&m.w){const p=cutPos(m,a);if(Math.abs(p.dx)+p.cw/2>m.w/2-T)out.push(`${a.name} 타공이 칸 밖으로 ${Math.round(Math.abs(p.dx)+p.cw/2-(m.w/2-T))}mm 나갑니다 · 좌우 이동을 줄이세요`)}});modApps(m).forEach(({a})=>{const need=a.kind==='sink'?sinkNeed(a):a.kind==='cooktop'?a.w+20:['dw','wash','oven'].includes(a.kind)?a.w+(a.kind==='oven'?2*T:0):a.kind==='dryer'?a.w+2*T:0;if(need&&m.w<need)out.push(`${a.name}은(는) 폭 ${need}mm 이상 필요 (지금 ${m.w})`)});return out}
 function defaultDoor(cat){const p=DEFAULT_DOOR_BY_CAT[cat];return (doorById(p)&&doorById(p).cats.includes(cat))?p:(doorsFor(cat)[0]?.id||null)}
 
 function defaultPlanFor(cat,key){if(cat==='kitchen'&&key==='I')return planById('kt-i');if(cat==='kitchen'&&key!=='A')return planById('kt-s');return plansFor(cat)[0]}
@@ -1176,8 +1180,8 @@ function cutList(j=job){const door=doorById(j.doorId)||{kind:'none',name:'-'},ro
 function obsOffset(g){return g.mirrored?g.sL:g.cut+g.sL}
 function fillerZones(g){if(g.cat!=='kitchen')return[[0,g.H]];const up=g.rows.find(r=>r.zone==='upper');return up?[[0,850],[up.z0,g.H]]:[[0,850]]}
 const FIXT=m=>['dw','wash','oven'].includes(m.t)||!!m.unit;
-const sinkNeed=a=>Math.ceil((a.w+2*T+40)/50)*50;
-function minWOf(m){let n=250;modApps(m).forEach(({a})=>{if(a.kind==='sink'&&a.w)n=Math.max(n,a.w+2*T+40);if(a.kind==='cooktop'&&a.w)n=Math.max(n,a.w+20)});return Math.ceil(n/5)*5}
+const sinkNeed=a=>a.cab?+a.cab:Math.ceil(((+a.cw||a.w-40)+2*T+30)/50)*50;
+function minWOf(m){let n=250;modApps(m).forEach(({a})=>{if(a.kind==='sink'&&a.w)n=Math.max(n,sinkNeed(a));if(a.kind==='cooktop'&&a.w)n=Math.max(n,a.w+20)});return Math.ceil(n/5)*5}
 function spreadW(ws,mins,flex,target,near){ws=ws.slice();let d=target-ws.reduce((a,b)=>a+b,0);const idx=ws.map((_,i)=>i).filter(i=>flex[i]);if(near==='R')idx.reverse();
   for(const i of idx){if(Math.abs(d)<1)break;if(d>0){ws[i]+=d;d=0}else{const take=Math.min(-d,ws[i]-mins[i]);if(take>0){ws[i]-=take;d+=take}}}return Math.abs(d)<1?ws:null}
 function fitPlan(j,o){const fi=j.faces.findIndex(f=>f.key===o.face);if(fi<0||!['dist','water'].includes(o.type))return null;const f=j.faces[fi],vg=gview(j,fi),offv=obsOffset(vg),g=geom(j,fi),water=o.type==='water';
@@ -1206,8 +1210,8 @@ function fitIssues(j=job,face){return(j.obstacles||[]).filter(o=>(!face||o.face=
 function fitMsg(o){return o.type==='water'?'싱크장이 배관 위치와 맞지 않아요':'분배기가 칸 경계(측판)에 걸려 있어요'}
 function sinkUI(m,gm){const sinks=(catalog.apps||[]).filter(a=>a.kind==='sink'&&a.w).sort((x,y)=>x.w-y.w);if(!sinks.length)return'';const cur=modApps(m).find(x=>x.a.kind==='sink')?.a,need=cur?sinkNeed(cur):0,face=cf().key,pipes=(job.obstacles||[]).filter(o=>o.face===face&&o.type==='water'),pc=pipes.length?Math.round(pipes[0].x+pipes[0].w/2):'',fi=fitIssues(job,face).filter(x=>x.o.type==='water');
   return`<div class="side-card" style="display:grid;gap:10px;padding:12px"><div class="label" style="margin:0">싱크볼 크기 <span class="hint">· 누르면 싱크장 폭도 맞춰집니다</span></div>
-  <div class="chips">${sinks.map(a=>`<button type="button" class="chip" data-act="sink-size" data-id="${a.id}" aria-pressed="${cur?.id===a.id}">${a.w}${a.w<=500?' 소형':a.w>=900?' 대형':''}</button>`).join('')}</div>
-  ${cur?`<p class="hint" style="margin:0">${esc(cur.name)} · ${cur.w}×${cur.d} · 이 볼에 필요한 싱크장 폭 <b>${need}mm 이상</b> · 지금 ${gm.w}mm ${gm.w<need?'<b class="st-bad">좁음</b>':'<span class="st-ok">OK</span>'}</p>`:''}
+  <div class="chips">${sinks.map(a=>`<button type="button" class="chip" data-act="sink-size" data-id="${a.id}" aria-pressed="${cur?.id===a.id}"><b>${a.w}</b>&nbsp;${esc(a.tag||'')}</button>`).join('')}</div>
+  ${cur?`<p class="hint" style="margin:0">${esc(cur.name)} · 외경 ${cur.w}×${cur.d}×${cur.h}${cur.cw?` · 타공 ${cur.cw}×${cur.cd}`:''} · ${won(cur.price)}원<br>이 볼에 필요한 싱크장 폭 <b>${need}mm 이상</b> · 지금 ${gm.w}mm ${gm.w<need?'<b class="st-bad">좁음</b>':'<span class="st-ok">OK</span>'}</p>`:''}
   <div class="toolbar" style="margin:0;flex-wrap:wrap"><span class="hint" style="min-width:64px">배관 위치</span><input class="input mono" style="width:96px;min-height:36px;text-align:center" inputmode="numeric" data-change="sink-pipe" value="${pc}" placeholder="mm" aria-label="배관 중심 위치 mm"><span class="hint">${FACE_NAME(face)} 벽 <b>왼쪽 끝</b>에서 배관(급·배수) 가운데까지</span></div>
   ${pipes.length?(fi.length?`<div class="issue"><span><b class="st-bad">싱크장이 배관 위치와 안 맞아요</b></span><button type="button" class="btn sm" data-act="obs-fit" data-id="${pipes[0].id}">싱크를 배관 위로 옮기기</button></div>`:'<p class="hint st-ok" style="margin:0">배관이 싱크장 안에 들어와 있습니다</p>'):'<p class="hint" style="margin:0">배관 위치를 넣으면 싱크장이 그 위로 자동으로 옮겨집니다</p>'}</div>`}
 function obstacleIssues(j=job){const out=[];(j.obstacles||[]).forEach(o=>{const fi=j.faces.findIndex(f=>f.key===o.face);if(fi<0)return;const g=gview(j,fi),off=obsOffset(g),hits=[];
@@ -1247,7 +1251,7 @@ function techModule(m,k,label=true){const{x,w,z0,z1}=m,h=z1-z0,lay=layout(m);if(
   lay.shelves.forEach(z=>s+=Rc(x+T,z-T,w-2*T,T,'sh'));lay.rods.forEach(z=>s+=Lc(x+T+20,z,x+w-T-20,z,'rod'));
   lay.drawers.forEach(d=>{s+=Rc(x+T+8,d.zb+4,w-2*T-16,d.h-8,'dr')+Lc(x+w/2-Math.min(40,w/6),d.zb+d.h-28,x+w/2+Math.min(40,w/6),d.zb+d.h-28,'thin')});
   if(lay.mirror)s+=Rc(x+T+40,lay.mirror.zb,w-2*T-80,lay.mirror.zt-lay.mirror.zb,'dash')+TX(x+w/2,(lay.mirror.zb+lay.mirror.zt)/2,'거울',9*k,'class="t" text-anchor="middle"');
-  if(lay.sink){const sa=modApps(m).find(q=>q.a.kind==='sink'&&q.a.w)?.a,bw=sa?Math.min(sa.w,w-2*T):w*.7,bh=sa?.h||200,bx=x+(w-bw)/2;s+=Rc(bx,z1-bh-10,bw,bh,'dash')+TX(x+w/2,z1-bh/2-6,sa?`싱크볼 ${sa.w}`:'싱크볼',9*k,'class="t" text-anchor="middle"')}
+  if(lay.sink){const sa=modApps(m).find(q=>q.a.kind==='sink'&&q.a.w)?.a,bw=sa?Math.min(+sa.cw||sa.w-40,w-2*T):w*.7,bh=sa?.h||200,bx=x+(w-bw)/2;s+=Rc(bx,z1-bh-10,bw,bh,'dash')+TX(x+w/2,z1-bh/2-6,sa?`싱크볼 ${sa.tag||sa.w}`:'싱크볼',9*k,'class="t" text-anchor="middle"')}
   if(lay.hood)s+=Rc(x+40,z0,w-80,150,'dash')+TX(x+w/2,z0+60,'후드',9*k,'class="t" text-anchor="middle"');
   if(m.corner){s+=Lc(m.side==='L'?x:x+w,z0+T,m.side==='L'?x+w:x,z1-T,'dash')+TX(x+w/2,z0+(z1-z0)/2,`${m.leg}×${m.leg}`,9*k,'class="t" text-anchor="middle"')}
   if(lay.cook)s+=TX(x+w/2,z1-120,'쿡탑',9*k,'class="t" text-anchor="middle"');
@@ -1630,7 +1634,7 @@ function workOrder(j=job){const rows=[],add=(trade,task,detail,who)=>rows.push([
   if(j.faces.some(f=>f.key==='I'))add('5 장 설치','아일랜드 방향',`문은 ${j.island?.front==='room'?'거실 쪽':'싱크대 쪽'}으로 · 오버행 ${j.island?.over||0}은 반대쪽`,'자체');
   if(tallOn(j))add('5 장 설치','코너 키큰장',`${TALL_K[j.corner.tallK||'oven']} · 데드코너 옆에 먼저 세우고 수평·수직 맞춘 뒤 하부장 연결`,'자체');
   if(j.cat==='kitchen'){gs.forEach(g=>{const c=g.island?islandCounter(j):counterById(j.counterId);add('6 상판',`${FACE_NAME(g.face)} 상판`,`${c?.name||'-'} · ${g.Wm+2*g.side}×${g.island?g.D:g.D+20}×${g.ct.thick}T${ctPieces(g)>1?` · ${ctPieces(g)}장 이음`:''}${g.ct.back&&!g.island?` · 뒷턱 ${g.ct.back}`:''} · ${g.ct.note}`,'상판')});
-    ap.filter(x=>['sink','cooktop'].includes(x.a.kind)).forEach(x=>add('6 상판',`${APP_KIND[x.a.kind]} 현장 타공`,`${x.where} · ${x.a.w-20}×${x.a.d-20} · ${cutTxt(x.m,x.a)} · 상판 도면 위치 참고${x.a.kind==='sink'&&x.g.ct.type==='natural'?' · 수전 타공은 볼 뒤쪽 상판':''}`,'상판'))}
+    ap.filter(x=>['sink','cooktop'].includes(x.a.kind)).forEach(x=>add('6 상판',`${APP_KIND[x.a.kind]} 현장 타공`,`${x.where} · ${cutPos(x.m,x.a).cw}×${cutPos(x.m,x.a).cd} · ${cutTxt(x.m,x.a)} · 상판 도면 위치 참고${x.a.kind==='sink'&&x.g.ct.type==='natural'?' · 수전 타공은 볼 뒤쪽 상판':''}`,'상판'))}
   ap.forEach(x=>add('7 가전',`${x.a.name} 설치`,`${x.where} · ${x.own==='cust'?'고객 구매품':'회사 공급'}`,'자체'));
   add('8 마감','실리콘·휠라 재단·청소',j.finish==='filler'?'휠라·상몰딩 현장 재단':'좌우·상부 틈 확인','자체');
   return rows}
@@ -2000,7 +2004,7 @@ function dataURLtoBlob(u){const[hd,b64]=u.split(',');const mime=(hd.match(/data:
 (async()=>{if(!LOCAL&&!window.claude?.use)return;
   const[db,as,us]=LOCAL?[localDB(),null,null]:await Promise.all(['db','assets','user'].map(n=>window.claude.use(n).catch(()=>null)));DB=db;ASSETS=as;USER=us;if(LOCAL){await DB.ready;if(DB.mode()==='mem')setTimeout(()=>toast('이 태블릿에 저장할 수 없는 상태입니다. 작업 후 꼭 ‘전체 내보내기’를 하세요.'),1500)}
   CAN_WRITE=!!DB&&(USER?USER.can?.('data.write')!==false:true);
-  if(DB){try{const s=await DB.doc('settings/catalog').get();if(s.exists&&s.data()?.catalog){store.set(CK,s.data().catalog);catalog=loadCatalog();const v=catalog.ver||0;upgradeCatalog();if(v<8&&CAN_WRITE)saveCatalog();syncBoard()}else if(CAN_WRITE)saveCatalog()}catch(e){}
+  if(DB){try{const s=await DB.doc('settings/catalog').get();if(s.exists&&s.data()?.catalog){store.set(CK,s.data().catalog);catalog=loadCatalog();const v=catalog.ver||0;upgradeCatalog();if(v<9&&CAN_WRITE)saveCatalog();syncBoard()}else if(CAN_WRITE)saveCatalog()}catch(e){}
     DB.collection('jobs').orderBy('updatedAt','desc').limit(300).onSnapshot(async snap=>{serverJobs=snap.docs.map(d=>({id:d.id,...d.data()}));
       const ids=[...new Set(serverJobs.map(x=>x.by).filter(Boolean))].filter(i=>!NAMES[i]);if(ids.length&&USER?.profiles){try{const ps=await USER.profiles(ids);ids.forEach(i=>NAMES[i]=ps[i]?.name||'')}catch(e){}}
       const mine=serverJobs.find(x=>x.id===job.id);if(mine&&mine.status!==job.serverStatus){job.serverStatus=mine.status;persist()}
@@ -2157,7 +2161,7 @@ function build3D(j,open){const T3=THREE,grp=new T3.Group(),door=doorById(j.doorI
       if(g.pen!=null){const lo_=g.rows.find(r=>r.zone==='lower');if(lo_){const all=rowAll(lo_);const a=Math.min(...all.map(m=>m.x)),b=Math.max(...all.map(m=>m.x+m.w));box(P,a,b,-DOOR_T,0,0,g.ct0,none?body:dCol)}}
       if(g.ct.back&&!isl)box(P,u0,u1,0,20,850,850+g.ct.back,ct);
       const lo=g.rows.find(r=>r.zone==='lower');lo?.mods.forEach(m=>{const cx=m.x+m.w/2;
-        if(m.t==='sink'){const sa=modApps(m).find(q=>q.a.kind==='sink'&&q.a.w)?.a,hw=sa?Math.min(sa.w/2,m.w/2-T-5):Math.min(330,m.w/2-50),dd=Math.min(sa?.d||380,520),sv=isl&&!room?[vd-470,vd-470+dd]:isl?[g.D-470,g.D-470+dd]:[Math.max(30,470-dd),470];box(P,cx-hw,cx+hw,sv[0],sv[1],850,853,'#8f969b',{},true);const fvv=isl&&!room?[vd-60,vd-30]:isl?[sv[0]-50,sv[0]-20]:[30,60];box(P,cx-15,cx+15,fvv[0],fvv[1],850,1100,'#b8bdc1',{},false);box(P,cx-15,cx+15,isl&&!room?fvv[0]-150:fvv[1],isl&&!room?fvv[0]:fvv[1]+150,1080,1100,'#b8bdc1',{},false)}
+        if(m.t==='sink'){const sa=modApps(m).find(q=>q.a.kind==='sink'&&q.a.w)?.a,hw=sa?Math.min((+sa.cw||sa.w-40)/2,m.w/2-T-5):Math.min(330,m.w/2-50),dd=Math.min(+sa?.cd||(sa?.d||420)-40,520),sv=isl&&!room?[vd-470,vd-470+dd]:isl?[g.D-470,g.D-470+dd]:[Math.max(30,470-dd),470];box(P,cx-hw,cx+hw,sv[0],sv[1],850,853,'#8f969b',{},true);const fvv=isl&&!room?[vd-60,vd-30]:isl?[sv[0]-50,sv[0]-20]:[30,60];box(P,cx-15,cx+15,fvv[0],fvv[1],850,1100,'#b8bdc1',{},false);box(P,cx-15,cx+15,isl&&!room?fvv[0]-150:fvv[1],isl&&!room?fvv[0]:fvv[1]+150,1080,1100,'#b8bdc1',{},false)}
         if(m.t==='cook'){const hw=Math.min(290,m.w/2-30),sv=isl&&!room?[vd-560,vd-60]:isl?[g.D-560,g.D-60]:[60,560];box(P,cx-hw,cx+hw,sv[0],sv[1],850,858,'#151515',{},false)}});
       if(g.tbl){const t=g.tbl,rt=pg.rects.find(x=>x.key==='T');if(rt){const P2=(u,v)=>[rt.x+u,rt.y+v];box(P2,0,rt.w,0,rt.h,t.top-30,t.top,ct)}}}});
   curUD=null;
