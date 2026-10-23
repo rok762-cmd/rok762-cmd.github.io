@@ -827,8 +827,8 @@ const MOD_APPS={sink:['sink','faucet','etc'],cook:['cooktop','oven'],hood:['hood
 const MOD_DEFAULT_APPS={sink:['a1','a3'],cook:['a5'],hood:['a7'],dw:['a9'],wash:['a11'],oven:['a12'],dryer:['a13']};
 const SUP_TYPE={leg:'다리',panel:'측판',bracket:'숨은 브라켓',cabinet:'장 (수납장)'},SUP_UNIT={leg:'개',panel:'장',bracket:'개',cabinet:'m'};
 const DEFAULT_COMPANY={name:'○○ 인테리어',tel:'010-0000-0000',origin:'경기 파주시'};
-const MC={W:'#2F6BFF',H:'#FF7A1A',D:'#14B88E',note:'#C04CF0',obs:'#E5484D',calib:'#FFC53D'};
-const ML={W:'가로',H:'높이',D:'깊이',note:'메모',obs:'설비 표시',calib:'벽 맞추기'};
+const MC={ref:'#00A2C7',W:'#2F6BFF',H:'#FF7A1A',D:'#14B88E',note:'#C04CF0',obs:'#E5484D',calib:'#FFC53D'};
+const ML={ref:'기준물',W:'가로',H:'높이',D:'깊이',note:'메모',obs:'설비 표시',calib:'벽 맞추기'};
 const HANDLES={push:'푸시 (손잡이 없음)',bar:'일자 손잡이',groove:'J홈'};
 
 /* ---------- state ---------- */
@@ -2104,6 +2104,16 @@ function solveLin(A,b){const n=b.length,M=A.map((r,i)=>[...r,b[i]]);for(let c=0;
   if(Math.abs(M[c][c])<1e-12)return null;for(let r=0;r<n;r++){if(r===c)continue;const k=M[r][c]/M[c][c];for(let q=c;q<=n;q++)M[r][q]-=k*M[c][q]}}return M.map((r,i)=>r[n]/r[i])}
 function homog(src,dst){const A=[],b=[];for(let i=0;i<4;i++){const[x,y]=src[i],[u,v]=dst[i];A.push([x,y,1,0,0,0,-u*x,-u*y]);b.push(u);A.push([0,0,0,x,y,1,-v*x,-v*y]);b.push(v)}const s=solveLin(A,b);return s?[...s,1]:null}
 function applyH(H,x,y){const w=H[6]*x+H[7]*y+H[8];return[(H[0]*x+H[1]*y+H[2])/w,(H[3]*x+H[4]*y+H[5])/w]}
+const REF_PRESETS=[['A4 용지',210,297],['A3 용지',297,420],['신용카드',86,54],['A4 2장 (가로로 붙임)',420,297],['A4 4장 (2×2로 붙임)',420,594]];
+function openRefSheet(){const lay=$('#layer'),r=job.refObj||{};lay.innerHTML=`<div class="overlay" data-act="sheet-back"><div class="sheet"><h3>기준물 고르기</h3>
+  <p class="hint" style="margin:0"><b>클수록 정확합니다</b> (A4 1장 오차 약 3~5% · A4 4장 약 1~2%). 크기를 아는 물건을 <b>재려는 벽에 평평하게 붙이고</b> 사진을 찍은 뒤, 사진에서 그 물건의 <b>네 모서리</b>를 누르세요.</p>
+  <div style="display:grid;gap:8px">${REF_PRESETS.map(([l,w,h])=>`<button type="button" class="btn" data-act="ref-pick" data-w="${w}" data-h="${h}" data-l="${l}">${l} <span class="hint">${w}×${h}mm</span></button>`).join('')}</div>
+  <div class="toolbar" style="margin:0"><span class="hint">직접</span><input class="input mono" id="refW" style="width:80px" inputmode="numeric" placeholder="가로" value="${r.l==='직접 입력'?r.w:''}"><span>×</span><input class="input mono" id="refH" style="width:80px" inputmode="numeric" placeholder="세로" value="${r.l==='직접 입력'?r.h:''}"><button type="button" class="btn sm" data-act="ref-pick">확인</button></div>
+  <div class="sheet-actions"><button type="button" class="btn" data-act="sheet-cancel">취소</button></div></div></div>`;sheetCb={ok:()=>{},cancel:()=>{lay.innerHTML='';sheetCb=null}}}
+function refOf(p){if(!p?.ref)return null;const{w,h,pts}=p.ref,src=[[0,0],[w,0],[w,h],[0,h]],H=homog(pts,src);return H?{p2r:H}:null}
+function refDist(p,a,b){const r=refOf(p);if(!r)return null;const A=applyH(r.p2r,a[0],a[1]),B=applyH(r.p2r,b[0],b[1]);const d=Math.hypot(A[0]-B[0],A[1]-B[1]);return isFinite(d)?Math.round(d/5)*5:null}
+function setRef(p,pts){const q=orderQuad(pts),L=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]),hz=(L(q[0],q[1])+L(q[3],q[2]))/2,vt=(L(q[0],q[3])+L(q[1],q[2]))/2,o=job.refObj||{w:210,h:297,l:'A4 용지'},big=Math.max(o.w,o.h),sm=Math.min(o.w,o.h);
+  p.ref={pts:q,w:hz>=vt?big:sm,h:hz>=vt?sm:big,l:o.l}}
 function calibOf(p){if(!p?.calib)return null;const f=job.faces.find(x=>x.key===p.calib.face);if(!f)return null;const len=+f.len,H=+job.dims.H,src=[[0,0],[len,0],[len,H],[0,H]];
   const w2p=homog(src,p.calib.pts),p2w=homog(p.calib.pts,src);return w2p&&p2w?{w2p,p2w,len,H}:null}
 const calibPhotoFor=fi=>{const k=job.faces[fi]?.key;return job.photos.find(p=>p.calib&&p.calib.face===k&&calibOf(p))};
@@ -2235,7 +2245,7 @@ async function render3D(el,open){if(!el)return;if(!window.THREE)el.innerHTML='<p
   el.innerHTML='';const wrap=document.createElement('div');wrap.style.position='relative';el.appendChild(wrap);wrap.appendChild(V3.ren.domElement);V3.wrap=wrap;V3.hl=[];
   const bar=document.createElement('div');bar.className='toolbar';bar.style.margin='10px 0 0';bar.innerHTML=`<div class="seg" role="group" aria-label="3D 시점"><button type="button" data-act="v3-view" data-v="diag">대각선</button><button type="button" data-act="v3-view" data-v="front">정면</button><button type="button" data-act="v3-view" data-v="side">옆에서</button><button type="button" data-act="v3-view" data-v="top">위에서</button></div><span class="hint" style="margin:0">끌면 돌아가고 · 두 손가락 확대 · <b>칸을 누르면 수정</b></span>`;el.appendChild(bar);
   const w=Math.max(280,el.clientWidth||600),h=Math.round(w*.66);V3.ren.setSize(w,h,false);V3.cam.aspect=w/h;V3.cam.updateProjectionMatrix();v3Draw()}
-let viewMode='draw', calibPts=[];
+let viewMode='draw', calibPts=[], refPts=[];
 function viewSeg(){const ok=!!calibPhotoFor(job.fi);return`<div class="seg" role="group" aria-label="보기 방식"><button type="button" data-act="view" data-v="draw" aria-pressed="${viewMode==='draw'}">도면 이미지</button><button type="button" data-act="view" data-v="photo" aria-pressed="${viewMode==='photo'}">현장 사진 합성</button><button type="button" data-act="view" data-v="3d" aria-pressed="${viewMode==='3d'}">3D 보기</button></div>`}
 function calibGuide(){const has=job.photos.some(p=>p.src!=='sample');return`<div class="panel" style="padding:22px;display:grid;gap:12px;justify-items:center;text-align:center;background:var(--surface-2)">
   <b style="font-size:16px">사진 합성을 하려면 ‘벽 맞추기’가 한 번 필요해요</b>
@@ -2287,7 +2297,7 @@ function renderStage(){const st=$('#stage');if(job.cat==='kitchen'&&!v3Auto&&(st
 
 /* step 1 */
 function step1(){const p=job.photos[job.active],g=geom();
-  const tools=['W','H','D','note','calib','obs'].map(t=>`<button type="button" class="chip" data-act="tool" data-tool="${t}" aria-pressed="${tool===t}"><span class="dot" style="background:${MC[t]}"></span>${ML[t]}${['W','H','D'].includes(t)?' 재기':''}</button>`).join('');
+  const tools=['ref','W','H','D','note','calib','obs'].map(t=>`<button type="button" class="chip" data-act="tool" data-tool="${t}" aria-pressed="${tool===t}"><span class="dot" style="background:${MC[t]}"></span>${ML[t]}${['W','H','D'].includes(t)?' 재기':''}</button>`).join('');
   const photo=p?`<div class="photo-wrap ${tool?'armed':''}" id="photoWrap"><img id="photoImg" src="${photoSrc(p)}" alt="현장 사진"><svg id="photoSvg" viewBox="0 0 ${p.w} ${p.h}" preserveAspectRatio="none" data-act="photo-tap"></svg>${p.src==='sample'?'<span class="badge">예시 현장 사진</span>':''}</div>`
     :`<div class="empty-photo"><b>현장 사진을 추가하세요</b><span>태블릿 카메라로 바로 찍거나 앨범에서 고를 수 있습니다.</span><span style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><label class="btn primary file-btn">📷 카메라로 촬영<input type="file" accept="image/*" capture="environment" data-change="photo-add"></label><label class="btn file-btn">🖼 앨범에서 고르기<input type="file" accept="image/*" multiple data-change="photo-add"></label></span></div>`;
   const marks=job.photos.flatMap((ph,pi)=>ph.marks.map(m=>({...m,pi})));
@@ -2389,23 +2399,26 @@ function drawOverlay(){const svg=$('#photoSvg');if(!svg)return;const p=job.photo
     s+=`<rect x="${mx-tw/2}" y="${my-26*u}" width="${tw}" height="${52*u}" rx="${26*u}" fill="${c}" stroke="#fff" stroke-width="${3*u}"/><text x="${mx}" y="${my+11*u}" font-size="${30*u}" font-weight="700" fill="#fff" text-anchor="middle" font-family="${FONT}">${esc(t)}</text>`});
   if(p.calib){const q=p.calib.pts;s+=`<polygon points="${q.map(x=>x.join(',')).join(' ')}" fill="${MC.calib}" fill-opacity=".08" stroke="${MC.calib}" stroke-width="${4*u}" stroke-dasharray="${18*u} ${10*u}"/>`;
     s+=`<text x="${q[3][0]+14*u}" y="${q[3][1]+40*u}" font-size="${26*u}" font-weight="700" fill="${MC.calib}" stroke="#000" stroke-width="${4*u}" paint-order="stroke" font-family="${FONT}">${FACE_NAME(p.calib.face)} 기준</text>`}
+  if(p.ref){const q=p.ref.pts;s+=`<polygon points="${q.map(x=>x.join(',')).join(' ')}" fill="${MC.ref}" fill-opacity=".25" stroke="${MC.ref}" stroke-width="${4*u}"/><text x="${q[3][0]}" y="${q[3][1]-14*u}" font-size="${24*u}" font-weight="700" fill="#fff" stroke="#000" stroke-width="${4*u}" paint-order="stroke" font-family="${FONT}">${esc(p.ref.l)} ${p.ref.w}×${p.ref.h}</text>`}
+  refPts.forEach((q,i)=>s+=`<circle cx="${q[0]}" cy="${q[1]}" r="${12*u}" fill="${MC.ref}" stroke="#000" stroke-width="${3*u}"/><text x="${q[0]}" y="${q[1]+8*u}" font-size="${20*u}" font-weight="700" text-anchor="middle" font-family="${FONT}">${i+1}</text>`);
   calibPts.forEach((q,i)=>s+=`<circle cx="${q[0]}" cy="${q[1]}" r="${14*u}" fill="${MC.calib}" stroke="#000" stroke-width="${3*u}"/><text x="${q[0]}" y="${q[1]+9*u}" font-size="${24*u}" font-weight="700" text-anchor="middle" font-family="${FONT}">${i+1}</text>`);
   job.obstacles.filter(o=>o.photo===p.id&&o.a&&o.b).forEach(o=>{const c=(OBS[o.type]||OBS.etc).color,x=Math.min(o.a[0],o.b[0]),y=Math.min(o.a[1],o.b[1]),w=Math.abs(o.a[0]-o.b[0]),hh=Math.abs(o.a[1]-o.b[1]);
     s+=`<rect x="${x}" y="${y}" width="${w}" height="${hh}" fill="${c}" fill-opacity=".22" stroke="${c}" stroke-width="${5*u}"/><rect x="${x}" y="${y-44*u}" width="${((OBS[o.type]||OBS.etc).label.length*24+24)*u}" height="${40*u}" rx="${8*u}" fill="${c}"/><text x="${x+12*u}" y="${y-15*u}" font-size="${24*u}" font-weight="700" fill="#fff" font-family="${FONT}">${esc((OBS[o.type]||OBS.etc).label)}</text>`});
   if(pending)s+=`<circle cx="${pending[0]}" cy="${pending[1]}" r="${16*u}" fill="none" stroke="${MC[tool]||'#fff'}" stroke-width="${6*u}"/><circle cx="${pending[0]}" cy="${pending[1]}" r="${5*u}" fill="#fff"/>`;
   svg.innerHTML=s}
-function updateHint(){const h=$('#toolHint');if(!h)return;const cp=job.photos[job.active];h.innerHTML=tool==='calib'?`<b>벽 맞추기 · ${FACE_NAME(cf().key)}</b> 사진에서 장이 들어갈 벽의 <b>네 모서리</b>(바닥·천장과 만나는 꼭짓점)를 <b>아무 순서로</b> 누르세요. (${calibPts.length}/4)`
-  :tool==='obs'?(pending?'<b>설비 표시</b> 반대쪽 모서리를 누르세요.':`<b>설비 표시</b> 분배기·수도·보일러·점검구의 한쪽 모서리를 누르세요.${cp?.calib?'':' 벽 맞추기를 먼저 하면 위치가 mm로 자동 계산됩니다.'}`):!tool?'측정하려면 위에서 <b>가로·높이·깊이</b> 도구를 고르세요. 사진 합성을 하려면 <b>벽 맞추기</b>를 하세요.':tool==='note'?'<b>메모</b>할 위치(콘센트, 배관, 스위치 등)를 누르세요.':pending?`<b>${ML[tool]}</b> 끝점을 누르세요.`:`<b>${ML[tool]}${tool==='W'&&job.faces.length>1?' · '+FACE_NAME(cf().key):''}</b> 시작점을 누르세요. 같은 도구로 여러 번 잴 수 있습니다.`}
+function updateHint(){const h=$('#toolHint');if(!h)return;const cp=job.photos[job.active];h.innerHTML=tool==='ref'?`<b>기준물 · ${esc(job.refObj?.l||'')} ${job.refObj?.w}×${job.refObj?.h}</b> 사진 속 기준물의 <b>네 모서리</b>를 아무 순서로 누르세요. (${refPts.length}/4) · 확대해서 정확히 누를수록 오차가 줄어요`:tool==='calib'?`<b>벽 맞추기 · ${FACE_NAME(cf().key)}</b> 사진에서 장이 들어갈 벽의 <b>네 모서리</b>(바닥·천장과 만나는 꼭짓점)를 <b>아무 순서로</b> 누르세요. (${calibPts.length}/4)`
+  :tool==='obs'?(pending?'<b>설비 표시</b> 반대쪽 모서리를 누르세요.':`<b>설비 표시</b> 분배기·수도·보일러·점검구의 한쪽 모서리를 누르세요.${cp?.calib?'':' 벽 맞추기를 먼저 하면 위치가 mm로 자동 계산됩니다.'}`):!tool?`${cp?.ref?`<b style="color:${MC.ref}">${esc(cp.ref.l)} 기준 저장됨</b> · 가로·높이를 재면 길이가 자동으로 나옵니다 <button type="button" class="btn sm quiet" data-act="ref-del">기준 지우기</button><br>`:'사진에 <b>A4 용지 같은 기준물</b>을 벽에 붙여 찍었다면 <b>기준물</b>을 먼저 누르세요. '}`+'측정하려면 위에서 <b>가로·높이·깊이</b> 도구를 고르세요. 사진 합성을 하려면 <b>벽 맞추기</b>를 하세요.':tool==='note'?'<b>메모</b>할 위치(콘센트, 배관, 스위치 등)를 누르세요.':pending?`<b>${ML[tool]}</b> 끝점을 누르세요.`:`<b>${ML[tool]}${tool==='W'&&job.faces.length>1?' · '+FACE_NAME(cf().key):''}</b> 시작점을 누르세요. 같은 도구로 여러 번 잴 수 있습니다.`}
 function photoTap(e){if(!tool)return;const svg=$('#photoSvg'),p=job.photos[job.active],r=svg.getBoundingClientRect();const pt=[Math.round((e.clientX-r.left)/r.width*p.w),Math.round((e.clientY-r.top)/r.height*p.h)];
+  if(tool==='ref'){refPts.push(pt);if(refPts.length===4){setRef(p,refPts);refPts=[];tool=null;toast(`${p.ref.l} 기준을 저장했습니다 · 이제 가로·높이 재기나 벽 맞추기를 하면 길이가 자동으로 계산됩니다`);render()}else{drawOverlay();updateHint()}return}
   if(tool==='calib'){if(cf().key==='I'){toast('아일랜드는 벽이 아니라 맞출 수 없습니다. 벽면을 고르세요.');return}calibPts.push(pt);
-    if(calibPts.length===4){job.photos.forEach(ph=>{if(ph!==p&&ph.calib?.face===cf().key)delete ph.calib});const oq=orderQuad(calibPts);p.calib={face:cf().key,pts:oq,orig:oq.map(q=>[...q])};calibPts=[];tool=null;toast(`${FACE_NAME(cf().key)} 벽을 맞췄습니다 · ③ 도어·마감에서 ‘현장 사진 합성’으로 보세요`);viewMode='photo';render()}else{drawOverlay();updateHint()}return}
+    if(calibPts.length===4){job.photos.forEach(ph=>{if(ph!==p&&ph.calib?.face===cf().key)delete ph.calib});const oq=orderQuad(calibPts);let refMsg='';if(p.ref){const d=(a,b)=>refDist(p,a,b),Wv=Math.round((d(oq[0],oq[1])+d(oq[3],oq[2]))/2/5)*5,Hv=Math.round((d(oq[0],oq[3])+d(oq[1],oq[2]))/2/5)*5;if(Wv>0&&Hv>0){p.marks=p.marks.filter(m=>!(m.ref&&(m.type==='H'||(m.type==='W'&&(m.face||'A')===cf().key))));p.marks.push({id:uid(),type:'W',a:oq[0],b:oq[1],v:Wv,face:cf().key,ref:true},{id:uid(),type:'H',a:oq[0],b:oq[3],v:Hv,ref:true});recomputeDims();refMsg=` · 사진 계산 가로 ${Wv.toLocaleString('ko-KR')} · 높이 ${Hv.toLocaleString('ko-KR')}`}}p.calib={face:cf().key,pts:oq,orig:oq.map(q=>[...q])};calibPts=[];tool=null;toast(`${FACE_NAME(cf().key)} 벽을 맞췄습니다${refMsg} · ③ 도어·마감에서 ‘현장 사진 합성’으로 보세요`);viewMode='photo';render()}else{drawOverlay();updateHint()}return}
   if(tool==='obs'){if(!pending){pending=pt;drawOverlay();updateHint();return}const a=pending;pending=null;let pre={face:cf().key==='I'?'A':cf().key,x:'',z:'',w:'',h:''};const cal=calibOf(p);
     if(cal){const cs=[a,[pt[0],a[1]],pt,[a[0],pt[1]]].map(c=>applyH(cal.p2w,c[0],c[1])),xs=cs.map(c=>c[0]),zs=cs.map(c=>c[1]),r10=v=>Math.max(0,Math.round(v/10)*10);
       pre={face:p.calib.face,x:r10(Math.min(...xs)),z:r10(Math.min(...zs)),w:r10(Math.max(...xs)-Math.min(...xs)),h:r10(Math.max(...zs)-Math.min(...zs)),auto:true}}
     drawOverlay();updateHint();openObsSheet({...pre,type:'dist',photo:p.id,a,b:pt});return}
   if(tool==='note'){openSheet({title:'메모 입력',text:true,onOk:v=>{if(!v)return;p.marks.push({id:uid(),type:'note',a:pt,text:v});render()}});return}
   if(!pending){pending=pt;drawOverlay();updateHint();return}const a=pending;pending=null;drawOverlay();updateHint();
-  openSheet({title:`${ML[tool]} 치수 입력`,unit:'mm',onOk:v=>{const n=Math.round(+v);if(!(n>0))return;p.marks.push({id:uid(),type:tool,a,b:pt,v:n,...(tool==='W'?{face:cf().key}:{})});recomputeDims();render()},onCancel:()=>drawOverlay()})}
+  const auto=tool!=='D'?refDist(p,a,pt):null;openSheet({title:`${ML[tool]} 치수 입력${auto?` · 사진 계산 ${auto.toLocaleString('ko-KR')}mm`:tool==='D'&&p.ref?' · 깊이는 벽면이 아니라 직접 입력':''}`,unit:auto?'사진 계산값입니다. 줄자로 잰 값이 있으면 고쳐서 mm':'mm',value:auto||'',onOk:v=>{const n=Math.round(+v);if(!(n>0))return;p.marks.push({id:uid(),type:tool,a,b:pt,v:n,...(tool==='W'?{face:cf().key}:{})});recomputeDims();render()},onCancel:()=>drawOverlay()})}
 function openSheet({title,unit,text,value='',onOk,onCancel}){const lay=$('#layer');lay.innerHTML=`<div class="overlay" data-act="sheet-back"><form class="sheet" id="sheetForm"><h3>${esc(title)}</h3>
   <input class="input ${text?'':'big-input'}" id="sheetIn" ${text?'':'inputmode="numeric" pattern="[0-9]*"'} value="${esc(value)}" placeholder="${text?'예: 좌측 하단 콘센트':'0'}" autocomplete="off">${unit?`<span class="hint" style="text-align:center">${unit} 단위로 입력</span>`:''}
   <div class="sheet-actions"><button type="button" class="btn" data-act="sheet-cancel">취소</button><button type="submit" class="btn primary">확인</button></div></form></div>`;
@@ -2699,7 +2712,9 @@ const ACT={
   'comp-scale':b=>{const p=calibPhotoFor(job.fi);if(!p)return;const k=+b.dataset.v,q=p.calib.pts,cx=q.reduce((s,v)=>s+v[0],0)/4,cy=q.reduce((s,v)=>s+v[1],0)/4;setCalib(p,q.map(v=>[cx+(v[0]-cx)*k,cy+(v[1]-cy)*k]))},
   'comp-move':b=>{const p=calibPhotoFor(job.fi);if(!p)return;const[dx,dy]=b.dataset.v.split(',').map(Number),s=Math.max(p.w,p.h)*.01;setCalib(p,p.calib.pts.map(v=>[v[0]+dx*s,v[1]+dy*s]))},
   'comp-reset':()=>{const p=calibPhotoFor(job.fi);if(p?.calib?.orig)setCalib(p,p.calib.orig.map(v=>[...v]))},
-  tool:b=>{tool=b.dataset.tool||null;pending=null;calibPts=[];renderStage()},
+  tool:b=>{if(b.dataset.tool==='ref'){openRefSheet();return}tool=b.dataset.tool||null;pending=null;calibPts=[];refPts=[];renderStage()},
+  'ref-pick':b=>{let w=+b.dataset.w,h=+b.dataset.h,l=b.dataset.l;if(!w){w=+$('#refW')?.value;h=+$('#refH')?.value;l='직접 입력'}if(!(w>0&&h>0)){toast('가로·세로를 mm로 넣으세요');return}job.refObj={w,h,l};$('#layer').innerHTML='';sheetCb=null;tool='ref';pending=null;refPts=[];calibPts=[];renderStage()},
+  'ref-del':()=>{const p=job.photos[job.active];if(p){delete p.ref;persist?.();render()}},
   'photo-sel':b=>{job.active=+b.dataset.i;pending=null;render()},
   'photo-del':()=>{const pid=job.photos[job.active]?.id;job.obstacles.forEach(o=>{if(o.photo===pid){delete o.a;delete o.b;delete o.photo}});job.photos.splice(job.active,1);job.active=0;recomputeDims();render()},
   'mark-del':b=>{job.photos.forEach(p=>p.marks=p.marks.filter(m=>m.id!==b.dataset.id));recomputeDims();render()},
