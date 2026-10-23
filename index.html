@@ -1008,8 +1008,8 @@ function hingeSolve(j,f,ctx,row){row.hinge=[];row.clash=[];row.b2b=0;if(isMD(ctx
     if((hR&&B.pro)||(hL&&A.pro))return{c:100,lvl:'bad',msg:`${where(hR&&B.pro?i:i+1)}: 경첩이 침니 후드 쪽이라 문이 후드에 부딪힙니다`,fix:fx,fixLabel:`사이에 휠라 ${fillW}mm`,x,z:zm};
     if((hR&&B.drw)||(hL&&A.drw)){const di=hR&&B.drw?i+1:i;return{c:20,lvl:'warn',msg:`${where(di===i?i+1:i)} 문을 열어 두면 옆 칸(${TYPES[ms[di].t].label})이 안 열립니다 (열린 문이 서랍 앞을 막음)`,fix:fx,fixLabel:`사이에 휠라 ${fillW}mm`,x,z:zm}}
     if(hR&&hL)return{c:proj?.5:0,lvl:'b2b',x,z:zm};return null};
-  const st=i=>{const I=info[i];if(!I.door)return['N'];if(I.dbl)return['D'];const ov=ms[i].hinge;return ov==='L'||ov==='R'?[ov]:['L','R']};
-  const un=(i,s_)=>{let c=0;if(i===0){const e=edgeCost(0,'L',s_);if(e)c+=e.c}if(i===n-1){const e=edgeCost(n-1,'R',s_);if(e)c+=e.c}if(s_==='L'||s_==='R')c+=((i%2===0)===(s_==='L'))?0:.01;return c};
+  const sgl=info.map((I,i)=>I.door&&!I.dbl?i:-1).filter(i=>i>=0);const st=i=>{const I=info[i];if(!I.door)return['N'];if(I.dbl)return['D'];const ov=ms[i].hinge;return ov==='L'||ov==='R'?[ov]:['L','R']};
+  const un=(i,s_)=>{let c=0;if(i===0){const e=edgeCost(0,'L',s_);if(e)c+=e.c}if(i===n-1){const e=edgeCost(n-1,'R',s_);if(e)c+=e.c}if(s_==='L'||s_==='R'){const k=sgl.indexOf(i),m_=sgl.length;let want;if(k<0)want=(i%2===0)?'L':'R';else if(k===0)want='L';else if(k===m_-1)want='R';else want=k<m_/2?(k%2?'R':'L'):((m_-1-k)%2?'L':'R');c+=s_===want?0:(k===0||k===m_-1?.3:.05)}return c};
   let best=st(0).map(s_=>({s:s_,c:un(0,s_),p:[s_]}));
   for(let i=1;i<n;i++)best=st(i).map(s_=>{let bb=null;best.forEach(q=>{const pc=pairCost(i-1,q.s,s_),c=q.c+(pc?pc.c:0)+un(i,s_);if(!bb||c<bb.c)bb={s:s_,c,p:[...q.p,s_]}});return bb});
   const path=best.reduce((a,b)=>b.c<a.c?b:a).p;row.hinge=path;
@@ -1100,12 +1100,12 @@ function layout(m){const t=m.t,z0=m.z0,z1=m.z1,h=z1-z0,n=Math.max(0,m.n??TYPES[t
 function leaves(g,door){const gap=3,out=[];if(isMD(g.cat))return out;const none=!door||door.kind==='none';
   if(!none&&door.kind==='sliding'){const row=g.rows[0],n=Math.max(2,Math.round(g.Wm/1100)),ov=40,lw=Math.round((g.Wm+(n-1)*ov)/n);
     for(let i=0;i<n;i++)out.push({x:i*(lw-ov),zb:row.z0,w:lw,h:row.z1-row.z0,kind:'slide',layer:i%2,zone:'full'});return out}
-  g.rows.forEach(row=>rowAll(row).forEach((m,mi)=>{const st0=out.length;layout(m).zones.forEach(z=>{if(none&&z.kind!=='drawer')return;const zh=z.zt-z.zb;
+  g.rows.forEach(row=>{const all=rowAll(row),sg=all.filter(m=>!m.corner&&!m.flap&&m.w<=650&&layout(m).zones.some(z=>!['drawer','panel'].includes(z.kind))),x0=Math.min(...all.map(m=>m.x)),x1=Math.max(...all.map(m=>m.x+m.w)),defH=m=>{const n=sg.length,k=sg.indexOf(m);if(k<0)return'L';if(n===1)return m.x+m.w/2>(x0+x1)/2?'R':'L';if(k===0)return'L';if(k===n-1)return'R';return k<n/2?(k%2?'R':'L'):((n-1-k)%2?'L':'R')};all.forEach((m,mi)=>{const st0=out.length;layout(m).zones.forEach(z=>{if(none&&z.kind!=='drawer')return;const zh=z.zt-z.zb;
     if(z.kind==='drawer'||z.kind==='panel'){if(z.kind==='panel'&&!modApps(m).some(x=>x.a.panel))return;out.push({x:m.x+gap/2,zb:z.zb+gap/2,w:m.w-gap,h:zh-gap,kind:z.kind,zone:row.zone});return}
     if(m.flap&&!m.corner){out.push({x:m.x+gap/2,zb:z.zb+gap/2,w:m.w-gap,h:zh-gap,kind:'door',hinge:'U',flap:true,zone:row.zone});return}
     if(m.w>650&&!m.corner){const hw=m.w/2;out.push({x:m.x+gap/2,zb:z.zb+gap/2,w:hw-gap,h:zh-gap,kind:'door',hinge:'L',zone:row.zone});
       out.push({x:m.x+hw+gap/2,zb:z.zb+gap/2,w:hw-gap,h:zh-gap,kind:'door',hinge:'R',zone:row.zone})}
-    else out.push({x:m.x+gap/2,zb:z.zb+gap/2,w:m.w-gap,h:zh-gap,kind:'door',hinge:m.corner?(m.side==='L'?'R':'L'):(row.hinge?.[m.i]==='L'||row.hinge?.[m.i]==='R'?row.hinge[m.i]:(mi%2?'R':'L')),zone:row.zone,corner:m.corner?m.t:''})});for(let q=st0;q<out.length;q++){out[q].mh=m.handleId||'';out[q].mi=m.i;if(m.glass&&out[q].kind==='door')out[q].glass=true}}));
+    else out.push({x:m.x+gap/2,zb:z.zb+gap/2,w:m.w-gap,h:zh-gap,kind:'door',hinge:m.corner?(m.side==='L'?'R':'L'):(row.hinge?.[m.i]==='L'||row.hinge?.[m.i]==='R'?row.hinge[m.i]:defH(m)),zone:row.zone,corner:m.corner?m.t:''})});for(let q=st0;q<out.length;q++){out[q].mh=m.handleId||'';out[q].mi=m.i;if(m.glass&&out[q].kind==='door')out[q].glass=true}})});
   return out}
 const hingesPer=h=>h>1800?4:h>1000?3:2;
 function countDrawers(g){return g.rows.reduce((a,r)=>a+r.mods.reduce((b,m)=>b+layout(m).drawers.length,0),0)}
