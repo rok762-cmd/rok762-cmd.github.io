@@ -663,19 +663,19 @@ const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){retu
 
 /* ---------- domain ---------- */
 let T=20; const MFRAME=40;
-const PL_RANGE={closet:[50,120],shoe:[50,120],dress:[50,120],kitchen:[120,150],middoor:[0,0],laundry:[50,120]};
+const PL_RANGE={closet:[50,120],shoe:[50,120],dress:[50,120],kitchen:[120,150],middoor:[0,0],laundry:[50,120],single:[0,120]};
 const LAYOUTS={I:'일자형',L:'ㄱ자형',U:'ㄷ자형',island:'아일랜드형',Lisland:'ㄱ자+아일랜드',II:'11자형',niche:'매립형'};
 const OBS={dist:{label:'보일러 분배기',color:'#E5484D',tip:'바닥판·걸레받이 따내기, 해당 칸에 점검문 필요'},water:{label:'수도 (급·배수)',color:'#2F6BFF',tip:'뒷판·바닥판 타공 필요'},
   boiler:{label:'보일러',color:'#B4520F',tip:'장으로 덮지 말고 보일러 가림장(통풍 루버)이나 비움 검토'},access:{label:'점검구',color:'#8E4EC6',tip:'해당 칸 뒷판에 점검문 가공 필요'},
   gas:{label:'가스 배관·계량기',color:'#D6409F',tip:'가스 배관 이격 확인, 뒷판 따내기 필요'},elec:{label:'콘센트·스위치',color:'#12A594',tip:'뒷판 타공 또는 전기 위치 이동'},
   window:{label:'창문',color:'#0090FF',tip:'상부장·키큰장 설치 불가 구간, 높이 조정 필요'},etc:{label:'기타',color:'#6F6E77',tip:'현장 확인 필요'}};
-const CAT_LAYOUTS={kitchen:['I','L','U','island','Lisland'],shoe:['I','II','L','U','niche'],closet:['I','L','niche'],dress:['I','L','U','II'],middoor:['I'],laundry:['I','niche','L']};
+const CAT_LAYOUTS={kitchen:['I','L','U','island','Lisland'],shoe:['I','II','L','U','niche'],closet:['I','L','niche'],dress:['I','L','U','II'],middoor:['I'],laundry:['I','niche','L'],single:['I']};
 const LAYOUT_FACES={I:['A'],L:['A','B'],U:['A','B','C'],island:['A','I'],Lisland:['A','B','I'],II:['A','B'],niche:['A']};
 const CORNER_T={blind:'일자장 붙임 (데드코너)',magic:'일자장 + 매직코너',pullout:'일자장 + 코너 풀아웃',diag:'오각 코너장',lshape:'ㄱ자(직각) 코너장',cdrawer:'코너 서랍 (V자)',tall:'키큰장 코너'};
 const HWS={tandem:{l:'텐덤 서랍 (소프트)',p:'hwTandem'},cutlery:{l:'커트러리 트레이',p:'hwCutlery'},basket:{l:'그릇 바스켓',p:'hwBasket'},pullout:{l:'양념 풀아웃',p:'hwPullout'},trash:{l:'분리수거함',p:'hwTrash'},pants:{l:'바지걸이',p:'hwPants'},tray:{l:'액세서리 트레이',p:'hwTray'}};
 const HW_FOR={baseDrawer:['tandem','cutlery'],base:['basket','pullout','trash'],sink:['trash','basket'],cook:['pullout','basket'],oven:['tandem'],drawerOnly:['tandem','tray','cutlery'],drawer:['tray','pants'],hang:['pants'],hang2:['pants'],shelf:['tray','basket'],shoe:['pullout'],washpair:['basket'],washone:['basket','pullout'],washstack:['basket']};
 const GLASS_OK=t=>['upper','shelf','base','drawerOnly','hang','hang2','shoe','dryer'].includes(t);
-const TALL_K={combo:'콤비장 (전자레인지+오븐)',oven:'오븐장',fridge:'냉장고장',pantry:'팬트리(수납)장'};
+const TALL_K={fspace:'냉장고 자리 (빈 공간+위 수납)',combo:'콤비장 (전자레인지+오븐)',oven:'오븐장',fridge:'냉장고장',pantry:'팬트리(수납)장'};
 const tallEndOf=(j,f)=>{const t=j.tallEnd;if(!t?.on||j.cat!=='kitchen'||!f||f.key==='I'||t.face!==f.key)return null;const corner=isCornerLay(j);if(corner&&j.layout==='U'&&f.key==='A')return null;const side=corner?'R':(t.side==='L'?'L':'R');return{w:Math.max(300,Math.min(1200,Math.round((+t.w||600)/5)*5)),k:t.k||'combo',side}};
 const isCornerLay=j=>['L','U','Lisland'].includes(j.layout);
 const cKind=(j,z)=>{const c=j.corner||{},k=j.cat==='kitchen';let lo=c.lower||'blind';if(!k&&['pullout','cdrawer','tall'].includes(lo))lo='blind';if(lo==='tall'&&j.layout==='U')lo='blind';
@@ -687,16 +687,17 @@ const tallOn=j=>j.cat==='kitchen'&&cKind(j,'lower')==='tall';
 const lidOn=j=>j.cat==='kitchen'&&isCornerLay(j)&&cType(j,'lower')==='blind'&&!!(j.corner?.lid??tallOn(j));
 const cLeg=(j,z)=>{const c=j.corner||{};return z==='upper'?(+c.legU||600):(+c.legL||900)};
 const FACE_NAME=k=>k==='I'?'아일랜드':k+'면';
-const SIDE_LEN={closet:1800,shoe:900,kitchen:1800,dress:1500,middoor:1500,laundry:1200};
+const SIDE_LEN={closet:1800,shoe:900,kitchen:1800,dress:1500,middoor:1500,laundry:1200,single:600};
 const CATS={
   closet:{name:'붙박이장',W:2700,H:2300,D:600},
   shoe:{name:'현관장',W:1200,H:2300,D:380},
   kitchen:{name:'주방 싱크대',W:2400,H:2300,D:600},
   middoor:{name:'중문',W:1500,H:2300,D:120},
   dress:{name:'드레스룸',W:2400,H:2300,D:450},
-  laundry:{name:'세탁실장',W:1800,H:2300,D:700}
+  laundry:{name:'세탁실장',W:1800,H:2300,D:700},
+  single:{name:'단품 가구',W:800,H:1000,D:450}
 };
-const CAT_ORDER=['closet','shoe','kitchen','middoor','dress','laundry'];
+const CAT_ORDER=['closet','shoe','kitchen','middoor','dress','laundry','single'];
 const TYPES={
   hang:{label:'긴옷 행거',door:1}, hang2:{label:'2단 행거',door:1},
   shelf:{label:'선반장',door:1,n:4,nl:'선반'}, drawer:{label:'내부서랍+행거',door:1,n:3,nl:'서랍'},
@@ -711,7 +712,7 @@ const TYPES={
 };
 const CAT_TYPES={closet:['hang','hang2','shelf','drawer','drawerOnly','open'],shoe:['shoe','bench','shelf','open'],
   dress:['hang','hang2','shelf','drawer','drawerOnly','vanity','open'],kitchen_lower:['base','baseDrawer','sink','cook','dw','wash','oven','open'],
-  kitchen_upper:['upper','upperOpen','hood','dryer'],middoor:['mslide','mfixed','mswing'],laundry:['washpair','washstack','washone','shelf','open','drawerOnly','hang']};
+  kitchen_upper:['upper','upperOpen','hood','dryer'],middoor:['mslide','mfixed','mswing'],laundry:['washpair','washstack','washone','shelf','open','drawerOnly','hang'],single:['drawerOnly','shelf','open','hang','hang2','shoe','drawer']};
 const md=(t,r,n)=>({t,r,n:n??TYPES[t].n});
 const F=mods=>[{zone:'full',mods}];
 const BUILTIN_PLANS=[
@@ -733,16 +734,20 @@ const BUILTIN_PLANS=[
   {id:'ld-p',cat:'laundry',name:'나란히 + 양옆 오픈',rows:F([md('open',350,5),{...md('washpair',1300),fix:true,r:1300},md('open',350,5)])},
   {id:'ld-s',cat:'laundry',name:'직렬 + 수납장',rows:F([{...md('washstack',700),fix:true,r:700},md('shelf',550,5),md('drawerOnly',550,4)])},
   {id:'ld-1',cat:'laundry',name:'세탁기 + 수납',rows:F([{...md('washone',700),fix:true,r:700},md('shelf',600,5),md('hang',500)])},
+  {id:'sg-d4',cat:'single',name:'서랍장 4단',rows:F([md('drawerOnly',800,4)])},
+  {id:'sg-s2',cat:'single',name:'수납장 (선반)',rows:F([md('shelf',800,3)])},
+  {id:'sg-w',cat:'single',name:'옷장 1칸',rows:F([md('hang',800)])},
+  {id:'sg-dd',cat:'single',name:'서랍+수납 2칸',rows:F([md('drawerOnly',450,4),md('shelf',450,3)])},
   {id:'dr-s',cat:'dress',name:'선반 집중형',rows:F([md('shelf',600,5),md('hang2',600),md('shelf',600,5),md('open',600,5)])}
 ];
 const DEFAULT_DOORS=[
-  {id:'d1',name:'무광 화이트 PET',kind:'hinged',tex:'solid',color:'#EEEDE9',price:95000,cats:['closet','shoe','kitchen','laundry']},
-  {id:'d2',name:'그레이지 PET',kind:'hinged',tex:'solid',color:'#BDB5A9',price:98000,cats:['closet','shoe','kitchen','laundry']},
-  {id:'d3',name:'내추럴 오크 LPM',kind:'hinged',tex:'wood',color:'#C9A77C',price:78000,cats:['closet','shoe','kitchen','dress','laundry']},
-  {id:'d4',name:'월넛 무늬목',kind:'hinged',tex:'wood',color:'#6E4C35',price:165000,cats:['closet','shoe','kitchen']},
+  {id:'d1',name:'무광 화이트 PET',kind:'hinged',tex:'solid',color:'#EEEDE9',price:95000,cats:['closet','shoe','kitchen','laundry','single']},
+  {id:'d2',name:'그레이지 PET',kind:'hinged',tex:'solid',color:'#BDB5A9',price:98000,cats:['closet','shoe','kitchen','laundry','single']},
+  {id:'d3',name:'내추럴 오크 LPM',kind:'hinged',tex:'wood',color:'#C9A77C',price:78000,cats:['closet','shoe','kitchen','dress','laundry','single']},
+  {id:'d4',name:'월넛 무늬목',kind:'hinged',tex:'wood',color:'#6E4C35',price:165000,cats:['closet','shoe','kitchen','single']},
   {id:'d5',name:'딥그린 도장',kind:'hinged',tex:'solid',color:'#3E5245',price:185000,cats:['closet','shoe','kitchen']},
-  {id:'t1',name:'템바보드 베이지',kind:'hinged',tex:'tambour',color:'#D9C9B3',price:145000,cats:['closet','shoe','kitchen','dress','laundry']},
-  {id:'t2',name:'템바보드 오크',kind:'hinged',tex:'tambour',color:'#B8935F',price:155000,cats:['closet','shoe','kitchen','dress','laundry']},
+  {id:'t1',name:'템바보드 베이지',kind:'hinged',tex:'tambour',color:'#D9C9B3',price:145000,cats:['closet','shoe','kitchen','dress','laundry','single']},
+  {id:'t2',name:'템바보드 오크',kind:'hinged',tex:'tambour',color:'#B8935F',price:155000,cats:['closet','shoe','kitchen','dress','laundry','single']},
   {id:'d6',name:'브론즈 유리 슬라이딩',kind:'sliding',tex:'glass',color:'#5E4B3B',frame:'#3B3229',price:210000,cats:['closet','dress']},
   {id:'d7',name:'화이트 슬라이딩',kind:'sliding',tex:'solid',color:'#EEEDE9',price:120000,cats:['closet']},
   {id:'d8',name:'도어 없음 (오크 시스템)',kind:'none',tex:'wood',color:'#CDB08A',price:0,cats:['dress','closet']},
@@ -751,7 +756,7 @@ const DEFAULT_DOORS=[
   {id:'m3',name:'샤틴유리 · 화이트',kind:'frame',tex:'satin',color:'#EDEDEB',glass:'#EEF2F2',price:190000,cats:['middoor']},
   {id:'m4',name:'모루유리 · 블랙',kind:'frame',tex:'fluted',color:'#2A2B2C',glass:'#D5E0E2',price:230000,cats:['middoor']}
 ];
-const DEFAULT_DOOR_BY_CAT={closet:'d1',shoe:'d2',kitchen:'d1',middoor:'m1',dress:'d8',laundry:'d3'};
+const DEFAULT_DOOR_BY_CAT={closet:'d1',shoe:'d2',kitchen:'d1',middoor:'m1',dress:'d8',laundry:'d3',single:'d3'};
 const DEFAULT_COUNTERS=[
   {id:'c1',name:'인조대리석 스노우화이트',type:'artificial',color:'#F2F1EE',price:220000},
   {id:'c2',name:'인조대리석 그레이 콘크리트',type:'artificial',color:'#9C9D9A',price:240000},
@@ -768,9 +773,9 @@ const CT_TYPES={
   stainless_low:{label:'저가형 스텐',thick:30,sinkCabMin:580,maxLen:2400,mount:'over',back:30,cut:'현장 타공',note:'합판 보강 · 탑마운트(오버) 볼만 가능 · 언더싱크 불가'}};
 const ctType=c=>c?.type||(/세라믹/.test(c?.name||'')?'ceramic':/천연|대리석 비앙코|카라라/.test(c?.name||'')&&!/인조/.test(c?.name||'')?'natural':/저가.*스텐/.test(c?.name||'')?'stainless_low':/스텐/.test(c?.name||'')?'stainless':'artificial');
 const ctSpec=c=>{const t=ctType(c),d=CT_TYPES[t]||CT_TYPES.artificial;return{...d,type:t,...Object.fromEntries(['thick','sinkCabMin','maxLen','back'].filter(k=>c&&c[k]!=null&&c[k]!=='').map(k=>[k,+c[k]]))}};
-const DEFAULT_PRICES={glassDoor:120000,hwTandem:60000,hwCutlery:45000,hwBasket:120000,hwPullout:150000,hwTrash:90000,hwPants:70000,hwTray:40000,cornerPullout:280000,cornerDrawer:650000,cornerLid:220000,tallCorner:1100000,installRate:20,installMin:350000,shipBase:50000,ship50:20000,ship70:40000,shipOver:60000,shipPerKm:0,ltShelf:35000,ltRod:45000,ltVert:35000,ltPuck:15000,ltUnder:30000,ltPlinth:25000,ltSensorDoor:12000,ltSensorPir:15000,ltTouch:15000,ltPsu60:25000,ltPsu100:35000,ltPsu150:45000,ltWire:20000,jaMM:300,clearance:10,fullTop:20,fullSide:20,fillerW:50,moldingH:50,fillerPrice:35000,demoPrice:40000,board:20,plinthBox:60,plinthKitchen:120,nicheClr:5,cornerK:180000,cornerB:90000,islandFinish:150000,islandOverhang:300,tableLeg:120000,tablePanel:180000,maxOverhang:300,appInstall:50000,magicCorner:450000,cornerDiag:350000,cornerDiagU:220000,cornerL:400000,cornerLU:260000,waterjet:80000,hoodRaise:0,hoodMinGas:650,hoodMinElec:600,elecLine:250000,breaker:80000,gasWork:60000,gasCap:50000,outlet:60000,body:{closet:110000,shoe:100000,dress:85000,laundry:95000},kLower:380000,kUpper:260000,sinkSet:250000,
+const DEFAULT_PRICES={fridgeHousing:250000,glassDoor:120000,hwTandem:60000,hwCutlery:45000,hwBasket:120000,hwPullout:150000,hwTrash:90000,hwPants:70000,hwTray:40000,cornerPullout:280000,cornerDrawer:650000,cornerLid:220000,tallCorner:1100000,installRate:20,installMin:350000,shipBase:50000,ship50:20000,ship70:40000,shipOver:60000,shipPerKm:0,ltShelf:35000,ltRod:45000,ltVert:35000,ltPuck:15000,ltUnder:30000,ltPlinth:25000,ltSensorDoor:12000,ltSensorPir:15000,ltTouch:15000,ltPsu60:25000,ltPsu100:35000,ltPsu150:45000,ltWire:20000,jaMM:300,clearance:10,fullTop:20,fullSide:20,fillerW:50,moldingH:50,fillerPrice:35000,demoPrice:40000,board:20,plinthBox:60,plinthKitchen:120,nicheClr:5,cornerK:180000,cornerB:90000,islandFinish:150000,islandOverhang:300,tableLeg:120000,tablePanel:180000,maxOverhang:300,appInstall:50000,magicCorner:450000,cornerDiag:350000,cornerDiagU:220000,cornerL:400000,cornerLU:260000,waterjet:80000,hoodRaise:0,hoodMinGas:650,hoodMinElec:600,elecLine:250000,breaker:80000,gasWork:60000,gasCap:50000,outlet:60000,body:{closet:110000,shoe:100000,dress:85000,laundry:95000,single:90000},kLower:380000,kUpper:260000,sinkSet:250000,
   mFrame:320000,mSlide:190000,mFixed:110000,mSwing:210000,drawer:45000,handleBar:9000,handleProj:35,pushOpener:12000,groove:5000,
-  install:{closet:150000,shoe:80000,kitchen:200000,middoor:150000,dress:120000,laundry:120000},vat:true};
+  install:{closet:150000,shoe:80000,kitchen:200000,middoor:150000,dress:120000,laundry:120000,single:50000},vat:true};
 const H_TYPE={bar:'바 손잡이',knob:'노브',edge:'엣지(끝단) 손잡이',groove:'J홈 가공',push:'푸시 오프너'};
 const DEFAULT_HANDLES=[
   {id:'h1',name:'블랙 바 160',type:'bar',fam:'블랙 바',len:160,cc:128,proj:35,color:'#2B2B2B',price:7000},{id:'h2',name:'블랙 바 224',type:'bar',fam:'블랙 바',len:224,cc:192,proj:35,color:'#2B2B2B',price:9000},
@@ -823,8 +828,9 @@ function loadCatalog(){const c=store.get(CK);const d=defaultCatalog();if(!c)retu
   return{ver:c.ver||0,tiles:Array.isArray(c.tiles)&&c.tiles.length?c.tiles:d.tiles,apps:Array.isArray(c.apps)&&c.apps.length?c.apps:d.apps,supports:Array.isArray(c.supports)&&c.supports.length?c.supports:d.supports,doors:Array.isArray(c.doors)&&c.doors.length?c.doors:d.doors,plans:Array.isArray(c.plans)?c.plans:[],asCfg:c.asCfg||null,units:Array.isArray(c.units)?c.units:d.units,trucks:Array.isArray(c.trucks)&&c.trucks.length?c.trucks:d.trucks,handles:Array.isArray(c.handles)&&c.handles.length?c.handles:d.handles,counters:Array.isArray(c.counters)&&c.counters.length?c.counters:d.counters,
     prices:{...d.prices,...(c.prices||{}),body:{...d.prices.body,...(c.prices?.body||{})},install:{...d.prices.install,...(c.prices?.install||{})}},company:{...d.company,...(c.company||{})}}}
 let catalog=loadCatalog();
-function upgradeCatalog(){if((catalog.ver||0)<2){DEFAULT_COUNTERS.forEach(c=>{if(!catalog.counters.some(x=>x.id===c.id))catalog.counters.push(clone(c))});catalog.counters.forEach(c=>{if(!c.type)c.type=ctType(c)});catalog.ver=2}if((catalog.ver||0)<3){catalog.units=catalog.units||[];DEFAULT_UNITS.forEach(u=>{if(!catalog.units.some(x=>x.id===u.id))catalog.units.push(clone(u))});catalog.ver=3}if((catalog.ver||0)<4){catalog.handles=catalog.handles||[];DEFAULT_HANDLES.forEach(h=>{if(!catalog.handles.some(x=>x.id===h.id))catalog.handles.push(clone(h))});catalog.ver=4}if((catalog.ver||0)<6){['d1','d2','d3','t1','t2'].forEach(id=>{const d=catalog.doors.find(x=>x.id===id);if(d&&!d.cats.includes('laundry'))d.cats.push('laundry')});catalog.prices.body=catalog.prices.body||{};if(catalog.prices.body.laundry==null)catalog.prices.body.laundry=95000}
-  if((catalog.ver||0)<5){DEFAULT_DOORS.filter(d=>d.tex==='tambour').forEach(d=>{if(!catalog.doors.some(x=>x.id===d.id))catalog.doors.push(clone(d))});catalog.ver=5}if((catalog.ver||0)<6)catalog.ver=6}
+function upgradeCatalog(){if((catalog.ver||0)<2){DEFAULT_COUNTERS.forEach(c=>{if(!catalog.counters.some(x=>x.id===c.id))catalog.counters.push(clone(c))});catalog.counters.forEach(c=>{if(!c.type)c.type=ctType(c)});catalog.ver=2}if((catalog.ver||0)<3){catalog.units=catalog.units||[];DEFAULT_UNITS.forEach(u=>{if(!catalog.units.some(x=>x.id===u.id))catalog.units.push(clone(u))});catalog.ver=3}if((catalog.ver||0)<4){catalog.handles=catalog.handles||[];DEFAULT_HANDLES.forEach(h=>{if(!catalog.handles.some(x=>x.id===h.id))catalog.handles.push(clone(h))});catalog.ver=4}if((catalog.ver||0)<6){['d1','d2','d3','t1','t2'].forEach(id=>{const d=catalog.doors.find(x=>x.id===id);if(d&&!d.cats.includes('laundry'))d.cats.push('laundry')});}
+  if((catalog.ver||0)<7){['d1','d2','d3','d4','t1','t2'].forEach(id=>{const d=catalog.doors.find(x=>x.id===id);if(d&&!d.cats.includes('single'))d.cats.push('single')});catalog.prices.body=catalog.prices.body||{};if(catalog.prices.body.single==null)catalog.prices.body.single=90000;catalog.prices.body=catalog.prices.body||{};if(catalog.prices.body.laundry==null)catalog.prices.body.laundry=95000}
+  if((catalog.ver||0)<5){DEFAULT_DOORS.filter(d=>d.tex==='tambour').forEach(d=>{if(!catalog.doors.some(x=>x.id===d.id))catalog.doors.push(clone(d))});catalog.ver=5}if((catalog.ver||0)<7)catalog.ver=7}
 upgradeCatalog();
 const syncBoard=()=>{T=clamp(+catalog.prices.board||20,9,40)};syncBoard();
 const plRange=cat=>PL_RANGE[cat]||[0,0];
@@ -979,7 +985,7 @@ function hingeSolve(j,f,ctx,row){row.hinge=[];row.clash=[];row.b2b=0;if(ctx.cat=
 function upperH(Hm){return clamp(Hm-1450,500,900)}
 function geom(j=job,fi=j.fi||0,rowsOverride,adjL=0){const cat=j.cat,c=CATS[cat],P=catalog.prices,f=j.faces[fi]||j.faces[0],isl=f.key==='I';
   const cut=cornerCut(j,f),fin=j.finish||'full';let sL,sR,top;
-  if(isl){sL=sR=top=0}else if(cat==='middoor'){sL=sR=5;top=10}else if(fin==='filler'){sL=sR=+P.fillerW||0;top=+P.moldingH||0}else{sL=sR=(+P.fullSide||0)/2;top=+P.fullTop||0}
+  if(isl||cat==='single'){sL=sR=top=0}else if(cat==='middoor'){sL=sR=5;top=10}else if(fin==='filler'){sL=sR=+P.fillerW||0;top=+P.moldingH||0}else{sL=sR=(+P.fullSide||0)/2;top=+P.fullTop||0}
   if(cut>0)sL=0;const sL0=sL,sR0=sR,cA=isCornerLay(j)&&f.key==='A'&&j.layout!=='U';let rem5=0;{const W0=Math.max(300,(+f.len||c.W)-cut),r=Math.round(((W0-sL-sR)%5+5)%5*10)/10;if(r&&isl){rem5=r;sL+=r/2;sR+=r/2}else if(r&&cat!=='middoor'){rem5=r;if(cut>0||cA)sR+=r;else{const a=Math.floor(r/2);sL+=a;sR+=r-a}}}if(adjL){rem5+=adjL;if(cut>0||cA)sR+=adjL;else{const a=Math.floor(adjL/2);sL+=a;sR+=adjL-a}}const clr=sL+sR;
   const ctc=cat==='kitchen'?(isl?islandCounter(j):counterById(j.counterId)):null,ct=ctSpec(ctc),ct0=850-(cat==='kitchen'?ct.thick:30);
   const H=isl?850:(+j.dims.H||c.H),D=isl?(+j.island.cab||600)+(+j.island.over||0):(cat==='kitchen'?kD(j):(+j.dims.D||c.D)),W=Math.max(300,(+f.len||c.W)-cut),pl=cat==='middoor'?0:plinthOf(j);
@@ -1036,7 +1042,8 @@ function layout(m){const t=m.t,z0=m.z0,z1=m.z1,h=z1-z0,n=Math.max(0,m.n??TYPES[t
     case 'washpair':case 'washone':{const pb=z0+400,mt=pb+880;o.drawers.push({zb:z0,h:200,ext:true},{zb:z0+200,h:200,ext:true});o.washers={zb:pb+10,zt:mt,n:t==='washpair'?2:1};o.shelves=even(mt+T+20,z1,1);o.zones=[{zb:z0,zt:z0+200,kind:'drawer'},{zb:z0+200,zt:pb,kind:'drawer'},{zb:mt+20,zt:z1,kind:'door'}];break}
     case 'washstack':{const mt=z0+1760;o.washers={zb:z0+10,zt:mt,n:2,stack:true};o.shelves=even(mt+T+20,z1,1);o.zones=[{zb:mt+20,zt:z1,kind:'door'}];break}
     case 'corner_dr':{const k=Math.max(1,n),dh=Math.floor(h/k);for(let i=0;i<k;i++)o.drawers.push({zb:z0+i*dh,h:i===k-1?h-i*dh:dh,ext:true});o.zones=o.drawers.map(d=>({zb:d.zb,zt:d.zb+d.h,kind:'drawer'}));break}
-    case 'tallc':{const tk=m.tk||'oven';if(tk==='combo'){const ob=z0+380,ot=ob+600,mb=ot+30,mt=mb+400;o.drawers.push({zb:z0,h:ob-z0,ext:true});o.oven={zb:ob,zt:ot};o.micro={zb:mb,zt:mt};o.shelves=even(mt+T,z1,2);o.openTop=mt+T;o.zones=[{zb:z0,zt:ob,kind:'drawer'}]}
+    case 'tallc':{const tk=m.tk||'oven';if(tk==='fspace'){const ft=Math.min(z1-250,z0+1850);o.fridge={zb:z0,zt:ft};o.fspace=true;o.shelves=[];o.zones=[{zb:ft+20,zt:z1,kind:'door'}]}
+      else if(tk==='combo'){const ob=z0+380,ot=ob+600,mb=ot+30,mt=mb+400;o.drawers.push({zb:z0,h:ob-z0,ext:true});o.oven={zb:ob,zt:ot};o.micro={zb:mb,zt:mt};o.shelves=even(mt+T,z1,2);o.openTop=mt+T;o.zones=[{zb:z0,zt:ob,kind:'drawer'}]}
       else if(tk==='oven'){const ob=z0+620,ot=ob+600;o.drawers.push({zb:z0,h:310,ext:true},{zb:z0+310,h:310,ext:true});o.oven={zb:ob,zt:ot};o.shelves=even(ot+T,z1,2);
         o.zones=[{zb:z0,zt:z0+310,kind:'drawer'},{zb:z0+310,zt:ob,kind:'drawer'},{zb:ot,zt:z1,kind:'door'}]}
       else if(tk==='fridge'){const ft=Math.min(z1-300,z0+1850);o.fridge={zb:z0,zt:ft};o.shelves=[Math.round((ft+z1)/2)];o.zones=[{zb:z0,zt:ft,kind:'door'},{zb:ft,zt:z1,kind:'door'}]}
@@ -1072,7 +1079,7 @@ function quote(j=job){const P=catalog.prices,door=doorById(j.doorId)||{kind:'non
   const spec=arr=>arr.length>1?arr.map(g=>`${g.island?'아일랜드':g.face} ${g.Wm}`).join(' · '):arr[0]?`${arr[0].Wm}×${arr[0].Hm}×${arr[0].Dm}`:'';
   const pw=(g,z)=>g.rows.filter(r=>!z||r.zone===z).reduce((a,r)=>a+r.mods.reduce((b,m)=>b+((unitById(m.unit)?.price>0)?m.w:0),0),0);
   {const t={};gs.forEach(g=>g.rows.forEach(r=>r.mods.forEach(m=>{const u=unitById(m.unit);if(u&&u.price>0)t[u.id]=(t[u.id]||0)+1})));Object.entries(t).forEach(([id,q])=>{const u=unitById(id);add(`내 장 · ${u.name}`,`${u.w} (완제품 단가)`,q,'개',u.price)})}
-  if(['closet','shoe','dress','laundry'].includes(cat))add(`${CATS[cat].name} 본체`,spec(gs),r2(gs.reduce((a,g)=>a+ceil1(Math.max(0,g.Wm-pw(g))/P.jaMM),0)),'자',P.body[cat]);
+  if(['closet','shoe','dress','laundry','single'].includes(cat))add(`${CATS[cat].name} 본체`,spec(gs),r2(gs.reduce((a,g)=>a+ceil1(Math.max(0,g.Wm-pw(g))/P.jaMM),0)),'자',P.body[cat]);
   if(cat==='kitchen'){const wall=gs.filter(g=>!g.island),lm=r2(wall.reduce((a,g)=>a+ceil1((g.Wm-(g.tallSum||0))/1000),0));add('하부장 본체',spec(wall)+(wall[0]?` · 깊이 ${wall[0].D}`:''),r2(wall.reduce((a,g)=>a+ceil1(Math.max(0,g.Wm-(g.tallSum||0)-pw(g,'lower'))/1000),0)),'m',P.kLower);
     const ups=wall.filter(g=>g.rows.some(r=>r.zone==='upper'));add('상부장 본체',spec(ups),r2(ups.reduce((a,g)=>a+ceil1(Math.max(0,g.Wm-(g.rows.find(r=>r.zone==='upper')?.corners||[]).filter(c=>c.ghost||c.tfill).reduce((a,c)=>a+c.w,0)-pw(g,'upper'))/1000),0)),'m',P.kUpper);
     const c=counterById(j.counterId);if(c)add(`상판 · ${c.name}`,spec(wall),lm,'m',c.price);
@@ -1093,7 +1100,7 @@ function quote(j=job){const P=catalog.prices,door=doorById(j.doorId)||{kind:'non
     zs.forEach(z=>{const t=cType(j,z),up=z==='upper',kd=cKind(j,z),pr=kd==='cdrawer'?P.cornerDrawer:kd==='pullout'?P.cornerPullout:t==='diag'?(up?P.cornerDiagU:P.cornerDiag):t==='lshape'?(up?P.cornerLU:P.cornerL):t==='magic'?P.magicCorner:(cat==='kitchen'?P.cornerK:P.cornerB);
       add(`코너 · ${up?'상부 ':z==='lower'?'하부 ':''}${CORNER_T[kd==='tall'?'blind':kd]}`,t==='diag'||t==='lshape'?`${cLeg(j,z)}×${cLeg(j,z)}`:'',nc,'곳',pr)})}
   {const hc={};let gl=0;gs.forEach(g=>{g.rows.forEach(r=>r.mods.forEach(m=>(m.hw||[]).forEach(k=>{if(HWS[k])hc[k]=(hc[k]||0)+1})));gl+=leaves(g,door).filter(l=>l.glass).length});Object.entries(hc).forEach(([k,q])=>add(`철물 · ${HWS[k].l}`,'',q,'개',P[HWS[k].p]));if(gl)add('유리 도어 (알루미늄 프레임)','추가금',gl,'짝',P.glassDoor)}
-  gs.forEach(g=>(g.talls||[]).forEach(t=>add(`${t.end?'':'코너 '}키큰장 · ${TALL_K[t.k]||'키큰장'}`,`${t.w}×${g.Hm-g.pl}×${g.D}`,1,'개',P.tallCorner)));
+  gs.forEach(g=>(g.talls||[]).forEach(t=>add(`${t.end?'':'코너 '}${t.k==='fspace'?'냉장고장 (위 수납·측판)':'키큰장 · '+(TALL_K[t.k]||'키큰장')}`,`${t.w}×${g.Hm-g.pl}×${g.D}`,1,'개',t.k==='fspace'?P.fridgeHousing:P.tallCorner)));
   {const B=gs.find(g=>g.pen!=null);if(B){const c=counterById(j.counterId),m=ceil1(B.Wm/1000);add('반도형 뒷면 마감','B면 뒤쪽 노출면 마감판',m,'m',P.islandFinish);if(c&&B.pen>0)add(`반도형 오버행 상판 · ${c.name}`,`뒤로 ${B.pen}`,m,'m',Math.round(c.price*B.pen/620))}}
   if(lidOn(j)){const A=gs.find(g=>g.face==='A');if(A?.lidW)add('코너 리프트업 상판 수납','상판 분할 + 가스쇼바·경첩',nc,'곳',P.cornerLid)}
   {const lp=lightPlan(j);if(lp.runs.length){const cn=CCT[lp.cct][0];Object.entries(lp.byT).forEach(([t,b])=>{const L_=LT[t];add(`조명 · ${L_.label} (${cn})`,L_.unit==='m'?'프로파일+LED':'',L_.unit==='m'?r2(Math.ceil(b.m*10)/10):b.n,L_.unit,P[L_.pk])});
@@ -1105,7 +1112,7 @@ function quote(j=job){const P=catalog.prices,door=doorById(j.doorId)||{kind:'non
     if(u.needGas)add('가스 배관 연결 (가스공사 별도)','',1,'식',P.gasWork);if(u.capGas)add('기존 가스 배관 막음 (가스공사 별도)','',1,'식',P.gasCap)}
   tileAreas(j).forEach(ta=>add(`주방 벽 타일 · ${ta.tl.name}`,`${FACE_NAME(ta.g.face)} ${ta.x1-ta.x0}×${ta.z1-ta.z0} · 손실 10%`,ta.order,'㎡',ta.tl.price));
   if(j.preDemo)add('기존장 철거·폐기','',r2(gs.reduce((a,g)=>a+ceil1(g.W/1000),0)),'m',P.demoPrice);
-  {const svc=/설치|운반|전원선|차단기|가스|철거|배선|타공/;const ps=L.filter(l=>!svc.test(l.item)).reduce((a,l)=>a+l.amt,0),rate=+P.installRate||0,mn=+P.installMin||0,pct=Math.round(ps*rate/100/1000)*1000,v=Math.max(pct,mn);
+  {const svc=/설치|운반|전원선|차단기|가스|철거|배선|타공/;const ps=L.filter(l=>!svc.test(l.item)).reduce((a,l)=>a+l.amt,0),rate=+P.installRate||0,mn=cat==='single'?(+P.install?.single||50000):(+P.installMin||0),pct=Math.round(ps*rate/100/1000)*1000,v=Math.max(pct,mn);
     add('시공·설치비',pct>=mn?`제품 ${won(ps)} × ${rate}%`:`최소 ${won(mn)} (제품 ${rate}% = ${won(pct)})`,1,'식',v)}{const sf=shipFee(j);add(`운반 물류비 · ${sf.tr.name}${sf.auto?' (자동)':''}`,sf.km?`${catalog.company.origin||'출고지'} → 현장 ${sf.km}km · ${sf.tier}`:'거리 미입력 · 30km 이하 요금',sf.n,'대',sf.unit)}
   const sub=L.reduce((a,l)=>a+l.amt,0),vat=P.vat?Math.round(sub*.1):0;return{lines:L,sub,vat,total:sub+vat}}
 function cutList(j=job){const door=doorById(j.doorId)||{kind:'none',name:'-'},rows=[];const add=(part,size,mat,qty,note='')=>{if(qty>0)rows.push({part,size,mat,qty,note})};
@@ -1350,6 +1357,7 @@ function interiorCust(m,body,P,front,seed){if(m.blind){const c=front?.color||bod
   lay.shoes.forEach((z,i)=>s+=shoes(x+T,x+w-T,z,seed+i));
   lay.drawers.forEach(d=>{if(d.ext)return;s+=R(x+T+6,d.zb+3,w-2*T-12,d.h-6,`fill="${shade(body,-.02)}" stroke="${edge}" stroke-width="2"`)+R(x+w/2-60,d.zb+d.h-40,120,12,`fill="${edge}" rx="6"`)});
   if(lay.washers){const W_=lay.washers,n=W_.n;for(let q=0;q<n;q++){const xa=W_.stack?x+T:x+T+q*(w-2*T)/n,wa=W_.stack?w-2*T:(w-2*T)/n,za=W_.stack?W_.zb+q*(W_.zt-W_.zb)/2:W_.zb,ha=W_.stack?(W_.zt-W_.zb)/2:W_.zt-W_.zb,mw=Math.min(wa-30,600),mx=xa+(wa-mw)/2,mh=Math.min(ha-10,850);s+=R(mx,za,mw,mh,'fill="#F2F3F3" stroke="#B9BEC1" stroke-width="4" rx="10"')+R(mx+20,za+mh-120,mw-40,90,'fill="#DDE0E2" rx="6"')+`<circle cx="${f(mx+mw/2)}" cy="${f(-(za+mh*.42))}" r="${f(Math.min(mw,mh)*.3)}" fill="#C9D3D8" stroke="#8E989D" stroke-width="10"/>`}}
+  if(lay.fspace)s+=R(x+40,lay.fridge.zb+10,w-80,lay.fridge.zt-lay.fridge.zb-20,'fill="#C9CDD0" stroke="#9EA3A6" stroke-width="6" rx="14"')+R(x+w/2-6,lay.fridge.zb+500,12,700,'fill="#8E9396" rx="6"');
   if(lay.micro)s+=R(x+T,lay.micro.zb,w-2*T,lay.micro.zt-lay.micro.zb,'fill="#1E1F21"')+R(x+T+30,lay.micro.zb+40,w-2*T-170,lay.micro.zt-lay.micro.zb-80,'fill="#3A3D40" rx="8"')+R(x+w-T-110,lay.micro.zb+60,60,lay.micro.zt-lay.micro.zb-120,'fill="#55595c" rx="6"');
   if(lay.oven)s+=R(x+T,lay.oven.zb,w-2*T,lay.oven.zt-lay.oven.zb,'fill="#1E1F21"')+R(x+T+30,lay.oven.zt-90,w-2*T-60,16,'fill="#B8BDC1" rx="8"')+R(x+T+40,lay.oven.zb+60,w-2*T-80,lay.oven.zt-lay.oven.zb-200,'fill="#3A3D40" rx="10"');
   if(lay.dw)s+=R(x+8,z0+8,w-16,h-16,'fill="#C9CDD0" stroke="#9EA3A6" stroke-width="4"')+R(x+30,z1-70,w-60,18,'fill="#7E8487" rx="9"');
@@ -1518,7 +1526,7 @@ function planInner(j,k,active,ui){const pg=planGeo(j);let s='';
     if(sp?.type==='cabinet')s+=`<rect x="${f(r.x)}" y="${f(r.y+cab)}" width="${f(r.w)}" height="${f(r.h-cab)}" fill="#1E56D0" fill-opacity=".12" stroke="#1E56D0" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>`;
     if(sp?.type==='panel')s+=`<rect x="${f(r.x-sd)}" y="${f(r.y)}" width="40" height="${f(r.h)}" fill="#555"/><rect x="${f(r.x+r.w+sd-40)}" y="${f(r.y)}" width="40" height="${f(r.h)}" fill="#555"/>`}}
   pg.dims.forEach(d=>{const off=d.side*36*k;if(d.v){const x=d.pos+off;s+=dimV(-d.a,-d.b,x,d.label,k,d.side?d.pos:null)}else{const y=d.pos+off;s+=dimH(d.a,d.b,-y,d.label,k,d.side?-d.pos:null)}});
-  return{s,pg}}
+  s+=workTriSVG(j,k);return{s,pg}}
 function planBox(j){const pg=planGeo(j),m=Math.max(pg.w,pg.h)*.16+200;return{x:-m,y:-m,w:pg.w+2*m,h:pg.h+2*m}}
 function planPlace(j,area,active){const b=planBox(j),sc=Math.min(area.w/b.w,area.h/b.h),k=1/sc,ox=area.x+(area.w-b.w*sc)/2-b.x*sc,oy=area.y+(area.h-b.h*sc)/2-b.y*sc;
   return`<g transform="translate(${f(ox)},${f(oy)}) scale(${sc.toFixed(5)})">${planInner(j,k,active,false).s}</g>`}
@@ -1681,7 +1689,7 @@ async function doShare(){const d=SEND;if(!d)return;const text=$('#snd-txt').valu
   catch(e){go.disabled=false;go.textContent='공유하기';toast('공유하지 못했습니다')}}
 
 /* ---------- 앱: 구글 드라이브 자동 업로드 ---------- */
-function drawPages(){const c=cutPage(),wp=workPage(),mk=makePage();return[...(job.room?.on?[{svg:roomPage(job),w:1400,h:990,mm:.3}]:[]),...job.faces.flatMap((f,i)=>[{svg:drawingSVG(job,i),w:1400,h:990,mm:.3},...(job.cat!=='middoor'?[{svg:sidePage(job,i),w:1400,h:990,mm:.3}]:[])]),{svg:planDetailSVG(job),w:1400,h:990,mm:.3},...(job.cat==='kitchen'?[{svg:counterSVG(job),w:1400,h:990,mm:.3}]:[]),{...mk,mm:.3},...(tileAreas().length?[{svg:tileSVG(),w:1400,h:990,mm:.3}]:[]),{...c,mm:.3},{...wp,mm:.3}]}
+function drawPages(){const c=cutPage(),wp=workPage(),mk=makePage();return[...(job.room?.on?[{svg:roomPage(job),w:1400,h:990,mm:.3}]:[]),...job.faces.map((f,i)=>elecPoints(job,i).pts.length?{svg:elecPage(job,i),w:1400,h:990,mm:.3}:null).filter(Boolean),...job.faces.flatMap((f,i)=>[{svg:drawingSVG(job,i),w:1400,h:990,mm:.3},...(job.cat!=='middoor'?[{svg:sidePage(job,i),w:1400,h:990,mm:.3}]:[])]),{svg:planDetailSVG(job),w:1400,h:990,mm:.3},...(job.cat==='kitchen'?[{svg:counterSVG(job),w:1400,h:990,mm:.3}]:[]),{...mk,mm:.3},...(tileAreas().length?[{svg:tileSVG(),w:1400,h:990,mm:.3}]:[]),{...c,mm:.3},{...wp,mm:.3}]}
 const SYK='silcheuk-sync';
 let SY=(()=>{try{return{url:'',key:'',wifi:true,pdf:true,done:{},asSig:'',last:0,log:[],...(JSON.parse(localStorage.getItem(SYK))||{})}}catch(e){return{url:'',key:'',wifi:true,pdf:true,done:{},asSig:'',last:0,log:[]}}})();
 const sySave=()=>{try{localStorage.setItem(SYK,JSON.stringify(SY))}catch(e){}};
@@ -1845,6 +1853,7 @@ function roomSVG(j=job,{w=640,h=460,label=true}={}){const G=roomGeo(j),R=G.R,pad
     else if(it.type==='pillar'){const d=+it.d||300,a=rPt(R,it.wall,o,0),b=rPt(R,it.wall,o+w_,d);s+=`<rect x="${f(Math.min(a[0],b[0]))}" y="${f(Math.min(a[1],b[1]))}" width="${f(Math.abs(a[0]-b[0]))}" height="${f(Math.abs(a[1]-b[1]))}" fill="#888" stroke="#333" stroke-width="${8*k}"/>`}
     else{const p=rPt(R,it.wall,o,60);s+=`<circle cx="${f(p[0])}" cy="${f(p[1])}" r="${f(28*k)}" fill="${c}"/><text x="${f(p[0])}" y="${f(p[1]+170*k)}" font-size="${f(70*kt)}" text-anchor="middle" fill="${c}">${RITEM[it.type].l}</text>`}});
   G.clr.forEach(c=>{if(c.d<60)return;const mx=c.a[0]+(c.b[0]-c.a[0])*.3,my=c.a[1]+(c.b[1]-c.a[1])*.3,col=c.d<800?'#C0362C':'#B4520F';s+=`<line x1="${f(c.a[0])}" y1="${f(c.a[1])}" x2="${f(c.b[0])}" y2="${f(c.b[1])}" stroke="${col}" stroke-width="${8*k}" stroke-dasharray="${30*k} ${20*k}"/><text x="${f(mx+40*k)}" y="${f(my)}" font-size="${f(85*kt)}" fill="${col}" font-weight="700">통로 ${c.d}</text>`});
+  if(j.cat==='kitchen')s+=workTriSVG(j,kt*2.4,rX(R));
   const dl=(a,b,lab,off)=>`<line x1="${f(a[0])}" y1="${f(a[1])}" x2="${f(b[0])}" y2="${f(b[1])}" stroke="#1E56D0" stroke-width="${6*k}"/><text x="${f((a[0]+b[0])/2+off[0])}" y="${f((a[1]+b[1])/2+off[1])}" font-size="${f(95*kt)}" text-anchor="middle" fill="#1E56D0">${lab}</text>`;
   s+=dl([0,-260],[R.W,-260],`가로 ${R.W}`,[0,-40*k])+dl([-260,0],[-260,R.L],'',[0,0])+`<text x="${f(-320)}" y="${f(R.L/2)}" font-size="${f(95*kt)}" text-anchor="middle" fill="#1E56D0" transform="rotate(-90 ${f(-300)} ${f(R.L/2)})">세로 ${R.L}</text>`;
   return s+'</svg>'}
@@ -1870,6 +1879,55 @@ function roomPage(j=job){const W=1400,H=990,G=roomGeo(j);let s=pageHead(j,'현�
   y+=16;s+=`<text x="960" y="${y}" font-size="16" class="hd">항목</text>`;y+=26;G.R.items.forEach(it=>{s+=`<text x="960" y="${y}" font-size="13" class="lb">${esc(RITEM[it.type]?.l||'')} · ${RWALL[it.wall]} 왼쪽 끝에서 ${it.off||0}${it.w?` · 폭 ${it.w}`:''}${it.type==='window'?` · 하단 ${it.sill||900}`:''}${it.type==='door'?` · ${it.open==='out'?'밖으로':'안으로'} 열림`:''}</text>`;y+=20});
   y+=16;s+=`<text x="960" y="${y}" font-size="16" class="hd">통로</text>`;y+=26;G.clr.forEach(c=>{s+=`<text x="960" y="${y}" font-size="13" class="lb">${c.key==='I'?'아일랜드':FACE_NAME(c.key)} 앞 ${c.d}mm</text>`;y+=20});
   return s+'</svg>'}
+/* ---------- 주방 작업 삼각형 ---------- */
+function triPts(j=job){if(j.cat!=='kitchen')return null;const pg=planGeo(j),o={};
+  j.faces.forEach((fc,fi)=>{const g=geom(j,fi),r=pg.rects.find(x=>x.key===g.face);if(!r)return;const P=ctFaceMap(j,g,r),dep=g.island?g.Dm:g.D,vm=g.island&&j.island?.front!=='room'?dep*.3:dep*.7;
+    g.rows.forEach(row=>{if(row.zone==='upper')return;row.mods.forEach(m=>{const c=P(m.x+m.w/2,vm);if(m.t==='sink'&&!o.sink)o.sink=c;if((m.t==='cook'||modApps(m).some(x=>x.a.kind==='cooktop'))&&!o.cook)o.cook=c});
+      (row.corners||[]).filter(c=>c.tall&&['fridge','fspace'].includes(c.tk)).forEach(c=>{if(!o.fridge)o.fridge=P(c.x+c.w/2,vm)})})});
+  return o}
+function workTri(j=job){const o=triPts(j);if(!o)return null;const d=(a,b)=>Math.round(Math.hypot(a[0]-b[0],a[1]-b[1])/10)*10;
+  if(!o.sink||!o.cook)return{o,need:'싱크대와 쿡탑 칸이 있어야 작업 삼각형을 계산합니다'};if(!o.fridge)return{o,need:'키큰장에서 냉장고장이나 "냉장고 자리"를 넣으면 작업 삼각형을 계산합니다',legs:[['싱크–쿡탑',d(o.sink,o.cook)]]};
+  const legs=[['싱크–쿡탑',d(o.sink,o.cook)],['쿡탑–냉장고',d(o.cook,o.fridge)],['냉장고–싱크',d(o.fridge,o.sink)]],tot=legs.reduce((a,l)=>a+l[1],0),msg=[];
+  legs.forEach(([n,v])=>{if(v<1200)msg.push(`작업 삼각형 ${n} ${v}mm — 너무 가깝습니다 (1200~2700 권장)`);else if(v>2700)msg.push(`작업 삼각형 ${n} ${v}mm — 너무 멉니다 (1200~2700 권장)`)});
+  if(tot>7900)msg.push(`작업 삼각형 합계 ${tot}mm — 동선이 깁니다 (4000~7900 권장)`);if(tot<4000)msg.push(`작업 삼각형 합계 ${tot}mm — 너무 좁습니다 (4000~7900 권장)`);
+  return{o,legs,tot,msg,ok:!msg.length}}
+function workTriSVG(j,k,X=p=>p){const t=workTri(j);if(!t||!t.legs||t.legs.length<3)return'';const o=t.o,pts=[o.sink,o.cook,o.fridge].map(X),col=t.ok?'#13795B':'#C0362C',sw=2.2*k;
+  let s=`<polygon points="${pts.map(p=>`${f(p[0])},${f(p[1])}`).join(' ')}" fill="${col}" fill-opacity=".07" stroke="${col}" stroke-width="${f(sw)}" stroke-dasharray="${f(9*k)} ${f(6*k)}"/>`;
+  [['싱크',pts[0]],['쿡탑',pts[1]],['냉장고',pts[2]]].forEach(([l,p])=>{s+=`<circle cx="${f(p[0])}" cy="${f(p[1])}" r="${f(7*k)}" fill="${col}"/><text x="${f(p[0])}" y="${f(p[1]-11*k)}" font-size="${f(10*k)}" text-anchor="middle" fill="${col}" font-weight="700">${l}</text>`});
+  [[0,1],[1,2],[2,0]].forEach(([a,b],i)=>{const m=[(pts[a][0]+pts[b][0])/2,(pts[a][1]+pts[b][1])/2];s+=`<text x="${f(m[0])}" y="${f(m[1]+4*k)}" font-size="${f(9.5*k)}" text-anchor="middle" fill="${col}" stroke="#fff" stroke-width="${f(3*k)}" paint-order="stroke">${t.legs[i][1]}</text>`});
+  return s}
+
+/* ---------- 전기·설비 도면 ---------- */
+const EL={C2:{l:'상판 2구 콘센트',c:'#1E56D0'},S16:{l:'가전 콘센트 (16A)',c:'#1E56D0'},DS:{l:'전용 콘센트 (220V 전용선)',c:'#B4520F'},SW:{l:'조명 스위치',c:'#555'},PSU:{l:'조명 전원 (SMPS)',c:'#7A3FB0'},HW:{l:'온수',c:'#D0312D'},CW:{l:'냉수',c:'#1E77D0'},D:{l:'배수',c:'#333'},AW:{l:'가전 급수',c:'#1E77D0'},G:{l:'가스 밸브',c:'#C8A000'}};
+function elecPoints(j=job,fi=j.fi){const g=geom(j,fi),pts=[],add=(t,x,z,n)=>pts.push({t,x:Math.round(x),z:Math.round(z),n});if(g.cat==='middoor')return{g,pts};
+  const ap=allApps(j),hasDW=ap.some(x=>x.a.kind==='dw'),lp=lightPlan(j);
+  g.rows.forEach(row=>{const ms=row.mods;
+    if(g.cat==='kitchen'&&row.zone==='lower'){let lastC=-9e9;
+      ms.forEach(m=>{const cx=m.x+m.w/2,apps=modApps(m).map(x=>x.a);
+        if(m.t==='sink'){add('HW',cx-100,500,'싱크 수전');add('CW',cx+100,500,'싱크 수전');add('D',cx,400,'싱크 배수');if(hasDW){add('AW',cx+220,450,'식기세척기 급수');add('S16',cx-220,300,'식기세척기')}}
+        if(m.t==='cook'||apps.some(a=>a.kind==='cooktop')){const ck=apps.find(a=>a.kind==='cooktop');if(ck?.fuel==='gas')add('G',cx,600,'가스레인지');else add('DS',cx,300,`인덕션${ck?.kw?` ${ck.kw}kW`:''} 전용`)}
+        if(m.t==='oven'||apps.some(a=>a.kind==='oven'))add('S16',cx,300,'빌트인 오븐');
+        if(m.t==='wash'||apps.some(a=>a.kind==='wash')){add('S16',cx-150,300,'세탁기');add('CW',cx+150,500,'세탁기 급수');add('D',cx+150,300,'세탁기 배수')}
+        if(['base','baseDrawer','open'].includes(m.t)&&!g.island&&cx-lastC>=1000){add('C2',cx,1100,'상판 위 콘센트');lastC=cx}});
+      (row.corners||[]).filter(c=>c.tall).forEach(c=>{const cx=c.x+c.w/2,L_=layout(c);if(L_.oven)add('S16',cx,L_.oven.zb-60,'오븐 (안쪽 뒤)');if(L_.micro)add('S16',cx+120,L_.micro.zb+60,'전자레인지 (안쪽 뒤)');if(L_.fridge||c.tk==='fspace')add('S16',cx,1900,'냉장고 (위쪽 뒤)')})}
+    if(g.cat==='kitchen'&&row.zone==='upper'){ms.forEach(m=>{if(m.t==='hood')add('S16',m.x+m.w/2,g.Hm-150,'후드')});
+      if(ms.some(m=>(m.lights||[]).length)){add('PSU',ms[0].x+120,g.Hm-60,'상부장 조명 전원');add('SW',(ms[ms.length-1]?.x||0)+(ms[ms.length-1]?.w||0)-150,1100,'상부장 하부등 스위치')}}
+    if(g.cat!=='kitchen'){ms.forEach(m=>{const cx=m.x+m.w/2,L_=layout(m);if(L_.washers){const n=L_.washers.n;add('S16',cx-120,L_.washers.zt+80,n>1?'세탁기·건조기':'세탁기');add('CW',cx+120,L_.washers.zt+80,'세탁기 급수');add('D',cx+200,150,'세탁기 배수 (바닥)')}if(m.t==='vanity')add('S16',cx+m.w/2-120,1100,'화장대')});
+      if(ms.some(m=>(m.lights||[]).length)||(lp.runs.length&&g.face==='A')){add('PSU',(ms[0]?.x||0)+150,g.Hm-60,'장 조명 전원 (천판 위)');if(j.lt?.ctrl!=='door')add('SW',(ms[0]?.x||0)-120+((ms[0]?.x||0)<200?250:0),1200,'조명 스위치')}}});
+  return{g,pts}}
+function elecPage(j=job,fi=j.fi){const{g,pts}=elecPoints(j,fi),W=1400,H=990,d=doorById(j.doorId)||{kind:'none'};let s=pageHead(j,`전기·설비 도면${j.faces.length>1?' · '+FACE_NAME(g.face):''}`,'콘센트·스위치·수도·배수 위치와 바닥에서 높이 · ');
+  const sym=(t,x,z,k)=>{const c=EL[t].c,r=26*k,cy=-z;if(t==='HW'||t==='CW')return`<circle cx="${f(x)}" cy="${f(cy)}" r="${f(r*.7)}" fill="${c}"/>`;if(t==='D')return`<circle cx="${f(x)}" cy="${f(cy)}" r="${f(r*.75)}" fill="#fff" stroke="${c}" stroke-width="${f(4*k)}"/><circle cx="${f(x)}" cy="${f(cy)}" r="${f(r*.3)}" fill="${c}"/>`;
+    if(t==='G')return`<polygon points="${f(x)},${f(cy-r)} ${f(x+r)},${f(cy+r*.8)} ${f(x-r)},${f(cy+r*.8)}" fill="${c}"/>`;if(t==='SW')return`<circle cx="${f(x)}" cy="${f(cy)}" r="${f(r*.6)}" fill="#fff" stroke="${c}" stroke-width="${f(4*k)}"/><line x1="${f(x)}" y1="${f(cy)}" x2="${f(x+r)}" y2="${f(cy-r)}" stroke="${c}" stroke-width="${f(4*k)}"/>`;
+    if(t==='PSU')return`<rect x="${f(x-r)}" y="${f(cy-r*.6)}" width="${f(2*r)}" height="${f(1.2*r)}" fill="#fff" stroke="${c}" stroke-width="${f(4*k)}" stroke-dasharray="${f(6*k)} ${f(4*k)}"/>`;if(t==='AW')return`<rect x="${f(x-r*.6)}" y="${f(cy-r*.6)}" width="${f(1.2*r)}" height="${f(1.2*r)}" fill="${c}"/>`;
+    const w=t==='C2'?2.2*r:1.4*r;return`<rect x="${f(x-w/2)}" y="${f(cy-r*.6)}" width="${f(w)}" height="${f(1.2*r)}" rx="${f(3*k)}" fill="${t==='DS'?'#FCE7D6':'#fff'}" stroke="${c}" stroke-width="${f(4*k)}"/><circle cx="${f(x-w*.18)}" cy="${f(cy)}" r="${f(4*k)}" fill="${c}"/><circle cx="${f(x+w*.18)}" cy="${f(cy)}" r="${f(4*k)}" fill="${c}"/>`};
+  const draw=k=>{let t=`<g opacity=".38">${techExterior(g,d,k)}</g>`;pts.forEach((p,i)=>{t+=Lc(p.x,0,p.x,p.z,'thin')+sym(p.t,p.x,p.z,k)+TX(p.x+30*k,p.z+18*k,`${i+1}`,13*k,'font-weight="700" fill="#111"')+TX(p.x+30*k,p.z-16*k,`${p.z}`,10*k,`fill="${EL[p.t].c}"`)});return t+dimH(0,g.Wm,g.H+42*k,`${g.Wm}`,k,g.H)};
+  s+=placeView({x:36,y:78,w:900,h:880},'정면 · 바닥(FFL)에서 높이',(g.Wm+g.ext)*1.18,g.H*1.12,draw);
+  let y=110;s+=`<text x="960" y="${y}" font-size="16" class="hd">기호</text>`;y+=12;Object.entries(EL).filter(([t])=>pts.some(p=>p.t===t)).forEach(([t,v])=>{y+=26;s+=`<g transform="translate(980,${y-6})">${sym(t,0,0,.55).replace(/cy="-?0(\.0+)?"/g,'cy="0"')}</g><text x="1004" y="${y}" font-size="13" fill="#111">${v.l}</text>`});
+  y+=36;s+=`<text x="960" y="${y}" font-size="16" class="hd">위치 목록</text>`;y+=8;
+  s+=pts.length?pts.map((p,i)=>{y+=21;return`<text x="960" y="${y}" font-size="12.5" fill="#111">${i+1}. ${esc(EL[p.t].l)} · ${esc(p.n)}</text><text x="1364" y="${y}" font-size="12.5" class="lb" text-anchor="end">왼쪽 ${p.x} / 높이 ${p.z}</text>`}).join(''):`<text x="960" y="${y+22}" font-size="13" class="lb">이 면에는 필요한 전기·설비 점이 없습니다</text>`;
+  s+=`<text x="960" y="${Math.min(950,y+40)}" font-size="11.5" class="lb">· 높이는 마감 바닥에서, 왼쪽 거리는 장 시작점에서 잰 값입니다</text><text x="960" y="${Math.min(966,y+57)}" font-size="11.5" class="lb">· 실제 위치는 현장에서 기사님과 한 번 더 확인하세요</text>`;
+  return s+'</svg>'}
+const hasElec=j=>j.faces.some((f,i)=>elecPoints(j,i).pts.length);
 const fname=s=>`${(job.customer.name||'현장').replace(/^예시\)\s*/,'').replace(/[\\/:*?"<>|]/g,'').trim()||'현장'}_${CATS[job.cat].name}_${s}`;
 
 /* ---------- sample photo ---------- */
@@ -1899,7 +1957,7 @@ function dataURLtoBlob(u){const[hd,b64]=u.split(',');const mime=(hd.match(/data:
 (async()=>{if(!LOCAL&&!window.claude?.use)return;
   const[db,as,us]=LOCAL?[localDB(),null,null]:await Promise.all(['db','assets','user'].map(n=>window.claude.use(n).catch(()=>null)));DB=db;ASSETS=as;USER=us;if(LOCAL){await DB.ready;if(DB.mode()==='mem')setTimeout(()=>toast('이 태블릿에 저장할 수 없는 상태입니다. 작업 후 꼭 ‘전체 내보내기’를 하세요.'),1500)}
   CAN_WRITE=!!DB&&(USER?USER.can?.('data.write')!==false:true);
-  if(DB){try{const s=await DB.doc('settings/catalog').get();if(s.exists&&s.data()?.catalog){store.set(CK,s.data().catalog);catalog=loadCatalog();const v=catalog.ver||0;upgradeCatalog();if(v<6&&CAN_WRITE)saveCatalog();syncBoard()}else if(CAN_WRITE)saveCatalog()}catch(e){}
+  if(DB){try{const s=await DB.doc('settings/catalog').get();if(s.exists&&s.data()?.catalog){store.set(CK,s.data().catalog);catalog=loadCatalog();const v=catalog.ver||0;upgradeCatalog();if(v<7&&CAN_WRITE)saveCatalog();syncBoard()}else if(CAN_WRITE)saveCatalog()}catch(e){}
     DB.collection('jobs').orderBy('updatedAt','desc').limit(300).onSnapshot(async snap=>{serverJobs=snap.docs.map(d=>({id:d.id,...d.data()}));
       const ids=[...new Set(serverJobs.map(x=>x.by).filter(Boolean))].filter(i=>!NAMES[i]);if(ids.length&&USER?.profiles){try{const ps=await USER.profiles(ids);ids.forEach(i=>NAMES[i]=ps[i]?.name||'')}catch(e){}}
       const mine=serverJobs.find(x=>x.id===job.id);if(mine&&mine.status!==job.serverStatus){job.serverStatus=mine.status;persist()}
@@ -2004,16 +2062,21 @@ function load3D(){if(window.THREE)return Promise.resolve();if(window.__t3p)retur
 const v0_mf=c=>c/2-60,v1_mf=c=>c/2+60;
 function build3D(j,open){const T3=THREE,grp=new T3.Group(),door=doorById(j.doorId)||{kind:'none',color:'#ECE9E3'},none=door.kind==='none',dCol=door.color||'#ECE9E3',body=none?dCol:'#ECE9E3',glass=['glass','satin','fluted'].includes(door.tex);
   const pg=planGeo(j),gs=j.faces.map((f,i)=>geom(j,i)),S=.001,mats={},edgeM=new T3.LineBasicMaterial({color:0x4a4d52,transparent:true,opacity:.45});
-  const mat=(col,o={})=>{if(o.tamb){const k='tb'+col+o.tamb;if(mats[k])return mats[k];const cv=document.createElement('canvas');cv.width=64;cv.height=4;const x=cv.getContext('2d');x.fillStyle=col;x.fillRect(0,0,64,4);x.fillStyle=shade(col,-.2);x.fillRect(48,0,14,4);x.fillStyle=shade(col,.12);x.fillRect(44,0,4,4);const tx=new T3.CanvasTexture(cv);tx.wrapS=T3.RepeatWrapping;tx.repeat.set(o.tamb,1);return mats[k]=new T3.MeshLambertMaterial({map:tx})}
+  let curUD=null;const bodyWood=none&&door.tex==='wood';
+  const mat=(col,o={})=>{if(o.wood){const k='wd'+col;if(mats[k])return mats[k];const cv=document.createElement('canvas');cv.width=256;cv.height=256;const x=cv.getContext('2d');x.fillStyle=col;x.fillRect(0,0,256,256);let sd=11;const rnd=()=>(sd=(sd*9301+49297)%233280)/233280;
+      for(let i=0;i<80;i++){const x0=rnd()*256,dk=rnd()<.55;x.strokeStyle=shade(col,dk?-(.05+rnd()*.12):(.03+rnd()*.06));x.lineWidth=.6+rnd()*2.2;x.beginPath();x.moveTo(x0,0);const amp=rnd()*4,ph=rnd()*6;for(let y=0;y<=256;y+=12)x.lineTo(x0+Math.sin(y/38+ph)*amp,y);x.stroke()}
+      const tx=new T3.CanvasTexture(cv);return mats[k]=new T3.MeshLambertMaterial({map:tx})}
+    if(o.tamb){const k='tb'+col+o.tamb;if(mats[k])return mats[k];const cv=document.createElement('canvas');cv.width=64;cv.height=4;const x=cv.getContext('2d');x.fillStyle=col;x.fillRect(0,0,64,4);x.fillStyle=shade(col,-.2);x.fillRect(48,0,14,4);x.fillStyle=shade(col,.12);x.fillRect(44,0,4,4);const tx=new T3.CanvasTexture(cv);tx.wrapS=T3.RepeatWrapping;tx.repeat.set(o.tamb,1);return mats[k]=new T3.MeshLambertMaterial({map:tx})}
     const k=col+JSON.stringify(o);return mats[k]||(mats[k]=new T3.MeshLambertMaterial({color:col,...o}))};
   const box=(P,u0,u1,v0,v1,z0,z1,col,o,edges=true)=>{if(u1-u0<1||Math.abs(v1-v0)<1||z1-z0<1)return;const a=P(u0,v0),b=P(u1,v0),d=P(u1,v1),cx=(a[0]+d[0])/2,cy=(a[1]+d[1])/2,ang=Math.atan2(b[1]-a[1],b[0]-a[0]);
-    const geo=new T3.BoxGeometry((u1-u0)*S,(z1-z0)*S,Math.abs(v1-v0)*S),m=new T3.Mesh(geo,mat(col,o));m.position.set(cx*S,(z0+z1)/2*S,cy*S);m.rotation.y=-ang;grp.add(m);
+    if(bodyWood&&col===body&&!(o&&o.transparent))o={...(o||{}),wood:1};const geo=new T3.BoxGeometry((u1-u0)*S,(z1-z0)*S,Math.abs(v1-v0)*S),m=new T3.Mesh(geo,mat(col,o));m.position.set(cx*S,(z0+z1)/2*S,cy*S);m.rotation.y=-ang;m.userData=curUD||{};grp.add(m);
     if(edges){const e=new T3.LineSegments(new T3.EdgesGeometry(geo),edgeM);e.position.copy(m.position);e.rotation.copy(m.rotation);grp.add(e)}};
   const A=gs.find(g=>g.face==='A');
-  gs.forEach(g=>{const r=pg.rects.find(x=>x.key===g.face);if(!r)return;const P=ctFaceMap(j,g,r),isl=g.island,cab=isl?g.Dm:g.D;
+  const udOf=(gi,g,row,i)=>{if(!row||typeof i!=='number')return{};const m=row.mods[i];if(!m)return{};return{fi:gi,rix:row.rix,i,lab:`${FACE_NAME(g.face)} ${row.zone==='upper'?'상부 ':row.zone==='lower'?'하부 ':''}${i+1}번째 칸 · ${TYPES[m.t]?.label||''} · ${m.w}mm`}};
+  gs.forEach((g,gi)=>{const r=pg.rects.find(x=>x.key===g.face);if(!r)return;const P=ctFaceMap(j,g,r),isl=g.island,cab=isl?g.Dm:g.D;
     const room=isl&&j.island?.front==='room',iov=g.D-cab,fv=zone=>{const dep=zone==='upper'?350:cab;return isl?(room?[g.D-DOOR_T,g.D]:[0,DOOR_T]):[dep-DOOR_T,dep]},bv=zone=>{const dep=zone==='upper'?350:cab;return isl?(room?[iov,g.D-DOOR_T]:[DOOR_T,dep]):[0,dep-DOOR_T]};
     g.rows.forEach(row=>{const lowerish=row.zone!=='upper';
-      rowAll(row).forEach(m=>{const z=m.tall?'lower':row.zone,[b0,b1]=bv(z),[f0,f1]=fv(z);
+      rowAll(row).forEach(m=>{curUD=udOf(gi,g,row,m.i);const z=m.tall?'lower':row.zone,[b0,b1]=bv(z),[f0,f1]=fv(z);
         if(m.filler){box(P,m.x,m.x+m.w,f0,f1,m.z0,m.z1,none?body:dCol);return}
         if(g.cat==='middoor')return;
         if(m.blind){box(P,m.x,m.x+m.w,b0,b1,m.z0,m.z1,body)}else{const bk=isl&&!room?[b1-9,b1]:[b0,b0+9],x0=m.x,x1=m.x+m.w,zz0=m.z0,zz1=m.z1,iv=isl&&!room?[b0,b1-9]:[b0+9,b1];
@@ -2026,12 +2089,18 @@ function build3D(j,open){const T3=THREE,grp=new T3.Group(),door=doorById(j.doorI
             box(P,mx,mx+mw,iv[0]+20,iv[1]-15,za,za+mh,'#f2f3f3');box(P,mx+mw*.2,mx+mw*.8,fz[0]+30,fz[1]+6,za+mh*.2,za+mh*.65,'#9aa6ab',{},false)}}}
         if(m.blind)box(P,m.x,m.x+m.w,f0,f1,m.z0,m.z1,none?body:dCol);
         if(lowerish&&g.pl&&m.z0>=g.pl-1){const pv=isl?(room?[iov+40,g.D-60]:[60,cab-40]):[40,cab-70];box(P,m.x,m.x+m.w,pv[0],pv[1],0,g.pl,'#3d3f42',{},false)}
-        const lay=layout(m);if(lay.oven){const[o0,o1]=fv(z);box(P,m.x+18,m.x+m.w-18,o0,o1+2,lay.oven.zb,lay.oven.zt,'#1c1d1f')}if(lay.micro){const[o0,o1]=fv(z);box(P,m.x+18,m.x+m.w-18,o0,o1+2,lay.micro.zb,lay.micro.zt,'#26282b')}if(lay.openTop&&m.tall){const[o0]=fv(z);lay.shelves.filter(s_=>s_>lay.openTop).forEach(s_=>box(P,m.x+T,m.x+m.w-T,0,o0,s_-T,s_,body))}
+        const lay=layout(m);if(lay.oven){const[o0,o1]=fv(z);box(P,m.x+18,m.x+m.w-18,o0,o1+2,lay.oven.zb,lay.oven.zt,'#1c1d1f')}if(lay.micro){const[o0,o1]=fv(z);box(P,m.x+18,m.x+m.w-18,o0,o1+2,lay.micro.zb,lay.micro.zt,'#26282b')}if(lay.fspace){const[o0,o1]=fv(z);box(P,m.x+30,m.x+m.w-30,20,o1-10,lay.fridge.zb+10,lay.fridge.zt-10,'#c9cdd0')}if(lay.openTop&&m.tall){const[o0]=fv(z);lay.shelves.filter(s_=>s_>lay.openTop).forEach(s_=>box(P,m.x+T,m.x+m.w-T,0,o0,s_-T,s_,body))}
         if(g.cat==='middoor')return;
         if(lay.dw&&!modApps(m).some(x=>x.a.panel)){box(P,m.x+4,m.x+m.w-4,f0,f1,m.z0+4,m.z1-4,'#c9cdd0')}});
       });
-    if(!none&&door.kind!=='sliding')leaves(g,door).forEach(l=>{const z=l.zone==='full'?'lower':l.zone,isTall=(g.rows.find(r=>r.zone==='lower')?.corners||[]).some(c=>c.tall&&l.x>=c.x-2&&l.x<=c.x+c.w);
-      const[f0,f1]=fv(isTall?'lower':z);if(l.glass){box(P,l.x,l.x+l.w,f0,f1,l.zb,l.zb+l.h,'#a9bcc1',{transparent:true,opacity:open?.15:.38});['L','R','T','B'].forEach(sd=>{const a=sd==='L'?[l.x,l.x+25,l.zb,l.zb+l.h]:sd==='R'?[l.x+l.w-25,l.x+l.w,l.zb,l.zb+l.h]:sd==='T'?[l.x,l.x+l.w,l.zb+l.h-25,l.zb+l.h]:[l.x,l.x+l.w,l.zb,l.zb+25];box(P,a[0],a[1],f0-1,f1+1,a[2],a[3],'#2b2c2e',{},false)})}else box(P,l.x,l.x+l.w,f0,f1,l.zb,l.zb+l.h,dCol,glass||open?{transparent:true,opacity:open?.18:.5}:door.tex==='tambour'?{tamb:Math.max(1,Math.round(l.w/30))}:{});
+    if(!none&&door.kind!=='sliding')leaves(g,door).forEach(l=>{curUD=udOf(gi,g,g.rows.find(r_=>r_.zone===l.zone),l.mi);const z=l.zone==='full'?'lower':l.zone,isTall=(g.rows.find(r=>r.zone==='lower')?.corners||[]).some(c=>c.tall&&l.x>=c.x-2&&l.x<=c.x+c.w);
+      const[f0,f1]=fv(isTall?'lower':z);
+      if(open&&(l.kind==='door'||l.kind==='drawer')){const outS=isl&&!room?-1:1,dm=door.tex==='wood'?{wood:1}:door.tex==='tambour'?{tamb:Math.max(1,Math.round(l.w/30))}:{};
+        if(l.kind==='drawer'){const sh=330*outS;box(P,l.x,l.x+l.w,f0+sh,f1+sh,l.zb,l.zb+l.h,dCol,dm);box(P,l.x+25,l.x+l.w-25,outS>0?f0+sh-400:f1+sh,outS>0?f0+sh:f1+sh+400,l.zb+15,l.zb+Math.min(l.h-30,220),shade(body,-.07));return}
+        const fz=outS>0?f1:f0,hu=l.hinge==='R'?l.x+l.w:l.x,fu=l.hinge==='R'?l.x:l.x+l.w,H_=P(hu,fz),Fr=P(fu,fz),N0=P(hu,fz+outS*100),c_=[(Fr[0]-H_[0])/l.w,(Fr[1]-H_[1])/l.w],n_=[(N0[0]-H_[0])/100,(N0[1]-H_[1])/100],a_=100*Math.PI/180,od=[c_[0]*Math.cos(a_)+n_[0]*Math.sin(a_),c_[1]*Math.cos(a_)+n_[1]*Math.sin(a_)];
+        const geo=new T3.BoxGeometry(l.w*S,l.h*S,DOOR_T*S),mm=new T3.Mesh(geo,l.glass?mat('#a9bcc1',{transparent:true,opacity:.4}):mat(dCol,dm));mm.position.set((H_[0]+od[0]*l.w/2)*S,(l.zb+l.h/2)*S,(H_[1]+od[1]*l.w/2)*S);mm.rotation.y=-Math.atan2(od[1],od[0]);mm.userData=curUD||{};grp.add(mm);
+        const e=new T3.LineSegments(new T3.EdgesGeometry(geo),edgeM);e.position.copy(mm.position);e.rotation.copy(mm.rotation);grp.add(e);return}
+      if(l.glass){box(P,l.x,l.x+l.w,f0,f1,l.zb,l.zb+l.h,'#a9bcc1',{transparent:true,opacity:open?.15:.38});['L','R','T','B'].forEach(sd=>{const a=sd==='L'?[l.x,l.x+25,l.zb,l.zb+l.h]:sd==='R'?[l.x+l.w-25,l.x+l.w,l.zb,l.zb+l.h]:sd==='T'?[l.x,l.x+l.w,l.zb+l.h-25,l.zb+l.h]:[l.x,l.x+l.w,l.zb,l.zb+25];box(P,a[0],a[1],f0-1,f1+1,a[2],a[3],'#2b2c2e',{},false)})}else box(P,l.x,l.x+l.w,f0,f1,l.zb,l.zb+l.h,dCol,glass?{transparent:true,opacity:.5}:door.tex==='tambour'?{tamb:Math.max(1,Math.round(l.w/30))}:door.tex==='wood'?{wood:1}:{});
       if(open)return;const p=handlePlace(j,l),hc='#2c2e31',o=isl&&!room?[f0-28,f0]:[f1,f1+28];
       if(p.kind==='bar'){const hl=Math.max(40,p.len||120);if(p.vert)box(P,p.cx-7,p.cx+7,o[0],o[1],p.cz-hl/2,p.cz+hl/2,hc,{},false);else box(P,p.cx-hl/2,p.cx+hl/2,o[0],o[1],p.cz-7,p.cz+7,hc,{},false)}
       else if(p.kind==='knob')box(P,p.cx-14,p.cx+14,o[0],o[1],p.cz-14,p.cz+14,hc,{},false);
@@ -2048,12 +2117,20 @@ function build3D(j,open){const T3=THREE,grp=new T3.Group(),door=doorById(j.doorI
         if(m.t==='sink'){const hw=Math.min(330,m.w/2-50),sv=isl&&!room?[vd-470,vd-90]:isl?[g.D-470,g.D-90]:[90,470];box(P,cx-hw,cx+hw,sv[0],sv[1],850,853,'#8f969b',{},true);const fvv=isl&&!room?[vd-60,vd-30]:isl?[sv[0]-50,sv[0]-20]:[30,60];box(P,cx-15,cx+15,fvv[0],fvv[1],850,1100,'#b8bdc1',{},false);box(P,cx-15,cx+15,isl&&!room?fvv[0]-150:fvv[1],isl&&!room?fvv[0]:fvv[1]+150,1080,1100,'#b8bdc1',{},false)}
         if(m.t==='cook'){const hw=Math.min(290,m.w/2-30),sv=isl&&!room?[vd-560,vd-60]:isl?[g.D-560,g.D-60]:[60,560];box(P,cx-hw,cx+hw,sv[0],sv[1],850,858,'#151515',{},false)}});
       if(g.tbl){const t=g.tbl,rt=pg.rects.find(x=>x.key==='T');if(rt){const P2=(u,v)=>[rt.x+u,rt.y+v];box(P2,0,rt.w,0,rt.h,t.top-30,t.top,ct)}}}});
+  curUD=null;
   {const xs=[],ys=[];pg.rects.forEach(r=>{xs.push(r.x,r.x+r.w);ys.push(r.y,r.y+r.h)});const x0=Math.min(...xs)-700,x1=Math.max(...xs)+700,y0=Math.min(...ys)-700,y1=Math.max(...ys)+900,cx=(x0+x1)/2,cy=(y0+y1)/2;
     const fl=new T3.Mesh(new T3.BoxGeometry((x1-x0)*S,.01,(y1-y0)*S),mat('#b9ad9b'));fl.position.set(cx*S,-.005,cy*S);grp.add(fl);
     const H=A?A.H:2400,mxr=(Math.min(...xs)+Math.max(...xs))/2,myr=(Math.min(...ys)+Math.max(...ys))/2;
     pg.walls.forEach(pts=>{for(let i=0;i<pts.length-1;i++){const[a,b]=[pts[i],pts[i+1]],L=Math.hypot(b[0]-a[0],b[1]-a[1]);if(L<1)continue;const nx=-(b[1]-a[1])/L,ny=(b[0]-a[0])/L,mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2,sgn=((mxr-mx)*nx+(myr-my)*ny)>0?-1:1;
       const w=new T3.Mesh(new T3.BoxGeometry(L*S,H*S,.06),mat('#efece6'));w.position.set((mx+sgn*nx*30)*S,H/2*S,(my+sgn*ny*30)*S);w.rotation.y=-Math.atan2(b[1]-a[1],b[0]-a[0]);grp.add(w)}})}
   return grp}
+function v3Pick(e){if(!V3?.grp)return;const cv=V3.ren.domElement,r=cv.getBoundingClientRect(),T3=THREE,rc=new T3.Raycaster();rc.setFromCamera(new T3.Vector2(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1),V3.cam);
+  const hit=rc.intersectObjects(V3.grp.children,false).find(x=>x.object.isMesh&&x.object.userData&&x.object.userData.lab);v3Hl(hit?hit.object.userData:null)}
+function v3Hl(ud){(V3.hl||[]).forEach(([m,o])=>m.material=o);V3.hl=[];V3.sel=ud;const pop=V3.wrap?.querySelector('.v3pop');if(pop)pop.remove();
+  if(ud){V3.grp.children.forEach(m=>{const u=m.userData;if(m.isMesh&&u&&u.fi===ud.fi&&u.rix===ud.rix&&u.i===ud.i){const o=m.material,c=o.clone();c.emissive=new THREE.Color(0x1e56d0);c.emissiveIntensity=.35;m.material=c;V3.hl.push([m,o])}});
+    const d=document.createElement('div');d.className='v3pop';d.style.cssText='position:absolute;left:10px;top:10px;right:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14px;box-shadow:0 6px 18px rgb(0 0 0/.15)';
+    d.innerHTML=`<b style="flex:1;min-width:160px">${esc(ud.lab)}</b><button type="button" class="btn sm primary" data-act="v3-edit" data-fi="${ud.fi}" data-rix="${ud.rix}" data-i="${ud.i}">이 칸 수정</button><button type="button" class="btn sm quiet" data-act="v3-unsel" aria-label="닫기">✕</button>`;V3.wrap?.appendChild(d)}
+  v3Draw()}
 function v3View(kind){if(!V3)return;const lay=job.layout,base={I:0,niche:0,L:Math.PI/4,Lisland:Math.PI/4,U:0,island:.35,II:Math.PI/2}[lay]??0;
   V3.th=kind==='front'?(lay==='L'||lay==='Lisland'?0:base):kind==='side'?Math.PI/2:kind==='top'?base:base;V3.ph=kind==='top'?1.35:kind==='front'||kind==='side'?.18:(lay==='II'?.8:.42);V3.r=V3.r0*(kind==='top'?1.05:1);v3Draw()}
 function v3Draw(){if(!V3)return;const{cam,ren,scene,tg}=V3,cp=Math.cos(V3.ph);cam.position.set(tg.x+V3.r*Math.sin(V3.th)*cp,tg.y+V3.r*Math.sin(V3.ph),tg.z+V3.r*Math.cos(V3.th)*cp);cam.lookAt(tg);ren.render(scene,cam)}
@@ -2065,17 +2142,17 @@ async function render3D(el,open){if(!el)return;if(!window.THREE)el.innerHTML='<p
     scene.add(new T3.HemisphereLight(0xffffff,0x9a958c,.78));const dl=new T3.DirectionalLight(0xffffff,.55);dl.position.set(3,6,5);scene.add(dl);const dl2=new T3.DirectionalLight(0xffffff,.22);dl2.position.set(-4,3,-2);scene.add(dl2);
     const cam=new T3.PerspectiveCamera(38,1.6,.3,60);V3={ren,scene,cam,tg:new T3.Vector3(),th:0,ph:.4,r:6,r0:6,grp:null,sig:'',ptrs:new Map()};
     const cv=ren.domElement;cv.style.touchAction='none';cv.style.display='block';cv.style.width='100%';cv.style.borderRadius='12px';cv.setAttribute('role','img');cv.setAttribute('aria-label','주방 3D 보기 (끌어서 돌리기)');
-    cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);V3.ptrs.set(e.pointerId,[e.clientX,e.clientY])});
+    cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);V3.ptrs.set(e.pointerId,[e.clientX,e.clientY]);V3.down={x:e.clientX,y:e.clientY,n:V3.ptrs.size}});
     cv.addEventListener('pointermove',e=>{const p=V3.ptrs.get(e.pointerId);if(!p)return;if(V3.ptrs.size===1){V3.th-=(e.clientX-p[0])*.008;V3.ph=clamp(V3.ph+(e.clientY-p[1])*.006,.02,1.5)}
       else{const ps=[...V3.ptrs.values()],o=ps.find(q=>q!==p),d0=Math.hypot(p[0]-o[0],p[1]-o[1]),d1=Math.hypot(e.clientX-o[0],e.clientY-o[1]);if(d0>0&&d1>0)V3.r=clamp(V3.r*d0/d1,V3.r0*.35,V3.r0*2.2)}
       V3.ptrs.set(e.pointerId,[e.clientX,e.clientY]);v3Draw()});
-    const up=e=>V3.ptrs.delete(e.pointerId);cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+    const up=e=>{V3.ptrs.delete(e.pointerId);if(e.type==='pointerup'&&V3.down&&V3.down.n===1&&!V3.ptrs.size&&Math.hypot(e.clientX-V3.down.x,e.clientY-V3.down.y)<7)v3Pick(e);};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
     cv.addEventListener('wheel',e=>{e.preventDefault();V3.r=clamp(V3.r*(e.deltaY>0?1.1:.9),V3.r0*.35,V3.r0*2.2);v3Draw()},{passive:false})}
   const sig=JSON.stringify([job.tallEnd,job.pen,job.faces,job.layout,job.dims,job.corner,job.doorId,job.counterId,job.island,job.table,job.hs,job.finish,catalog.doors.length,open]);
   if(sig!==V3.sig){if(V3.grp){V3.scene.remove(V3.grp);V3.grp.traverse(o=>{o.geometry&&o.geometry.dispose()})}V3.grp=build3D(job,open);V3.scene.add(V3.grp);const first=!V3.sig;V3.sig=sig;
-    const bb=new T3.Box3().setFromObject(V3.grp),sz=bb.getSize(new T3.Vector3());bb.getCenter(V3.tg);V3.tg.y=Math.min(V3.tg.y,1.0);V3.r0=Math.max(sz.x,sz.z,2.4)*1.1+.9;if(first){V3.r=V3.r0;v3View('diag')}}
-  el.innerHTML='';const wrap=document.createElement('div');el.appendChild(wrap);wrap.appendChild(V3.ren.domElement);
-  const bar=document.createElement('div');bar.className='toolbar';bar.style.margin='10px 0 0';bar.innerHTML=`<div class="seg" role="group" aria-label="3D 시점"><button type="button" data-act="v3-view" data-v="diag">대각선</button><button type="button" data-act="v3-view" data-v="front">정면</button><button type="button" data-act="v3-view" data-v="side">옆에서</button><button type="button" data-act="v3-view" data-v="top">위에서</button></div><span class="hint" style="margin:0">손가락으로 끌면 돌아가고, 두 손가락으로 확대·축소</span>`;el.appendChild(bar);
+    const bb=new T3.Box3().setFromObject(V3.grp),sz=bb.getSize(new T3.Vector3());bb.getCenter(V3.tg);V3.tg.y=Math.min(V3.tg.y,1.0);V3.r0=Math.max(sz.x,sz.z,1.0)*1.1+(sz.x<1.5?.6:.9);if(first){V3.r=V3.r0;v3View('diag')}}
+  el.innerHTML='';const wrap=document.createElement('div');wrap.style.position='relative';el.appendChild(wrap);wrap.appendChild(V3.ren.domElement);V3.wrap=wrap;V3.hl=[];
+  const bar=document.createElement('div');bar.className='toolbar';bar.style.margin='10px 0 0';bar.innerHTML=`<div class="seg" role="group" aria-label="3D 시점"><button type="button" data-act="v3-view" data-v="diag">대각선</button><button type="button" data-act="v3-view" data-v="front">정면</button><button type="button" data-act="v3-view" data-v="side">옆에서</button><button type="button" data-act="v3-view" data-v="top">위에서</button></div><span class="hint" style="margin:0">끌면 돌아가고 · 두 손가락 확대 · <b>칸을 누르면 수정</b></span>`;el.appendChild(bar);
   const w=Math.max(280,el.clientWidth||600),h=Math.round(w*.66);V3.ren.setSize(w,h,false);V3.cam.aspect=w/h;V3.cam.updateProjectionMatrix();v3Draw()}
 let viewMode='draw', calibPts=[];
 function viewSeg(){const ok=!!calibPhotoFor(job.fi);return`<div class="seg" role="group" aria-label="보기 방식"><button type="button" data-act="view" data-v="draw" aria-pressed="${viewMode==='draw'}">도면 이미지</button><button type="button" data-act="view" data-v="photo" aria-pressed="${viewMode==='photo'}">현장 사진 합성</button><button type="button" data-act="view" data-v="3d" aria-pressed="${viewMode==='3d'}">3D 보기</button></div>`}
@@ -2112,7 +2189,7 @@ function renderSide(){const g=geom(),q=quote(),d=doorById(job.doorId),pl=planByI
   $('#side').innerHTML=`<div class="side-card"><div class="label">현재 현장</div><div class="side-title">${esc(job.customer.name||'고객 이름 미입력')}</div>
     <dl class="kv"><dt>품목</dt><dd>${CATS[job.cat].name} · ${LAYOUTS[job.layout]}</dd>${job.serverStatus?`<dt>서버</dt><dd>${STATUS[job.serverStatus]}</dd>`:''}${job.faces.map(f=>`<dt>${FACE_NAME(f.key)}</dt><dd class="num">${f.len}${cornerCut(job,f)?` → ${f.len-cornerCut(job,f)}`:''}</dd>`).join('')}
     <dt>높이·깊이</dt><dd class="num">${job.dims.H} · ${job.dims.D}</dd><dt>플랜 (${FACE_NAME(cf().key)})</dt><dd>${esc(pl?.name||'-')}${cf().edited?' · 수정':''}</dd><dt>도어</dt><dd>${esc(d?.name||'-')}</dd></dl></div>
-    ${(()=>{const w=[...supportWarn(),...obstacleIssues().filter(x=>!x.ok).map(x=>`설비: ${OBS[x.o.type].label} → ${x.hits.map(h=>h.tag).join(', ')}`)];return w.length?sec('warn',`<span class="st-bad">확인할 것 ${w.length}건</span>`,'',w.map(x=>`<span style="font-size:13px">· ${x}</span>`).join('')):''})()}
+    ${(()=>{const w=[...(workTri(job)?.msg||[]),...(job.room?.on?roomGeo(job).warn:[]),...supportWarn(),...obstacleIssues().filter(x=>!x.ok).map(x=>`설비: ${OBS[x.o.type].label} → ${x.hits.map(h=>h.tag).join(', ')}`)];return w.length?sec('warn',`<span class="st-bad">확인할 것 ${w.length}건</span>`,'',w.map(x=>`<span style="font-size:13px">· ${x}</span>`).join('')):''})()}
     <div class="side-card"><div class="label">견적</div>${(()=>{const svc=/설치|운반/,work=/전원선|차단기|가스|철거|배선|타일/;const sum=f=>q.lines.filter(f).reduce((a,l)=>a+l.amt,0);const pr=sum(l=>!svc.test(l.item)&&!work.test(l.item)),sv=sum(l=>svc.test(l.item)),wk=sum(l=>!svc.test(l.item)&&work.test(l.item));
       return`<div class="qgroup"><span>제품</span><b>${won(pr)}</b></div><div class="qgroup"><span>시공·설치·운반</span><b>${won(sv)}</b></div>${wk?`<div class="qgroup"><span>전기·가스·타일 등</span><b>${won(wk)}</b></div>`:''}<div class="qgroup"><span>부가세</span><b>${won(q.vat)}</b></div>`})()}
     <div class="total"><small>합계 (VAT 포함)</small><span class="big">${won(q.total)}</span></div>
@@ -2370,8 +2447,8 @@ function step4(){const tabs=[['customer','고객용 이미지'],['proposal','제
   if(outTab==='customer'){body=`${job.faces.length>1?`<div class="toolbar">${faceTabs()}</div>`:''}<div class="toolbar">${viewSeg()}</div>${viewMode==='3d'?`<div class="v3d" id="v3dBox"></div>`:viewMode==='photo'&&!calibPhotoFor(job.fi)?calibGuide():viewMode==='photo'?`<div class="composite" id="compositeBox"></div>`:`<div class="paper-wrap" style="background:#E7E4DF">${sceneSVG(job,{open:job.open})}</div>`}`;
     acts=`${job.cat!=='middoor'&&doorById(job.doorId)?.kind!=='none'?`<div class="seg"><button type="button" data-act="open" data-v="0" aria-pressed="${!job.open}">문 닫힘</button><button type="button" data-act="open" data-v="1" aria-pressed="${!!job.open}">내부 보기</button></div>`:''}<button type="button" class="btn primary" data-act="ex-scene" ${dis}>이미지 저장 (PNG)</button>`}
   if(outTab==='make'){body=`${reqUI()}<div class="paper-wrap" style="margin-top:12px">${makePage().svg}</div>`;acts=`<button type="button" class="btn primary" data-act="ex-make-pdf" ${dis}>제작지시서 PDF</button><button type="button" class="btn" data-act="ex-make-png" ${dis}>제작지시서 이미지</button>`}
-  if(outTab==='drawing'){const rows=cutList(),dts=[['front','정면도'],['plan','평면도'],...(job.cat!=='middoor'?[['side','측면·배면도']]:[]),...(job.cat==='kitchen'?[['counter','상판 도면']]:[]),...(job.room?.on?[['room','현장 평면']]:[])];if(!dts.some(x=>x[0]===drawTab))drawTab='front';
-    body=`<div class="toolbar"><div class="seg">${dts.map(([k,l])=>`<button type="button" data-act="draw-tab" data-v="${k}" aria-pressed="${drawTab===k}">${l}</button>`).join('')}</div>${job.faces.length>1&&['front','side'].includes(drawTab)?faceTabs():''}<span class="hint">PDF에는 모든 면·모든 도면이 들어갑니다.</span></div><div class="paper-wrap">${drawPage()}</div><div class="table-wrap"><table><thead><tr><th>No</th><th>부재명</th><th>규격 (mm)</th><th>재질 / 마감</th><th class="r">수량</th><th>비고</th></tr></thead><tbody>${rows.map((r,i)=>`<tr><td class="r">${i+1}</td><td>${esc(r.part)}</td><td class="mono">${esc(r.size)}</td><td>${esc(r.mat)}</td><td class="r">${r.qty}</td><td>${esc(r.note)}</td></tr>`).join('')}</tbody></table></div>`;
+  if(outTab==='drawing'){const rows=cutList(),dts=[['front','정면도'],['plan','평면도'],...(job.cat!=='middoor'?[['side','측면·배면도']]:[]),...(job.cat==='kitchen'?[['counter','상판 도면']]:[]),...(job.room?.on?[['room','현장 평면']]:[]),...(hasElec(job)?[['elec','전기·설비']]:[])];if(!dts.some(x=>x[0]===drawTab))drawTab='front';
+    body=`<div class="toolbar"><div class="seg">${dts.map(([k,l])=>`<button type="button" data-act="draw-tab" data-v="${k}" aria-pressed="${drawTab===k}">${l}</button>`).join('')}</div>${job.faces.length>1&&['front','side','elec'].includes(drawTab)?faceTabs():''}<span class="hint">PDF에는 모든 면·모든 도면이 들어갑니다.</span></div><div class="paper-wrap">${drawPage()}</div><div class="table-wrap"><table><thead><tr><th>No</th><th>부재명</th><th>규격 (mm)</th><th>재질 / 마감</th><th class="r">수량</th><th>비고</th></tr></thead><tbody>${rows.map((r,i)=>`<tr><td class="r">${i+1}</td><td>${esc(r.part)}</td><td class="mono">${esc(r.size)}</td><td>${esc(r.mat)}</td><td class="r">${r.qty}</td><td>${esc(r.note)}</td></tr>`).join('')}</tbody></table></div>`;
     acts=`<button type="button" class="btn primary" data-act="ex-draw-pdf" ${dis}>전체 PDF (도면 전부·제작·부재·작업지시)</button><button type="button" class="btn" data-act="ex-draw-png" ${dis}>${job.faces.length>1?FACE_NAME(cf().key)+' ':''}도면 PNG</button><button type="button" class="btn" data-act="ex-cut-csv" ${dis}>부재목록 CSV</button>`}
   if(outTab==='tile'){body=`<div class="paper-wrap">${tileSVG()}</div>`;acts=`<button type="button" class="btn primary" data-act="ex-tile-pdf" ${dis}>타일 도면 PDF</button><button type="button" class="btn" data-act="ex-tile-png" ${dis}>타일 도면 PNG</button>`}
   if(outTab==='work'){body=`${reqUI()}<div class="paper-wrap" style="margin-top:12px">${workPage().svg}</div>`;acts=`<button type="button" class="btn primary" data-act="ex-work-pdf" ${dis}>작업지시서 PDF</button><button type="button" class="btn" data-act="ex-work-png" ${dis}>작업지시서 이미지</button>`}
@@ -2440,8 +2517,8 @@ function openManager(){const lay=$('#layer');const P=catalog.prices,C=catalog.co
   if(mgrTab==='prices'){const inp=(path,label,v)=>`<div class="field"><label for="p-${path}">${label}</label><input class="input mono" id="p-${path}" inputmode="numeric" data-change="price" data-path="${path}" value="${v}"></div>`;
     body=`<div class="form-grid"><div class="field"><label for="co-name">업체명</label><input class="input" id="co-name" data-change="company" data-k="name" value="${esc(C.name)}"></div><div class="field"><label for="co-tel">연락처</label><input class="input" id="co-tel" data-change="company" data-k="tel" value="${esc(C.tel)}"></div><div class="field"><label for="co-origin">출고지 주소 (운반 거리 기준)</label><input class="input" id="co-origin" data-change="company" data-k="origin" value="${esc(C.origin||'')}"></div></div>
     <div style="min-width:0"><div class="label" style="margin-top:14px">운반 차량 요금 (개별화물·용달 · 1대 기준 원)</div><div class="table-wrap" style="margin:0 0 6px;flex-shrink:0;min-height:max-content"><table><thead><tr><th>차량</th><th class="r">30km 이하</th><th class="r">30~50km</th><th class="r">50~70km</th><th class="r">70km 넘음</th><th class="r">70km 넘는 1km당</th><th class="r">자동 선택 (장 길이 합계 ≤ mm)</th><th></th></tr></thead><tbody>${trucks().map((t,i)=>`<tr><td><input class="input" style="width:90px;min-height:34px" data-change="trk" data-i="${i}" data-k="name" value="${esc(t.name)}" aria-label="차량 이름"></td>${['t30','t50','t70','over','perKm','maxLen'].map(k=>`<td class="r"><input class="input mono" style="width:100px;min-height:34px;text-align:right" inputmode="numeric" data-change="trk" data-i="${i}" data-k="${k}" value="${t[k]}" aria-label="${esc(t.name)} ${k}"></td>`).join('')}<td><button type="button" class="btn sm quiet danger" data-act="trk-del" data-i="${i}">삭제</button></td></tr>`).join('')}</tbody></table></div><button type="button" class="btn sm" style="flex-shrink:0;justify-self:start;width:auto" data-act="trk-add">+ 차량 추가</button></div>
-    <div class="form-grid">${inp('body.closet','붙박이장 본체 (자당)',P.body.closet)}${inp('body.shoe','현관장 본체 (자당)',P.body.shoe)}${inp('body.dress','드레스룸 본체 (자당)',P.body.dress)}${inp('body.laundry','세탁실장 본체 (자당)',P.body.laundry)}${inp('jaMM','1자 기준 (mm)',P.jaMM)}
-    ${inp('kLower','싱크 하부장 (m당)',P.kLower)}${inp('kUpper','싱크 상부장 (m당)',P.kUpper)}${inp('magicCorner','매직코너 철물 (곳당)',P.magicCorner)}${inp('cornerPullout','코너 풀아웃 철물 (곳당)',P.cornerPullout)}${inp('glassDoor','유리 도어 추가금 (짝당)',P.glassDoor)}${Object.values(HWS).map(x=>inp(x.p,`철물 · ${x.l} (개당)`,P[x.p])).join('')}${inp('cornerDrawer','코너 V자 서랍 (곳당)',P.cornerDrawer)}${inp('cornerLid','코너 리프트업 상판 (곳당)',P.cornerLid)}${inp('tallCorner','코너 키큰장 (개당)',P.tallCorner)}${inp('cornerDiag','오각 코너장 하부 (곳당)',P.cornerDiag)}${inp('cornerDiagU','오각 코너장 상부 (곳당)',P.cornerDiagU)}${inp('cornerL','ㄱ자 코너장 하부 (곳당)',P.cornerL)}${inp('cornerLU','ㄱ자 코너장 상부 (곳당)',P.cornerLU)}${inp('hoodRaise','후드장 기본 올림 (mm)',P.hoodRaise)}${inp('hoodMinGas','후드 하단~상판 최소 · 가스 (mm)',P.hoodMinGas)}${inp('hoodMinElec','후드 하단~상판 최소 · 전기 (mm)',P.hoodMinElec)}${inp('appInstall','고객 구매 가전 설치비 (개당)',P.appInstall)}${inp('elecLine','인덕션 전용선 신설',P.elecLine)}${inp('breaker','전용 차단기 설치',P.breaker)}${inp('gasWork','가스 배관 연결',P.gasWork)}${inp('gasCap','가스 배관 막음',P.gasCap)}
+    <div class="form-grid">${inp('body.closet','붙박이장 본체 (자당)',P.body.closet)}${inp('body.shoe','현관장 본체 (자당)',P.body.shoe)}${inp('body.dress','드레스룸 본체 (자당)',P.body.dress)}${inp('body.laundry','세탁실장 본체 (자당)',P.body.laundry)}${inp('body.single','단품 가구 본체 (자당)',P.body.single)}${inp('jaMM','1자 기준 (mm)',P.jaMM)}
+    ${inp('kLower','싱크 하부장 (m당)',P.kLower)}${inp('kUpper','싱크 상부장 (m당)',P.kUpper)}${inp('magicCorner','매직코너 철물 (곳당)',P.magicCorner)}${inp('cornerPullout','코너 풀아웃 철물 (곳당)',P.cornerPullout)}${inp('glassDoor','유리 도어 추가금 (짝당)',P.glassDoor)}${inp('fridgeHousing','냉장고 자리 위 수납·측판 (개당)',P.fridgeHousing)}${Object.values(HWS).map(x=>inp(x.p,`철물 · ${x.l} (개당)`,P[x.p])).join('')}${inp('cornerDrawer','코너 V자 서랍 (곳당)',P.cornerDrawer)}${inp('cornerLid','코너 리프트업 상판 (곳당)',P.cornerLid)}${inp('tallCorner','코너 키큰장 (개당)',P.tallCorner)}${inp('cornerDiag','오각 코너장 하부 (곳당)',P.cornerDiag)}${inp('cornerDiagU','오각 코너장 상부 (곳당)',P.cornerDiagU)}${inp('cornerL','ㄱ자 코너장 하부 (곳당)',P.cornerL)}${inp('cornerLU','ㄱ자 코너장 상부 (곳당)',P.cornerLU)}${inp('hoodRaise','후드장 기본 올림 (mm)',P.hoodRaise)}${inp('hoodMinGas','후드 하단~상판 최소 · 가스 (mm)',P.hoodMinGas)}${inp('hoodMinElec','후드 하단~상판 최소 · 전기 (mm)',P.hoodMinElec)}${inp('appInstall','고객 구매 가전 설치비 (개당)',P.appInstall)}${inp('elecLine','인덕션 전용선 신설',P.elecLine)}${inp('breaker','전용 차단기 설치',P.breaker)}${inp('gasWork','가스 배관 연결',P.gasWork)}${inp('gasCap','가스 배관 막음',P.gasCap)}
     ${inp('mFrame','중문 프레임·레일',P.mFrame)}${inp('mSlide','중문 슬라이딩 문짝',P.mSlide)}${inp('mFixed','중문 고정창',P.mFixed)}${inp('mSwing','중문 여닫이 문짝',P.mSwing)}
     ${inp('drawer','서랍 (개당)',P.drawer)}${inp('ltShelf','조명 · 선반 LED (m당)',P.ltShelf)}${inp('ltRod','조명 · 행거봉 LED (m당)',P.ltRod)}${inp('ltVert','조명 · 측면 세로 LED (m당)',P.ltVert)}${inp('ltPuck','조명 · 다운라이트 (개당)',P.ltPuck)}${inp('ltUnder','조명 · 상부장 하부 간접등 (m당)',P.ltUnder)}${inp('ltPlinth','조명 · 걸레받이 간접등 (m당)',P.ltPlinth)}${inp('ltSensorDoor','조명 · 문 열림 센서 (개당)',P.ltSensorDoor)}${inp('ltSensorPir','조명 · 인체 감지 센서 (개당)',P.ltSensorPir)}${inp('ltTouch','조명 · 터치 스위치 (개당)',P.ltTouch)}${inp('ltPsu60','SMPS 60W',P.ltPsu60)}${inp('ltPsu100','SMPS 100W',P.ltPsu100)}${inp('ltPsu150','SMPS 150W',P.ltPsu150)}${inp('ltWire','조명 배선·설치 (칸당)',P.ltWire)}
     ${inp('installRate','시공·설치비 · 제품 금액의 %',P.installRate)}${inp('installMin','시공·설치비 · 최소 (목수 1일)',P.installMin)}${inp('fullTop','몰딩 없음 · 위 띄움 (mm)',P.fullTop)}${inp('fullSide','몰딩 없음 · 좌우 합계 띄움 (mm)',P.fullSide)}${inp('fillerW','휠라 방식 · 한쪽 휠라 폭 (mm)',P.fillerW)}${inp('moldingH','휠라 방식 · 상몰딩 높이 (mm)',P.moldingH)}${inp('fillerPrice','휠라·상몰딩 (m당)',P.fillerPrice)}${inp('demoPrice','기존장 철거·폐기 (m당)',P.demoPrice)}${inp('board','측판·판재 두께 (mm)',P.board)}${inp('plinthBox','걸레받이 기본 · 붙박이·현관·드레스 (50~120)',P.plinthBox)}${inp('plinthKitchen','걸레받이 기본 · 싱크대 (120~150)',P.plinthKitchen)}${inp('cornerK','코너 처리 · 싱크대 (곳당)',P.cornerK)}${inp('cornerB','코너 처리 · 수납장 (곳당)',P.cornerB)}${inp('islandFinish','아일랜드 뒷면·측면 마감 (m당)',P.islandFinish)}${inp('islandOverhang','아일랜드 식탁 오버행 기본 (mm)',P.islandOverhang)}${inp('maxOverhang','받침 없이 가능한 최대 오버행 (mm)',P.maxOverhang)}</div>
@@ -2556,11 +2633,12 @@ const ACT={
   open:b=>{job.open=b.dataset.v==='1';render()},
   out:b=>{outTab=b.dataset.v;renderStage()},
   'v3-view':b=>v3View(b.dataset.v),
+  'v3-unsel':()=>v3Hl(null),'v3-edit':b=>{job.fi=+b.dataset.fi;job.sel={row:+b.dataset.rix,i:+b.dataset.i};step=2;render();window.scrollTo({top:0});toast('선택한 칸을 열었습니다')},
   'prop-pdf':async()=>{const p=propCache||await proposalPage();savePDF(fname('제안서.pdf'),[{...p,mm:.3}])},'prop-png':async()=>{const p=propCache||await proposalPage();savePNG(fname('제안서.png'),p.svg,p.w,p.h,2)},
   'prop-share':async()=>openSend(await propDoc(),'share'),'prop-email':async()=>openSend(await propDoc(),'email'),
   'sk-cancel':()=>{window.__skAbort?.abort();$('#layer').innerHTML=''},'sk-apply':()=>applySketch(),
   'ex-scene':()=>{if(viewMode==='3d'&&V3){v3Draw();V3.ren.domElement.toBlob(b=>saveFile(fname('3D이미지.png'),b),'image/png');return}if(viewMode==='photo'&&compositeCanvas){compositeCanvas.toBlob(b=>saveFile(fname(`현장합성${job.faces.length>1?'_'+cf().key:''}.png`),b),'image/png');return}const s=sceneSVG(job,{open:job.open,px:1800});savePNG(fname(`제안이미지${job.faces.length>1?'_'+cf().key:''}.png`),s,1800,+s.match(/height="(\d+)"/)[1],1)},
-  'ex-draw-png':()=>savePNG(fname(`${{front:'정면도',plan:'평면도',side:'측면배면도',counter:'상판도면'}[drawTab]||'도면'}${job.faces.length>1&&['front','side'].includes(drawTab)?'_'+cf().key:''}.png`),drawPage(),1400,990,2),
+  'ex-draw-png':()=>savePNG(fname(`${{front:'정면도',plan:'평면도',side:'측면배면도',counter:'상판도면',room:'현장평면',elec:'전기설비'}[drawTab]||'도면'}${job.faces.length>1&&['front','side'].includes(drawTab)?'_'+cf().key:''}.png`),drawPage(),1400,990,2),
   'ex-draw-pdf':()=>savePDF(fname('제작도면.pdf'),drawPages()),
   _unused_draw:()=>{const c=cutPage(),wp=workPage();const mk=makePage();return([...job.faces.flatMap((f,i)=>[{svg:drawingSVG(job,i),w:1400,h:990,mm:.3},...(job.cat!=='middoor'?[{svg:sidePage(job,i),w:1400,h:990,mm:.3}]:[])]),{svg:planDetailSVG(job),w:1400,h:990,mm:.3},...(job.cat==='kitchen'?[{svg:counterSVG(job),w:1400,h:990,mm:.3}]:[]),{...mk,mm:.3},...(tileAreas().length?[{svg:tileSVG(),w:1400,h:990,mm:.3}]:[]),{...c,mm:.3},{...wp,mm:.3}])},
   'q-email':()=>openSend(quoteDoc(),'email'),'q-share':()=>openSend(quoteDoc(),'share'),'send-close':()=>{$('#layer').innerHTML='';SEND=null},'send-email':()=>doEmail(),'send-share':()=>doShare(),
@@ -2691,7 +2769,7 @@ function counterSVG(j=job){let s=pageHead(j,`상판 도면 · ${LAYOUTS[j.layout
   s+=noteBox(36,804,680,'상판 사양',[`${c0?.name||'-'} · ${cs.label} ${cs.thick}T · ${cs.note}`,`깊이 = 하부장 ${A?A.D:''} + 앞 돌출 20 · 벽 쪽 3면 실리콘`,`타공: 현장에서 진행 (아래 타공 목록 위치대로) · 싱크볼 ${cs.mount==='under'?'언더':cs.mount==='over'?'탑마운트':'일체형'}`,cs.back?`뒷턱 ${cs.back}`:'',`최대 길이 ${cs.maxLen} · 넘으면 이음`]);
   s+=noteBox(740,804,620,'타공 목록',cuts.map(c=>`${c.pc.g.island?'아일랜드':c.pc.g.face} ${APP_KIND[c.x.a.kind]} ${c.cw}×${c.cd} · 시작에서 중심 ${Math.round(c.uc-c.pc.u0)} · 앞에서 ${c.fg}`).concat(cuts.length?[]:['타공 없음']));
   return s+'</svg>'}
-function drawPage(tab=drawTab,j=job,fi=j.fi){if(tab==='room')return roomPage(j);if(tab==='plan')return planDetailSVG(j);if(tab==='side')return sidePage(j,fi);if(tab==='counter')return counterSVG(j);return drawingSVG(j,fi)}
+function drawPage(tab=drawTab,j=job,fi=j.fi){if(tab==='room')return roomPage(j);if(tab==='elec')return elecPage(j,fi);if(tab==='plan')return planDetailSVG(j);if(tab==='side')return sidePage(j,fi);if(tab==='counter')return counterSVG(j);return drawingSVG(j,fi)}
 
 /* ---------- 고객 요구사항 · 제작지시서 ---------- */
 const REQ_TO={both:'공장+현장',factory:'공장',site:'현장'};
