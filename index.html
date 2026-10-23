@@ -806,6 +806,7 @@ const DEFAULT_SUPPORTS=[
 const APP_KIND={sink:'싱크볼',faucet:'수전',cooktop:'쿡탑',hood:'후드',dw:'식기세척기',wash:'세탁기',oven:'오븐',dryer:'식기건조대',etc:'기타 부속'};
 const DEFAULT_APPS=[
   {id:'a1',kind:'sink',name:'사각 언더싱크볼 700',w:700,h:220,d:450,price:150000},{id:'a2',kind:'sink',name:'사각 언더싱크볼 860',w:860,h:220,d:460,price:180000},
+  {id:'a15',kind:'sink',name:'사각 싱크볼 450 (소형·보조)',w:450,h:200,d:400,price:90000},{id:'a16',kind:'sink',name:'사각 언더싱크볼 600',w:600,h:220,d:450,price:120000},{id:'a17',kind:'sink',name:'사각 언더싱크볼 800',w:800,h:220,d:460,price:165000},{id:'a18',kind:'sink',name:'대형 언더싱크볼 900',w:900,h:230,d:480,price:200000},{id:'a19',kind:'sink',name:'와이드 싱크볼 1000',w:1000,h:230,d:480,price:240000},{id:'a20',kind:'sink',name:'2구 싱크볼 1200',w:1200,h:220,d:480,price:300000},
   {id:'a3',kind:'faucet',name:'원홀 거위목 수전',w:0,h:0,d:0,price:90000},{id:'a4',kind:'etc',name:'싱크대 음식물처리기',w:0,h:0,d:0,price:450000},
   {id:'a5',kind:'cooktop',name:'인덕션 3구 빌트인',w:580,h:60,d:510,price:650000,fuel:'elec',kw:7.4},{id:'a6',kind:'cooktop',name:'하이브리드 3구 (인덕션2+하이라이트1)',w:590,h:60,d:520,price:590000,fuel:'elec',kw:6.4},{id:'a14',kind:'cooktop',name:'가스쿡탑 3구 빌트인',w:600,h:60,d:510,price:320000,fuel:'gas',kw:0},
   {id:'a7',kind:'hood',name:'슬림 히든 후드 600',w:600,h:150,d:300,price:230000},{id:'a8',kind:'hood',name:'침니 후드 900',w:900,h:700,d:500,price:380000,style:'chimney'},
@@ -830,7 +831,7 @@ function loadCatalog(){const c=store.get(CK);const d=defaultCatalog();if(!c)retu
 let catalog=loadCatalog();
 function upgradeCatalog(){if((catalog.ver||0)<2){DEFAULT_COUNTERS.forEach(c=>{if(!catalog.counters.some(x=>x.id===c.id))catalog.counters.push(clone(c))});catalog.counters.forEach(c=>{if(!c.type)c.type=ctType(c)});catalog.ver=2}if((catalog.ver||0)<3){catalog.units=catalog.units||[];DEFAULT_UNITS.forEach(u=>{if(!catalog.units.some(x=>x.id===u.id))catalog.units.push(clone(u))});catalog.ver=3}if((catalog.ver||0)<4){catalog.handles=catalog.handles||[];DEFAULT_HANDLES.forEach(h=>{if(!catalog.handles.some(x=>x.id===h.id))catalog.handles.push(clone(h))});catalog.ver=4}if((catalog.ver||0)<6){['d1','d2','d3','t1','t2'].forEach(id=>{const d=catalog.doors.find(x=>x.id===id);if(d&&!d.cats.includes('laundry'))d.cats.push('laundry')});}
   if((catalog.ver||0)<7){['d1','d2','d3','d4','t1','t2'].forEach(id=>{const d=catalog.doors.find(x=>x.id===id);if(d&&!d.cats.includes('single'))d.cats.push('single')});catalog.prices.body=catalog.prices.body||{};if(catalog.prices.body.single==null)catalog.prices.body.single=90000;catalog.prices.body=catalog.prices.body||{};if(catalog.prices.body.laundry==null)catalog.prices.body.laundry=95000}
-  if((catalog.ver||0)<5){DEFAULT_DOORS.filter(d=>d.tex==='tambour').forEach(d=>{if(!catalog.doors.some(x=>x.id===d.id))catalog.doors.push(clone(d))});catalog.ver=5}if((catalog.ver||0)<7)catalog.ver=7}
+  if((catalog.ver||0)<5){DEFAULT_DOORS.filter(d=>d.tex==='tambour').forEach(d=>{if(!catalog.doors.some(x=>x.id===d.id))catalog.doors.push(clone(d))});catalog.ver=5}if((catalog.ver||0)<7)catalog.ver=7;if((catalog.ver||0)<8){catalog.apps=catalog.apps||[];DEFAULT_APPS.filter(a=>a.kind==='sink').forEach(a=>{if(!catalog.apps.some(x=>x.id===a.id))catalog.apps.push(clone(a))});catalog.ver=8}}
 upgradeCatalog();
 const syncBoard=()=>{T=clamp(+catalog.prices.board||20,9,40)};syncBoard();
 const plRange=cat=>PL_RANGE[cat]||[0,0];
@@ -1174,6 +1175,41 @@ function cutList(j=job){const door=doorById(j.doorId)||{kind:'none',name:'-'},ro
   return rows}
 function obsOffset(g){return g.mirrored?g.sL:g.cut+g.sL}
 function fillerZones(g){if(g.cat!=='kitchen')return[[0,g.H]];const up=g.rows.find(r=>r.zone==='upper');return up?[[0,850],[up.z0,g.H]]:[[0,850]]}
+const FIXT=m=>['dw','wash','oven'].includes(m.t)||!!m.unit;
+const sinkNeed=a=>Math.ceil((a.w+2*T+40)/50)*50;
+function minWOf(m){let n=250;modApps(m).forEach(({a})=>{if(a.kind==='sink'&&a.w)n=Math.max(n,a.w+2*T+40);if(a.kind==='cooktop'&&a.w)n=Math.max(n,a.w+20)});return Math.ceil(n/5)*5}
+function spreadW(ws,mins,flex,target,near){ws=ws.slice();let d=target-ws.reduce((a,b)=>a+b,0);const idx=ws.map((_,i)=>i).filter(i=>flex[i]);if(near==='R')idx.reverse();
+  for(const i of idx){if(Math.abs(d)<1)break;if(d>0){ws[i]+=d;d=0}else{const take=Math.min(-d,ws[i]-mins[i]);if(take>0){ws[i]-=take;d+=take}}}return Math.abs(d)<1?ws:null}
+function fitPlan(j,o){const fi=j.faces.findIndex(f=>f.key===o.face);if(fi<0||!['dist','water'].includes(o.type))return null;const f=j.faces[fi],vg=gview(j,fi),offv=obsOffset(vg),g=geom(j,fi),water=o.type==='water';
+  let a=o.x-offv,b=o.x+o.w-offv;if(vg.mirrored){const t=vg.Wm-b;b=vg.Wm-a;a=t}const c=(a+b)/2,pad=water?T+60:T+30,plans=[];let rel=0;
+  g.rows.forEach(row=>{if(row.zone==='upper'||!row.mods.length||!(o.z<(row.zone==='lower'?850:row.z1)&&o.z+o.h>row.z0))return;const M=row.mods,n=M.length,x0=M[0].x,x1=M[n-1].x+M[n-1].w;if(b<=x0||a>=x1)return;
+    const src=f.rows[row.rix].mods,si=src.findIndex(m=>m.t==='sink');if(water&&si<0)return;rel++;
+    const inside=m=>water?(c>=m.x+pad&&c<=m.x+m.w-pad):(a>=m.x+pad&&b<=m.x+m.w-pad);
+    if(water?inside(M[si]):M.some((m,i)=>!FIXT(src[i])&&inside(m)))return;
+    let best=null;const cands=water?[si]:src.map((m,i)=>i).filter(i=>!FIXT(src[i]));
+    cands.forEach(k=>{const base=[...Array(n).keys()],ords=[base];for(let p=0;p<n;p++){if(p===src.indexOf(src[k])&&base.indexOf(k)===p)continue;const o2=base.filter(i=>i!==k);o2.splice(p,0,k);if(o2.join()!==base.join())ords.push(o2)}
+      ords.forEach((ord,oi)=>{const pos=ord.indexOf(k),ws0=ord.map(i=>M[i].w),mins=ord.map(i=>FIXT(src[i])?M[i].w:minWOf(src[i])),flex=ord.map(i=>!FIXT(src[i]));
+        let wk0=Math.max(ws0[pos],mins[pos]);if(!water){const need=(b-a)+2*pad;if(need>wk0)wk0=Math.ceil(need/50)*50}const cL=x0+ws0.slice(0,pos).reduce((s2,v)=>s2+v,0),wks=[wk0];if(!water){const e1=cL+ws0[pos]-Math.floor((a-pad-x0)/5)*5-x0,e2=Math.ceil((b+pad-x0)/5)*5+x0-cL;[e1,e2].forEach(e=>{if(e>wk0)wks.push(e)})}wks.forEach(wk=>{
+        const sideR=(lo,hi)=>{const L=ord.slice(lo,hi).map((_,q)=>q+lo);if(!L.length)return[0,0];const fx=L.filter(i=>!flex[i]).reduce((s2,i)=>s2+ws0[i],0),fm=L.filter(i=>flex[i]).reduce((s2,i)=>s2+mins[i],0);return L.some(i=>flex[i])?[fx+fm,1e9]:[fx,fx]};
+        const [mnL,mxL]=sideR(0,pos),[mnR,mxR]=sideR(pos+1,n);let lo=Math.max(x0+mnL,x1-wk-mxR,water?c-wk+pad:b+pad-wk),hi=Math.min(x0+mxL,x1-wk-mnR,water?c-pad:a-pad);
+        lo=Math.ceil((lo-x0)/5)*5+x0;hi=Math.floor((hi-x0)/5)*5+x0;if(lo>hi)return;const cur=x0+ws0.slice(0,pos).reduce((s2,v)=>s2+v,0),pref=water?c-wk/2:cur;let L=Math.round((clamp(pref,lo,hi)-x0)/5)*5+x0;L=clamp(L,lo,hi);
+        const left=pos?spreadW(ws0.slice(0,pos),mins.slice(0,pos),flex.slice(0,pos),L-x0,'R'):[],right=pos<n-1?spreadW(ws0.slice(pos+1),mins.slice(pos+1),flex.slice(pos+1),x1-L-wk,'L'):[];if(!left||!right)return;
+        const ws=[...left,wk,...right];if(Math.abs(ws.reduce((s2,v)=>s2+v,0)-(x1-x0))>1)return;const cost=ws.reduce((s2,v,q)=>s2+Math.abs(v-M[ord[q]].w),0)+(oi?(water?350:1500):0)+(!water&&src[k].t==='sink'?200:0)+(water?Math.abs(L+wk/2-c)*.3:0)+30*ws.filter((v,q)=>v!==M[ord[q]].w).length;
+        if(!best||cost<best.cost)best={rix:row.rix,ord,ws,k,cost,moved:oi>0}})})});
+    plans.push(best||{rix:row.rix,fail:true})});
+  if(!rel)return null;return{fi,plans,ok:!plans.length,fail:plans.some(p=>p.fail)}}
+function applyFit(j,o){const pl=fitPlan(j,o);if(!pl)return'맞출 장이 없습니다';if(pl.ok)return'이미 잘 맞습니다';if(pl.fail)return water0(o)?'싱크장 폭·주변 칸 때문에 배관 위치에 맞출 수 없습니다 · 칸 폭 고정이나 가전 칸을 확인하세요':'분배기가 들어갈 만큼 칸을 넓힐 수 없습니다 · 칸 폭 고정이나 가전 칸을 확인하세요';
+  const f=j.faces[pl.fi];pl.plans.forEach(p=>{const rw=f.rows[p.rix],old=rw.mods,selM=j.fi===pl.fi&&j.sel.row===p.rix?old[j.sel.i]:null;rw.mods=p.ord.map((i,q)=>{const m=old[i];m.r=p.ws[q];return m});if(o.type==='dist')rw.mods[p.ord.indexOf(p.k)].fix=true;if(selM)j.sel.i=Math.max(0,rw.mods.indexOf(selM))});f.edited=true;
+  return o.type==='water'?'싱크장을 배관 위치에 맞췄습니다':'분배기가 한 칸 안에 들어가게 칸 폭을 맞췄습니다'}
+const water0=o=>o.type==='water';
+function fitIssues(j=job,face){return(j.obstacles||[]).filter(o=>(!face||o.face===face)&&['dist','water'].includes(o.type)).map(o=>({o,p:fitPlan(j,o)})).filter(x=>x.p&&!x.p.ok)}
+function fitMsg(o){return o.type==='water'?'싱크장이 배관 위치와 맞지 않아요':'분배기가 칸 경계(측판)에 걸려 있어요'}
+function sinkUI(m,gm){const sinks=(catalog.apps||[]).filter(a=>a.kind==='sink'&&a.w).sort((x,y)=>x.w-y.w);if(!sinks.length)return'';const cur=modApps(m).find(x=>x.a.kind==='sink')?.a,need=cur?sinkNeed(cur):0,face=cf().key,pipes=(job.obstacles||[]).filter(o=>o.face===face&&o.type==='water'),pc=pipes.length?Math.round(pipes[0].x+pipes[0].w/2):'',fi=fitIssues(job,face).filter(x=>x.o.type==='water');
+  return`<div class="side-card" style="display:grid;gap:10px;padding:12px"><div class="label" style="margin:0">싱크볼 크기 <span class="hint">· 누르면 싱크장 폭도 맞춰집니다</span></div>
+  <div class="chips">${sinks.map(a=>`<button type="button" class="chip" data-act="sink-size" data-id="${a.id}" aria-pressed="${cur?.id===a.id}">${a.w}${a.w<=500?' 소형':a.w>=900?' 대형':''}</button>`).join('')}</div>
+  ${cur?`<p class="hint" style="margin:0">${esc(cur.name)} · ${cur.w}×${cur.d} · 이 볼에 필요한 싱크장 폭 <b>${need}mm 이상</b> · 지금 ${gm.w}mm ${gm.w<need?'<b class="st-bad">좁음</b>':'<span class="st-ok">OK</span>'}</p>`:''}
+  <div class="toolbar" style="margin:0;flex-wrap:wrap"><span class="hint" style="min-width:64px">배관 위치</span><input class="input mono" style="width:96px;min-height:36px;text-align:center" inputmode="numeric" data-change="sink-pipe" value="${pc}" placeholder="mm" aria-label="배관 중심 위치 mm"><span class="hint">${FACE_NAME(face)} 벽 <b>왼쪽 끝</b>에서 배관(급·배수) 가운데까지</span></div>
+  ${pipes.length?(fi.length?`<div class="issue"><span><b class="st-bad">싱크장이 배관 위치와 안 맞아요</b></span><button type="button" class="btn sm" data-act="obs-fit" data-id="${pipes[0].id}">싱크를 배관 위로 옮기기</button></div>`:'<p class="hint st-ok" style="margin:0">배관이 싱크장 안에 들어와 있습니다</p>'):'<p class="hint" style="margin:0">배관 위치를 넣으면 싱크장이 그 위로 자동으로 옮겨집니다</p>'}</div>`}
 function obstacleIssues(j=job){const out=[];(j.obstacles||[]).forEach(o=>{const fi=j.faces.findIndex(f=>f.key===o.face);if(fi<0)return;const g=gview(j,fi),off=obsOffset(g),hits=[];
     const ov=(ax,aw,az,ah)=>o.x<ax+aw&&o.x+o.w>ax&&o.z<az+ah&&o.z+o.h>az;
     g.rows.forEach(row=>rowAll(row).forEach((m,i)=>{const top=row.zone==='lower'?850:m.z1;if(ov(off+m.x,m.w,m.z0,top-m.z0)){
@@ -1211,7 +1247,7 @@ function techModule(m,k,label=true){const{x,w,z0,z1}=m,h=z1-z0,lay=layout(m);if(
   lay.shelves.forEach(z=>s+=Rc(x+T,z-T,w-2*T,T,'sh'));lay.rods.forEach(z=>s+=Lc(x+T+20,z,x+w-T-20,z,'rod'));
   lay.drawers.forEach(d=>{s+=Rc(x+T+8,d.zb+4,w-2*T-16,d.h-8,'dr')+Lc(x+w/2-Math.min(40,w/6),d.zb+d.h-28,x+w/2+Math.min(40,w/6),d.zb+d.h-28,'thin')});
   if(lay.mirror)s+=Rc(x+T+40,lay.mirror.zb,w-2*T-80,lay.mirror.zt-lay.mirror.zb,'dash')+TX(x+w/2,(lay.mirror.zb+lay.mirror.zt)/2,'거울',9*k,'class="t" text-anchor="middle"');
-  if(lay.sink)s+=Rc(x+w*.15,z1-210,w*.7,190,'dash')+TX(x+w/2,z1-130,'싱크볼',9*k,'class="t" text-anchor="middle"');
+  if(lay.sink){const sa=modApps(m).find(q=>q.a.kind==='sink'&&q.a.w)?.a,bw=sa?Math.min(sa.w,w-2*T):w*.7,bh=sa?.h||200,bx=x+(w-bw)/2;s+=Rc(bx,z1-bh-10,bw,bh,'dash')+TX(x+w/2,z1-bh/2-6,sa?`싱크볼 ${sa.w}`:'싱크볼',9*k,'class="t" text-anchor="middle"')}
   if(lay.hood)s+=Rc(x+40,z0,w-80,150,'dash')+TX(x+w/2,z0+60,'후드',9*k,'class="t" text-anchor="middle"');
   if(m.corner){s+=Lc(m.side==='L'?x:x+w,z0+T,m.side==='L'?x+w:x,z1-T,'dash')+TX(x+w/2,z0+(z1-z0)/2,`${m.leg}×${m.leg}`,9*k,'class="t" text-anchor="middle"')}
   if(lay.cook)s+=TX(x+w/2,z1-120,'쿡탑',9*k,'class="t" text-anchor="middle"');
@@ -1964,7 +2000,7 @@ function dataURLtoBlob(u){const[hd,b64]=u.split(',');const mime=(hd.match(/data:
 (async()=>{if(!LOCAL&&!window.claude?.use)return;
   const[db,as,us]=LOCAL?[localDB(),null,null]:await Promise.all(['db','assets','user'].map(n=>window.claude.use(n).catch(()=>null)));DB=db;ASSETS=as;USER=us;if(LOCAL){await DB.ready;if(DB.mode()==='mem')setTimeout(()=>toast('이 태블릿에 저장할 수 없는 상태입니다. 작업 후 꼭 ‘전체 내보내기’를 하세요.'),1500)}
   CAN_WRITE=!!DB&&(USER?USER.can?.('data.write')!==false:true);
-  if(DB){try{const s=await DB.doc('settings/catalog').get();if(s.exists&&s.data()?.catalog){store.set(CK,s.data().catalog);catalog=loadCatalog();const v=catalog.ver||0;upgradeCatalog();if(v<7&&CAN_WRITE)saveCatalog();syncBoard()}else if(CAN_WRITE)saveCatalog()}catch(e){}
+  if(DB){try{const s=await DB.doc('settings/catalog').get();if(s.exists&&s.data()?.catalog){store.set(CK,s.data().catalog);catalog=loadCatalog();const v=catalog.ver||0;upgradeCatalog();if(v<8&&CAN_WRITE)saveCatalog();syncBoard()}else if(CAN_WRITE)saveCatalog()}catch(e){}
     DB.collection('jobs').orderBy('updatedAt','desc').limit(300).onSnapshot(async snap=>{serverJobs=snap.docs.map(d=>({id:d.id,...d.data()}));
       const ids=[...new Set(serverJobs.map(x=>x.by).filter(Boolean))].filter(i=>!NAMES[i]);if(ids.length&&USER?.profiles){try{const ps=await USER.profiles(ids);ids.forEach(i=>NAMES[i]=ps[i]?.name||'')}catch(e){}}
       const mine=serverJobs.find(x=>x.id===job.id);if(mine&&mine.status!==job.serverStatus){job.serverStatus=mine.status;persist()}
@@ -2121,7 +2157,7 @@ function build3D(j,open){const T3=THREE,grp=new T3.Group(),door=doorById(j.doorI
       if(g.pen!=null){const lo_=g.rows.find(r=>r.zone==='lower');if(lo_){const all=rowAll(lo_);const a=Math.min(...all.map(m=>m.x)),b=Math.max(...all.map(m=>m.x+m.w));box(P,a,b,-DOOR_T,0,0,g.ct0,none?body:dCol)}}
       if(g.ct.back&&!isl)box(P,u0,u1,0,20,850,850+g.ct.back,ct);
       const lo=g.rows.find(r=>r.zone==='lower');lo?.mods.forEach(m=>{const cx=m.x+m.w/2;
-        if(m.t==='sink'){const hw=Math.min(330,m.w/2-50),sv=isl&&!room?[vd-470,vd-90]:isl?[g.D-470,g.D-90]:[90,470];box(P,cx-hw,cx+hw,sv[0],sv[1],850,853,'#8f969b',{},true);const fvv=isl&&!room?[vd-60,vd-30]:isl?[sv[0]-50,sv[0]-20]:[30,60];box(P,cx-15,cx+15,fvv[0],fvv[1],850,1100,'#b8bdc1',{},false);box(P,cx-15,cx+15,isl&&!room?fvv[0]-150:fvv[1],isl&&!room?fvv[0]:fvv[1]+150,1080,1100,'#b8bdc1',{},false)}
+        if(m.t==='sink'){const sa=modApps(m).find(q=>q.a.kind==='sink'&&q.a.w)?.a,hw=sa?Math.min(sa.w/2,m.w/2-T-5):Math.min(330,m.w/2-50),dd=Math.min(sa?.d||380,520),sv=isl&&!room?[vd-470,vd-470+dd]:isl?[g.D-470,g.D-470+dd]:[Math.max(30,470-dd),470];box(P,cx-hw,cx+hw,sv[0],sv[1],850,853,'#8f969b',{},true);const fvv=isl&&!room?[vd-60,vd-30]:isl?[sv[0]-50,sv[0]-20]:[30,60];box(P,cx-15,cx+15,fvv[0],fvv[1],850,1100,'#b8bdc1',{},false);box(P,cx-15,cx+15,isl&&!room?fvv[0]-150:fvv[1],isl&&!room?fvv[0]:fvv[1]+150,1080,1100,'#b8bdc1',{},false)}
         if(m.t==='cook'){const hw=Math.min(290,m.w/2-30),sv=isl&&!room?[vd-560,vd-60]:isl?[g.D-560,g.D-60]:[60,560];box(P,cx-hw,cx+hw,sv[0],sv[1],850,858,'#151515',{},false)}});
       if(g.tbl){const t=g.tbl,rt=pg.rects.find(x=>x.key==='T');if(rt){const P2=(u,v)=>[rt.x+u,rt.y+v];box(P2,0,rt.w,0,rt.h,t.top-30,t.top,ct)}}}});
   curUD=null;
@@ -2246,8 +2282,8 @@ ${reqUI()}`)}
         <button type="button" class="btn sm quiet" data-act="mark-del" data-id="${m.id}" aria-label="삭제">삭제</button></li>`).join(''):'<li class="hint">아직 측정 기록이 없습니다.</li>'}</ul></div>${obsList()}`)}</div></div></div>`}
 function obsList(){const iss=obstacleIssues();return`<div><div class="toolbar" style="justify-content:space-between;margin-bottom:6px"><span class="label" style="margin:0">설비·장애물 ${iss.length?`· ${iss.length}건`:''}</span><button type="button" class="btn sm" data-act="obs-add">+ 직접 입력</button></div>
   <ul class="marks">${iss.length?iss.map(({o,hits,ok})=>`<li class="mark-row" style="grid-template-columns:minmax(0,1fr) auto">
-    <span style="font-size:13px;min-width:0;display:grid;gap:3px"><span><span class="tag" style="background:${(OBS[o.type]||OBS.etc).color}">${(OBS[o.type]||OBS.etc).label}</span></span>${job.faces.length>1?FACE_NAME(o.face)+' · ':''}<span class="mono">좌 ${o.x} · 바닥 ${o.z} · ${o.w}×${o.h}</span>${ok?'<span class="st-ok">장 걸림 없음</span>':`<span class="st-bad">걸림: ${hits.map(x=>x.label).join(', ')}</span><span class="hint">${(OBS[o.type]||OBS.etc).tip}</span>`}</span>
-    <span style="display:flex;flex-direction:column;gap:4px"><button type="button" class="btn sm quiet" data-act="obs-edit" data-id="${o.id}">수정</button><button type="button" class="btn sm quiet danger" data-act="obs-del" data-id="${o.id}">삭제</button></span></li>`).join(''):'<li class="hint">분배기, 수도, 보일러, 점검구 등을 ‘설비 표시’로 사진에서 찍거나 직접 입력하세요.</li>'}</ul></div>`}
+    <span style="font-size:13px;min-width:0;display:grid;gap:3px"><span><span class="tag" style="background:${(OBS[o.type]||OBS.etc).color}">${(OBS[o.type]||OBS.etc).label}</span></span>${job.faces.length>1?FACE_NAME(o.face)+' · ':''}<span class="mono">좌 ${o.x} · 바닥 ${o.z} · ${o.w}×${o.h}</span>${ok?'<span class="st-ok">장 걸림 없음</span>':`<span class="st-bad">걸림: ${hits.map(x=>x.label).join(', ')}</span><span class="hint">${(OBS[o.type]||OBS.etc).tip}</span>`}${(()=>{const p=fitPlan(job,o);return p&&!p.ok?`<span class="st-bad">${fitMsg(o)}</span>`:''})()}</span>
+    <span style="display:flex;flex-direction:column;gap:4px">${(()=>{const p=fitPlan(job,o);return p&&!p.ok?`<button type="button" class="btn sm" data-act="obs-fit" data-id="${o.id}">${o.type==='water'?'싱크 맞추기':'한 칸에 맞추기'}</button>`:''})()}<button type="button" class="btn sm quiet" data-act="obs-edit" data-id="${o.id}">수정</button><button type="button" class="btn sm quiet danger" data-act="obs-del" data-id="${o.id}">삭제</button></span></li>`).join(''):'<li class="hint">분배기, 수도, 보일러, 점검구 등을 ‘설비 표시’로 사진에서 찍거나 직접 입력하세요.</li>'}</ul></div>`}
 function dimsBoxes(){const box=(id,label,val,src,change,attrs,color)=>`<div class="dim-box"><span class="k">${color?`<span style="width:10px;height:10px;border-radius:50%;background:${color}"></span>`:''}${label}</span><input id="${id}" inputmode="numeric" data-change="${change}" ${attrs} value="${val}" aria-label="${label} mm"><span class="src">${src}</span></div>`;
   let s=job.faces.map(f=>box(`len-${f.key}`,f.key==='I'?'아일랜드 가로':(job.faces.length>1?`${FACE_NAME(f.key)} 길이`:'가로'),f.len,f.key==='I'?'직접 입력':dimSource('W',f.key),'face-len',`data-k="${f.key}"`,MC.W)).join('');
   s+=box('dim-H','높이',job.dims.H,dimSource('H'),'dim','data-k="H"',MC.H)+box('dim-D',job.cat==='kitchen'?'장 깊이':job.layout==='niche'?'홈 깊이':'깊이',job.dims.D,dimSource('D'),'dim','data-k="D"',MC.D);
@@ -2343,6 +2379,7 @@ function step2(){const plans=plansFor(job.cat),g=gview(job,job.fi),mir=isMir(job
       <div class="inspector">
         <p class="hint" style="margin:0">칸 폭은 5mm 단위로 나눕니다 · ${finishText(g)}</p>
         ${(()=>{const bad=obstacleIssues().filter(x=>!x.ok&&x.o.face===g.face);return bad.length?`<div class="issue">${bad.map(x=>`<span><b class="st-bad">${OBS[x.o.type].label}</b> → ${x.hits.map(h=>h.label).join(', ')}<br><span class="hint">${OBS[x.o.type].tip}</span></span>`).join('')}</div>`:''})()}
+        ${fitIssues(job,g.face).map(x=>`<div class="issue"><span><b class="st-bad">${fitMsg(x.o)}</b><br><span class="hint">${x.o.type==='water'?'배관이 싱크장 밖에 있으면 옆 칸 뒷판·바닥을 크게 따내야 합니다':'분배기는 장 한 칸 안에 쏙 들어가야 점검문 하나로 열어 볼 수 있습니다'}</span></span><button type="button" class="btn sm" data-act="obs-fit" data-id="${x.o.id}">${x.o.type==='water'?'싱크를 배관 위로':'한 칸에 맞추기'}</button></div>`).join('')}
         ${g.pl?`<div><div class="label">걸레받이 높이 (${plRange(job.cat)[0]}~${plRange(job.cat)[1]}mm · 모든 면)</div><div class="stepper"><button type="button" class="btn sm" data-act="plinth" data-d="-5" aria-label="5mm 낮추기" ${g.pl<=plRange(job.cat)[0]?'disabled':''}>−</button><span class="v">${g.pl}</span><button type="button" class="btn sm" data-act="plinth" data-d="5" aria-label="5mm 높이기" ${g.pl>=plRange(job.cat)[1]?'disabled':''}>+</button></div></div>`:''}
         ${g.rows.length>1?`<div><div class="label">줄</div><div class="seg">${cf().rows.map((r,ri)=>`<button type="button" data-act="mod-sel" data-row="${ri}" data-i="0" aria-pressed="${ri===job.sel.row}">${r.zone==='upper'?'상부장':'하부장'}</button>`).join('')}</div></div>`:''}
         <div><div class="label">선택한 칸 · ${job.sel.i+1}번째 / ${row.mods.length}칸</div><div class="chips">${types.map(t=>`<button type="button" class="chip" data-act="mod-type" data-t="${t}" aria-pressed="${m.t===t}">${TYPES[t].label}</button>`).join('')}</div></div>
@@ -2353,6 +2390,7 @@ function step2(){const plans=plansFor(job.cat),g=gview(job,job.fi),mir=isMir(job
         ${job.cat!=='middoor'?sec('unit','내 장 넣기','등록한 규격장',unitUI(row)):''}
         ${ty.n!=null?`<div><div class="label">${ty.nl} 수</div><div class="stepper"><button type="button" class="btn sm" data-act="mod-n" data-d="-1" aria-label="줄이기">−</button><span class="v">${m.n}</span><button type="button" class="btn sm" data-act="mod-n" data-d="1" aria-label="늘리기">+</button></div></div>`:''}
         ${row.zone==='upper'?`<div><div class="label">하단 올림 (상부장 아래선에서 위로) · 지금 ${gm.raise}mm${m.t==='hood'?` · 상판에서 ${gm.z0-850}mm`:''}</div><div class="toolbar" style="margin:0"><div class="stepper"><button type="button" class="btn sm" data-act="raise" data-d="-10" aria-label="10mm 내리기">−</button><input class="input mono" style="width:84px;min-height:36px;text-align:center" id="raiseIn" inputmode="numeric" data-change="raise" value="${gm.raise}" aria-label="올림 mm"><button type="button" class="btn sm" data-act="raise" data-d="10" aria-label="10mm 올리기">+</button></div>${[0,50,100,150].map(v=>`<button type="button" class="chip" style="min-height:36px" data-act="raise-set" data-v="${v}" aria-pressed="${gm.raise===v}">${v}</button>`).join('')}</div><p class="hint" style="margin:4px 0 0">도면에서 선택한 칸의 아래 손잡이(주황 막대)를 끌어 올려도 됩니다.</p></div>`:''}
+        ${m.t==='sink'&&job.cat==='kitchen'?sinkUI(m,gm):''}
         ${sec('more','문 방향·손잡이·조명·가전·요청',[modApps(m).map(x=>x.a.name).join(', '),m.lights?.length?'조명':'',m.note?'요청 있음':''].filter(Boolean).join(' · ')||'기본',`
         ${(()=>{const dr=doorById(job.doorId),gr=g.rows[job.sel.row],hs=gr.hinge?.[job.sel.i];if(dr?.kind!=='hinged'||!(hs==='L'||hs==='R'))return'';return`<div><div class="label">문 여는 방향 (경첩) · 지금 ${hs==='L'?'왼쪽':'오른쪽'} 경첩</div><div class="seg">${[['','자동'],['L','왼쪽 경첩'],['R','오른쪽 경첩']].map(([v,l])=>`<button type="button" data-act="mod-hinge" data-v="${mir?swLR(v):v}" aria-pressed="${(m.hinge||'')===(mir?swLR(v):v)}">${l}</button>`).join('')}</div></div>`})()}
         ${(()=>{const o=lightOpts(job.cat,row.zone,gm);if(!o.length)return'';const cur=m.lights||[];return`<div><div class="label">조명 <span class="hint">· ${CCT[job.lt.cct][0]} · ${CTRL[job.lt.ctrl]}</span></div><div class="chips">${o.map(t=>`<button type="button" class="chip" data-act="lt-toggle" data-t="${t}" aria-pressed="${cur.includes(t)}">${LT[t].label}</button>`).join('')}</div></div>`})()}
@@ -2582,6 +2620,10 @@ const ACT={
   view:b=>{viewMode=b.dataset.v;renderStage()},
   'obs-add':()=>openObsSheet({face:cf().key==='I'?'A':cf().key,type:'dist',x:'',z:0,w:'',h:''}),
   'obs-edit':b=>{const o=job.obstacles.find(x=>x.id===b.dataset.id);if(o)openObsSheet({...o})},
+  'obs-fit':b=>{const o=job.obstacles.find(x=>x.id===b.dataset.id);if(!o)return;toast(applyFit(job,o));render()},
+  'sink-size':b=>{const m=cf().rows[job.sel.row].mods[job.sel.i],a=appById(b.dataset.id);if(!a)return;const cur=modApps(m),old=cur.find(x=>x.a.kind==='sink');m.apps=[...cur.filter(x=>x.a.kind!=='sink').map(x=>({id:x.id,own:x.own})),{id:a.id,own:old?.own||'co'}];cf().edited=true;
+    const need=sinkNeed(a),gm=geom().rows[job.sel.row].mods[job.sel.i];let msg=`싱크볼 ${a.w}로 바꿨습니다`;if(gm&&gm.w<need){setModWidth(job.sel.row,job.sel.i,need);msg+=` · 싱크장 ${need}mm로 넓힘`}
+    const pipe=(job.obstacles||[]).find(o=>o.face===cf().key&&o.type==='water');if(pipe){const p=fitPlan(job,pipe);if(p&&!p.ok&&!p.fail){applyFit(job,pipe);msg+=' · 배관 위치에 맞춤'}}toast(msg);render()},
   'obs-del':b=>{job.obstacles=job.obstacles.filter(x=>x.id!==b.dataset.id);render()},
   layout:b=>{setLayout(b.dataset.v);recomputeDims();render()},
   face:b=>{job.fi=+b.dataset.i;job.sel={row:0,i:0};pending=null;render()},
@@ -3122,6 +3164,8 @@ document.addEventListener('change',async e=>{const t=e.target,c=t.dataset.change
   if(c==='cfill'){const v=t.value.trim();job.corner.fill=v===''?null:clamp(Math.round(+v)||0,0,300);render();return}
   if(c==='unit-price'){const u=unitById(t.dataset.id);if(u){u.price=Math.max(0,Math.round(+t.value)||0);saveCatalog()}return}
   if(c==='cleg'){const v=Math.round(+t.value);if(v>=400&&v<=1500)job.corner[t.dataset.k]=v;render()}
+  if(c==='sink-pipe'){const v=Math.round(+t.value);const face=cf().key;let o=job.obstacles.find(x=>x.face===face&&x.type==='water');if(!(v>0)){if(o&&o.auto)job.obstacles=job.obstacles.filter(x=>x!==o);render();return}
+    if(!o){o={id:uid(),face,type:'water',z:100,w:200,h:400,note:'싱크 배관 (직접 입력)',auto:true};job.obstacles.push(o)}o.x=Math.max(0,v-o.w/2);const p=fitPlan(job,o);toast(p&&!p.ok?applyFit(job,o):'배관이 이미 싱크장 안에 있습니다');render();return}
   if(c==='mod-w'){setModWidth(job.sel.row,job.sel.i,+t.value);render()}
   if(c==='photo-add'){const files=[...t.files];if(!files.length)return;if(job.photos.length&&job.photos.every(p=>p.src==='sample')){job.photos=[];job.obstacles=job.obstacles.filter(o=>o.photo!=='sample');const cd=CATS[job.cat];job.dims={H:cd.H,D:cd.D}}
     for(const file of files){try{job.photos.push(await loadImageFile(file))}catch(err){toast('사진을 열지 못했습니다')}}job.active=job.photos.length-1;tool='W';pending=null;render()}
