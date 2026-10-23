@@ -1021,7 +1021,9 @@ function geom(j=job,fi=j.fi||0,rowsOverride,adjL=0){const cat=j.cat,c=CATS[cat],
       if(spR>0){rc+=spR;corners.push({t:'filler',x:Wm-rc,w:spR,z0,z1,n:0,r:0,i:'S',filler:true,spacer:'R'})}}
     const span=(cat==='middoor'?Wm-2*MFRAME:Wm)-off-lc-rc;const al=allocW(row.mods,Math.max(200,span)),ws=al.ws;let x=(cat==='middoor'?MFRAME:0)+off+lc;
     const mods=row.mods.map((m,i)=>{const rz=row.zone==='upper'?clamp(modRaise(m),0,Math.max(0,z1-z0-250)):0,o={...m,x,w:ws[i],z0:z0+rz,z1,i,raise:rz};x+=ws[i];return o});
-    return{lo:al.lo||0,zone:row.zone,rix:f.rows.indexOf(row),z0,z1,off,corners,mods,fill:al.gap>0?[{t:'filler',x,w:al.gap,z0,z1,n:0,r:0,i:'F',filler:true}]:[],gap:al.gap,over:al.over}});
+    let fillA=al.gap>0?[{t:'filler',x,w:al.gap,z0,z1,n:0,r:0,i:'F',filler:true}]:[],toC=0;
+    if(al.gap>0&&cat==='kitchen'&&j.fillAt==='corner'&&!isl){const cc=corners.find(c=>c.cfill)||corners.find(c=>c.blind&&c.side==='L');if(cc){const gp=al.gap;corners.filter(c=>c!==cc&&c.x>cc.x&&!(c.side==='R'||c.spacer==='R'||c.end&&c.x>=Wm-rc-1)).forEach(c=>c.x+=gp);cc.w+=gp;if(cc.blind)cc.cf=(cc.cf||0)+gp;mods.forEach(m=>m.x+=gp);fillA=[];toC=gp}}
+    return{lo:al.lo||0,zone:row.zone,rix:f.rows.indexOf(row),z0,z1,off,corners,mods,fill:fillA,gap:al.gap,toC,over:al.over}});
   if(fin==='filler'&&!isl&&cat!=='middoor'&&!adjL&&!rowsOverride){const pr=rows.find(r=>r.zone!=='upper')||rows[0];if(pr&&pr.lo>0)return geom(j,fi,rowsOverride,pr.lo)}
   rows.forEach(r=>hingeSolve(j,f,{cat,isl,sL,sR,fi},r));
   const lr_=rows.find(r=>r.zone==='lower'),tl_=lr_?.corners.find(c=>c.tall&&!c.end),cb_=lr_?.corners.find(c=>c.blind&&c.side==='L'),talls_=(lr_?.corners||[]).filter(c=>c.tall).map(c=>({x:c.x,w:c.w,k:c.tk,end:!!c.end}));
@@ -2317,7 +2319,7 @@ function step1(){const p=job.photos[job.active],g=geom();
       ${sec('room','방 전체 평면도',job.room?.on?(()=>{const G=roomGeo(job);return G.warn.length?`확인 ${G.warn.length}건`:'문제 없음'})():'꺼짐',roomUI())}
       ${sec('site','현장 조건',`${job.preDemo?'철거 전':'빈 공간'} · ${(job.finish||'full')==='filler'?'휠라+상몰딩':'몰딩 없음'}${job.cat==='kitchen'?' · 전기·가스·식탁':''}`,`<div><div class="label">현장 상태</div><div class="chips" role="group" aria-label="현장 상태"><button type="button" class="chip" data-act="predemo" data-v="0" aria-pressed="${!job.preDemo}">빈 공간</button><button type="button" class="chip" data-act="predemo" data-v="1" aria-pressed="${!!job.preDemo}">기존 장 있음 (철거 전)</button></div>
         ${job.preDemo?'<p class="make" style="margin:6px 0 0">기존 장 위쪽·옆 벽에서 벽 끝~벽 끝을 재세요. 벽 맞추기는 바닥·천장 모서리를 누르면 사진 합성 때 기존 장이 새 장으로 덮입니다. 장 뒤 설비는 철거 후 다시 확인하세요.</p>':''}</div>
-${job.cat!=='middoor'?`<div><div class="label">마감 방식</div><div class="chips" role="group" aria-label="마감 방식"><button type="button" class="chip" data-act="finish" data-v="full" aria-pressed="${(job.finish||'full')==='full'}">몰딩 없이 꽉 차게</button><button type="button" class="chip" data-act="finish" data-v="filler" aria-pressed="${job.finish==='filler'}">휠라 + 상몰딩</button></div></div>`:''}
+${job.cat!=='middoor'?`<div><div class="label">마감 방식</div><div class="chips" role="group" aria-label="마감 방식"><button type="button" class="chip" data-act="finish" data-v="full" aria-pressed="${(job.finish||'full')==='full'}">몰딩 없이 꽉 차게</button><button type="button" class="chip" data-act="finish" data-v="filler" aria-pressed="${job.finish==='filler'}">휠라 + 상몰딩${job.cat==='kitchen'?' (싱크대 기본)':''}</button></div>${job.cat==='kitchen'&&isCornerLay(job)?`<div class="label" style="margin-top:8px">남는 치수 (벽 맞춤) 처리</div><div class="chips"><button type="button" class="chip" data-act="fillat" data-v="end" aria-pressed="${(job.fillAt||'end')==='end'}">벽 끝 휠라로</button><button type="button" class="chip" data-act="fillat" data-v="corner" aria-pressed="${job.fillAt==='corner'}">코너장 휠라로</button></div><p class="hint" style="margin:4px 0 0">칸 폭을 규격으로 고정했을 때 남는 치수를 어디서 잡을지 정합니다</p>`:''}</div>`:''}
 ${job.cat==='kitchen'?heightUI()+utilUI()+islandSupUI()+tableUI():''}`)}
       ${sec('cust','연락처·메모·요구사항',`${esc(job.customer.phone||'연락처 없음')} · 요청 ${(job.reqs||[]).length}건`,`<div class="field"><label for="c-phone">연락처</label><input class="input" id="c-phone" data-bind="phone" inputmode="tel" value="${esc(job.customer.phone||'')}" placeholder="AS·고객 관리에 연결"></div><div class="field"><label for="c-email">이메일 (견적서 발송용)</label><input class="input" id="c-email" data-bind="email" type="email" inputmode="email" value="${esc(job.customer.email||'')}" placeholder="예: kim@naver.com"></div>
 <div class="field"><label for="c-date">실측일</label><input class="input" id="c-date" type="date" data-bind="date" value="${esc(job.customer.date)}"></div>
@@ -2458,7 +2460,7 @@ function step2(){const plans=plansFor(job.cat),g=gview(job,job.fi),mir=isMir(job
         <div><div class="label">선택한 칸 · ${job.sel.i+1}번째 / ${row.mods.length}칸</div><div class="chips">${types.map(t=>`<button type="button" class="chip" data-act="mod-type" data-t="${t}" aria-pressed="${m.t===t}">${TYPES[t].label}</button>`).join('')}</div></div>
         <div class="field"><label for="modW">폭 (mm)${m.unit&&unitById(m.unit)?` · <span class="pill">${esc(unitById(m.unit).name)}</span>`:''}</label><input class="input mono" id="modW" inputmode="numeric" data-change="mod-w" value="${gm.w}">
           <label class="hint" style="display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" data-act="mod-fix" ${m.fix?'checked':''}> 폭 고정 (전체 길이가 바뀌어도 이 폭 유지)</label></div>
-        ${g.rows[job.sel.row].gap>0?`<div class="issue"><span><b>남는 공간 ${g.rows[job.sel.row].gap}mm</b> → 끝에 휠라로 막습니다.<br><span class="hint">칸이 모두 폭 고정이라 생긴 공간입니다. 휠라가 너무 넓으면 칸을 하나 더 넣거나 고정을 푸세요.</span></span><button type="button" class="btn sm" data-act="gap-fit">마지막 칸 고정 풀어 채우기</button></div>`:''}
+        ${g.rows[job.sel.row].gap>0?`<div class="issue"><span><b>남는 공간 ${g.rows[job.sel.row].gap}mm</b> → ${g.rows[job.sel.row].toC?'코너장 휠라에 더했습니다':'끝에 휠라로 막습니다'}.<br><span class="hint">칸이 모두 폭 고정이라 생긴 공간입니다. 휠라가 너무 넓으면 칸을 하나 더 넣거나 고정을 푸세요.</span></span><button type="button" class="btn sm" data-act="gap-fit">마지막 칸 고정 풀어 채우기</button></div>`:''}
         ${g.rows[job.sel.row].over>0?`<div class="issue"><span><b class="st-bad">고정 폭 합계가 ${g.rows[job.sel.row].over}mm 넘칩니다</b><br><span class="hint">들어갈 자리가 없어 비율로 줄여 그렸습니다. 칸을 빼거나 더 작은 장으로 바꾸세요.</span></span></div>`:''}
         ${job.cat!=='middoor'?sec('unit','내 장 넣기','등록한 규격장',unitUI(row)):''}
         ${ty.n!=null?`<div><div class="label">${ty.nl} 수</div><div class="stepper"><button type="button" class="btn sm" data-act="mod-n" data-d="-1" aria-label="줄이기">−</button><span class="v">${m.n}</span><button type="button" class="btn sm" data-act="mod-n" data-d="1" aria-label="늘리기">+</button></div></div>`:''}
@@ -2658,7 +2660,7 @@ function openManager(){const lay=$('#layer');const P=catalog.prices,C=catalog.co
   $('#counterForm')?.addEventListener('submit',e=>{e.preventDefault();catalog.counters.push({id:'u'+uid(),name:$('#nc-name').value.trim()||'새 상판',type:$('#nc-type').value,thick:$('#nc-thick').value||'',sinkCabMin:$('#nc-cab').value||'',maxLen:$('#nc-max').value||'',color:$('#nc-color').value,price:+$('#nc-price').value||0});saveCatalog();toast('상판을 추가했습니다');openManager();render()})}
 
 /* ---------- actions ---------- */
-function setCat(c){if(job.cat===c)return;const sampleOnly=job.photos.length&&job.photos.every(p=>p.src==='sample');job.cat=c;job.layout='I';job.faces=[newFace(c,'A')];job.fi=0;job.sel={row:0,i:0};job.plinth=null;
+function setCat(c){if(job.cat===c)return;const sampleOnly=job.photos.length&&job.photos.every(p=>p.src==='sample');job.cat=c;if(!job.finishUser)job.finish=c==='kitchen'?'filler':'full';job.layout='I';job.faces=[newFace(c,'A')];job.fi=0;job.sel={row:0,i:0};job.plinth=null;
   if(!doorById(job.doorId)?.cats.includes(c))job.doorId=defaultDoor(c);
   if(sampleOnly){job.photos.forEach(p=>{p.marks=[];delete p.calib});job.obstacles=[]}const cd=CATS[c];job.dims={H:cd.H,D:cd.D};recomputeDims();
   if(!job.photos.some(p=>p.marks.some(m=>m.type==='D')))job.dims.D=cd.D;tool=null;pending=null}
@@ -2689,7 +2691,8 @@ const ACT={
   'local-export':async()=>{if(!DB?.dump)return;if(autoOK()&&isDirty())await saveJobToServer(undefined,{silent:true});const all=await DB.dump(),docs={};Object.entries(all).forEach(([k,v])=>{if(!k.startsWith('settings/'))docs[k]=v});const n=Object.keys(docs).filter(k=>k.startsWith('jobs/')).length;
     const d=new Date(),ts=`${d.getMonth()+1}${String(d.getDate()).padStart(2,'0')}_${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;await saveFile(`실측스튜디오_오프라인현장_${ts}.json`,JSON.stringify({kind:'silcheuk-offline',v:1,at:Date.now(),docs}));toast(`현장 ${n}건을 파일로 내보냈습니다. 인터넷이 될 때 본 앱 ‘현장 목록’에서 불러오세요.`)},
   'srv-send':()=>saveJobToServer('sent'),
-  finish:b=>{job.finish=b.dataset.v;render()},
+  finish:b=>{job.finish=b.dataset.v;job.finishUser=true;render()},
+  fillat:b=>{job.fillAt=b.dataset.v;render()},
   view:b=>{viewMode=b.dataset.v;renderStage()},
   'obs-add':()=>openObsSheet({face:cf().key==='I'?'A':cf().key,type:'dist',x:'',z:0,w:'',h:''}),
   'obs-edit':b=>{const o=job.obstacles.find(x=>x.id===b.dataset.id);if(o)openObsSheet({...o})},
