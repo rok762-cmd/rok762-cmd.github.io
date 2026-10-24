@@ -627,7 +627,7 @@ details.sec>.sec-body{padding:0 14px 14px;display:grid;gap:12px;min-width:0}
 
 .zbar{display:flex;justify-content:flex-end;margin:0 0 6px}.paper-wrap{cursor:zoom-in}
 #zv{position:fixed;inset:0;z-index:9999;background:#2b2d30;display:flex;flex-direction:column}#zv .zt{display:flex;gap:6px;padding:8px 10px;background:#1d1f22;align-items:center;flex-wrap:wrap}#zv .zt button{min-height:40px;min-width:44px;border-radius:10px;border:0;background:#3a3d42;color:#fff;font-size:15px;padding:0 12px}#zv .zt b{color:#fff;min-width:60px;text-align:center;font-family:monospace}#zvBox{flex:1;overflow:hidden;position:relative;touch-action:none}#zvIn{position:absolute;left:0;top:0;background:#fff;box-shadow:0 4px 30px #0008}#zvIn>svg,#zvIn>img{display:block;width:100%;height:100%;min-width:0!important;max-width:none!important}
-</style>
+.bath-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(290px,1fr);gap:14px}.bath-grid>div{min-width:0}@media(max-width:900px){.bath-grid{grid-template-columns:1fr}}</style>
 
 <div class="app">
   <header class="topbar">
@@ -1234,7 +1234,7 @@ function quoteBreakUI(){const B=quoteBreak(),c=qCost,th=h=>`<th style="text-alig
   <table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr>${th('구역')}${th('')}${th('판매가')}${c?th('매입가')+th('마진'):''}</tr></thead><tbody>${gt}<tr><td colspan="2" style="padding:5px 6px"><b>공급가 계</b></td>${td('<b>'+won(B.q.sub)+'</b>','mono')}${c?td('<b>'+won(B.cost)+'</b>','mono')+td(`<b>${won(B.margin)}</b> <span class="hint">(${B.q.sub?Math.round(B.margin/B.q.sub*100):0}%)</span>`,'mono'):''}</tr></tbody></table>
   ${B.cabs.length?`<div class="label" style="margin:6px 0 0">장별 견적 (한 장에 한 줄)</div><p class="hint" style="margin:0">장 값 = 그 구역 본체값을 폭 비율로 + 도어값을 문 면적 비율로 나눈 금액입니다. 상판·기기·철물·시공은 위 구역별 소계에 따로 있습니다.</p>
   <table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr>${th('코드')}${th('제품명')}${th('규격 W×D×H')}${th('면')}${th('장 값')}${c?th('매입가'):''}</tr></thead><tbody>${zt}</tbody></table>`:''}</div>`}
-const V_SKIP=['docNo','savedAt','reqs','active','photos','customer','items','ipos','sent','variants','serverStatus','id','house','created','updated','status','memo','schedule','as','orders'];
+const V_SKIP=['baths','bi','docNo','savedAt','reqs','active','photos','customer','items','ipos','sent','variants','serverStatus','id','house','created','updated','status','memo','schedule','as','orders'];
 function varSnap(){const o={};Object.keys(job).forEach(k=>{if(!V_SKIP.includes(k))o[k]=clone(job[k])});return o}
 function varDesc(sn){const d=doorById(sn.doorId),c=counterById(sn.counterId);return[LAYOUTS[sn.layout]||'',(sn.faces||[]).map(f=>f.key+' '+f.len).join('·'),d?.name,c?.name,sn.tallEnd?.on?'키큰장 '+(TALL_K[sn.tallEnd.k]||''):''].filter(Boolean).join(' · ')}
 function variantUI(){const V=job.variants||[];const cur=quote().total;const nm=String.fromCharCode(65+V.length%26)+'안';
@@ -2527,7 +2527,7 @@ function houseChange(c,t){const H=HS();
   return false}
 
 /* ---------- 현장 품목 여러 개 ---------- */
-const SITE_KEYS=['id','docNo','customer','serverStatus','savedAt','sent','reqs','house'];
+const SITE_KEYS=['id','docNo','customer','serverStatus','savedAt','sent','reqs','house','baths','bi'];
 function siteAll(j=job){const a=[...(j.items||[])];a.splice(clamp(j.ipos||0,0,a.length),0,j);return a}
 function itemName(it,all=siteAll()){const same=all.filter(x=>x.cat===it.cat);const n=same.length>1?' '+'①②③④⑤⑥⑦⑧⑨'[same.indexOf(it)]||'':'';return(it.label||CATS[it.cat].name)+(it.label?'':n)}
 function withJob(it,fn){const keep=job;try{job=it;return fn()}finally{job=keep}}
@@ -3186,7 +3186,7 @@ document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.dataset&&d.datas
 const STEPS=[[1,'현장 실측'],[2,'디자인 플랜'],[3,'도어·마감'],[4,'결과물']];
 let toastT=0;function toast(m){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.className='toast';t.setAttribute('role','status');document.body.appendChild(t)}t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2600)}
 function renderSteps(){$('#steps').innerHTML=STEPS.map(([n,l])=>`<button type="button" class="step-btn" data-act="step" data-step="${n}" ${step===n?'aria-current="step"':''}><span class="n">${n}</span>${l}</button>`).join('')}
-function render(){if(job.cat==='kitchen'&&mode!=='house'&&mode!=='as'){try{fitSinkCabs()}catch(e){}}renderMode();netChip();if(mode==='as'){renderAS();persist();return}if(mode==='house'){renderHouse();persist();return}renderSteps();renderStage();renderSide();persist()}
+function render(){if(job.cat==='kitchen'&&mode!=='house'&&mode!=='as'){try{fitSinkCabs()}catch(e){}}renderMode();netChip();if(mode==='as'){renderAS();persist();return}if(mode==='house'){renderHouse();persist();return}if(mode==='bath'){renderBath();persist();return}renderSteps();renderStage();renderSide();persist()}
 function renderSide(){const g=geom(),q=quote(),d=doorById(job.doorId),pl=planById(cf().planId);
   $('#side').innerHTML=`<div class="side-card"><div class="label">현재 현장</div><div class="side-title">${esc(job.customer.name||'고객 이름 미입력')}</div>
     <dl class="kv"><dt>품목</dt><dd>${esc(itemName(job))} · ${LAYOUTS[job.layout]}${siteAll().length>1?` <span class="hint">(외 ${siteAll().length-1})</span>`:''}</dd>${job.serverStatus?`<dt>서버</dt><dd>${STATUS[job.serverStatus]}</dd>`:''}${job.faces.map(f=>`<dt>${FACE_NAME(f.key)}</dt><dd class="num">${f.len}${cornerCut(job,f)?` → ${f.len-cornerCut(job,f)}`:''}</dd>`).join('')}
@@ -4103,7 +4103,295 @@ function newTicket(custId){const c=custById(custId);return{id:'t'+uid(),no:nextT
 function newCustomer(o={}){return{id:'c'+uid(),name:'',phone:'',addr:'',memo:'',subId:'',subStart:'',subEnd:'',subStatus:'',installs:[],...o}}
 
 /* AS render */
-function renderMode(){const m=$('#modeSeg');if(m)m.innerHTML=[['measure','실측'],['house','평면·도배'],['as','AS·고객']].map(([k,l])=>`<button type="button" data-act="mode" data-v="${k}" aria-pressed="${mode===k}">${l}</button>`).join('');
+/* ---------- 욕실 ---------- */
+const BWALL={N:'위쪽 벽',E:'오른쪽 벽',S:'아래쪽 벽',W:'왼쪽 벽'},BROT={N:0,E:90,S:180,W:270};
+const BFX={
+  toilet:{l:'양변기',w:400,d:700,h:780,fl:1,opts:[['tp','투피스 양변기',220000],['op','원피스 양변기',350000],['bd','비데 일체형 양변기',690000],['wh','벽걸이 양변기 (매립 탱크)',950000]]},
+  basin:{l:'세면대',w:500,d:450,h:850,fl:1,opts:[['long','긴다리 세면대',180000],['half','반다리 세면대',200000],['top','탑볼 + 인조대리석 상판',380000]]},
+  vanity:{l:'세면대 하부장',w:800,d:480,h:850,fl:1,opts:[['v6','하부장 세면대 600',420000,600],['v8','하부장 세면대 800',520000,800],['v10','하부장 세면대 1000',640000,1000]]},
+  tub:{l:'욕조',w:1500,d:700,h:550,fl:1,opts:[['a15','아크릴 욕조 1500',250000,1500],['a17','아크릴 욕조 1700',320000,1700],['fs','독립 욕조 1600',900000,1600]]},
+  shower:{l:'샤워 공간',w:900,d:900,h:1900,fl:1,opts:[['p1','일자 유리 파티션',250000],['sq','ㄱ자 사각 샤워부스',450000],['sw','스윙 도어 샤워부스',600000],['open','파티션 없음 (구역만)',0]]},
+  rain:{l:'샤워 수전',w:300,d:150,h:2100,opts:[['hb','해바라기 샤워수전',170000],['std','일반 샤워수전 + 슬라이드바',110000],['em','매립 해바라기 수전',450000]]},
+  mirror:{l:'거울장',w:800,d:130,h:700,z:1050,opts:[['m8','슬라이드 거울장 800',180000,800],['m6','여닫이 거울장 600',120000,600],['led','LED 거울',250000,700]]},
+  gendai:{l:'젠다이 (선반 벽)',w:1000,d:200,h:1000,fl:1,perM:1,opts:[['g','젠다이 + 인조대리석 상판 (m당)',150000]]},
+  niche:{l:'니치 (벽 매립 선반)',w:600,d:100,h:300,z:1100,opts:[['n','니치 시공 (타일 마감)',150000]]},
+  washer:{l:'세탁기 자리',w:700,d:700,h:850,fl:1,opts:[['wm','세탁기 자리 (배수구·수전)',80000]]}};
+const BTILE=[
+  {id:'w1',n:'300×600 유광 화이트',w:600,h:300,c:'#F4F4F1',g:'#D6D6D0',p:25000,use:'w'},
+  {id:'w2',n:'300×600 무광 웜그레이',w:600,h:300,c:'#CFCAC2',g:'#B5AFA5',p:28000,use:'w'},
+  {id:'w3',n:'300×600 칼라카타 대리석 패턴',w:600,h:300,c:'#F2F0EC',g:'#D8D3CB',p:35000,use:'w',vein:'#ADA699'},
+  {id:'w4',n:'600×600 무광 라이트그레이',w:600,h:600,c:'#D8D8D4',g:'#BEBEB8',p:32000,use:'wf'},
+  {id:'w5',n:'600×1200 대형 포세린 테라조',w:600,h:1200,c:'#E6E2DA',g:'#CCC6BB',p:55000,use:'wf',dots:1},
+  {id:'w6',n:'75×300 서브웨이 화이트 (포인트)',w:300,h:75,c:'#FAFAF8',g:'#CFCFCA',p:45000,use:'w',bond:1},
+  {id:'w7',n:'300×600 딥그린 유광 (포인트)',w:600,h:300,c:'#3F5E55',g:'#2C433C',p:38000,use:'w'},
+  {id:'w8',n:'300×600 테라코타 무광 (포인트)',w:600,h:300,c:'#C07A5A',g:'#9E5F43',p:38000,use:'w'},
+  {id:'f1',n:'300×300 논슬립 그레이',w:300,h:300,c:'#9A9893',g:'#7F7D78',p:22000,use:'f'},
+  {id:'f2',n:'300×300 논슬립 차콜',w:300,h:300,c:'#5E5D5A',g:'#454441',p:22000,use:'f'},
+  {id:'f3',n:'600×600 논슬립 베이지',w:600,h:600,c:'#CDBFAA',g:'#B1A38D',p:35000,use:'f'},
+  {id:'f4',n:'200×200 무광 화이트 (그레이 줄눈)',w:200,h:200,c:'#EFEFEC',g:'#A9A9A4',p:48000,use:'f'}];
+const BCEIL={smc:['SMC 돔 천장 (일체형)',45000,220000],abs:['ABS 평천장',40000,200000],pvc:['PVC 리브 천장',38000,200000],inno:['이노솔 평천장',50000,250000],paint:['방수 페인트 도장',45000,250000],keep:['기존 천장 그대로',0,0]};
+const BP0={demoM2:18000,demoMin:500000,waste:250000,plaster:25000,water:35000,waterMin:600000,waterTest:50000,overGlue:8000,overDemo:150000,tileLab:45000,tileLabBig:65000,tileLabSmall:60000,loss:10,install:50000,faucetB:100000,faucetT:130000,fan:85000,light:45000,heater:350000,door:350000,sill:60000,drain:15000,trench:150000,acc:120000,silicon:150000,outlet:50000,move:300000,transport:150000};
+const BPN={demoM2:'타일 철거 (㎡당)',demoMin:'철거 최소',waste:'폐기물 처리',plaster:'바닥 미장 (㎡당)',water:'방수 (㎡당)',waterMin:'방수 최소',waterTest:'담수 테스트',overGlue:'덧방 프라이머·본드 (㎡당)',overDemo:'기존 도기 철거 (덧방)',tileLab:'타일 시공비 (㎡당)',tileLabBig:'대형 타일 시공비 (㎡당)',tileLabSmall:'소형 타일 시공비 (㎡당)',loss:'타일 손실률 (%)',install:'도기 설치 (개당)',faucetB:'세면 수전',faucetT:'욕조 수전',fan:'환풍기 (댐퍼형)',light:'방습 LED등 (개당)',heater:'욕실 천장 난방기',door:'ABS 도어 교체 (문틀 포함)',sill:'인조대리석 문턱',drain:'배수구 유가 (개당)',trench:'트렌치 유가',acc:'액세서리 세트',silicon:'실리콘·줄눈·코너비드',outlet:'방수 콘센트',move:'배관 위치 변경 (곳당)',transport:'운반·양중·보양'};
+const bp=k=>{const v=catalog.prices.bath?.[k];return v!=null&&v!==''?+v:BP0[k]};
+const bfxOpt=f=>{const L=BFX[f.t].opts;return L.find(o=>o[0]===f.opt)||L[0]};
+const bfxP=f=>{const o=bfxOpt(f),v=catalog.prices.bath?.['fx.'+f.t+'.'+o[0]];return v!=null&&v!==''?+v:o[2]};
+const btile=id=>BTILE.find(t=>t.id===id)||BTILE[0];
+const btP=t=>{const v=catalog.prices.bath?.['tile.'+t.id];return v!=null&&v!==''?+v:t.p};
+let bSel=null,bTab='size',bWall='N',BV=null;
+function BS(){if(!Array.isArray(job.baths)||!job.baths.length)job.baths=[newBath('거실 욕실')];job.bi=clamp(job.bi||0,0,job.baths.length-1);return job.baths[job.bi]}
+function newBath(name,W=1600,D=2200){const b={id:'b'+uid(),name,W,D,H:2300,method:'demo',prevOver:false,door:{wall:'S',off:150,w:700,h:2000,swing:'in',hinge:'L'},win:{on:false,wall:'N',off:500,w:600,h:600,z:1400},
+  fx:[],wt:'w1',ft:'f1',acc:{on:false,wall:'N',tile:'w7'},ceil:'smc',opt:{fan:true,light:2,heater:false,door:false,sill:true,trench:false,acc:true,outlet:true,move:0}};bDefaultFx(b);return b}
+function bScore(b){return bathIssues(b).reduce((a,i)=>a+(i.lv==='bad'?100:i.lv==='warn'?10:0)*(i.w||1),0)}
+function bPlace(b,f,walls=['N','E','S','W']){let best=null,bs=1e9;const keep=[f.wall,f.off];for(const w of walls){const L_=bLen(b,w);if(L_<f.w)continue;f.wall=w;for(let o=0;o<=L_-f.w+1;o+=50){f.off=Math.min(o,L_-f.w);const sc=bScore(b)+Math.abs(f.off-(w===keep[0]?keep[1]:f.off))/1000;if(sc<bs-1e-6){bs=sc;best=[w,f.off]}}}if(best){f.wall=best[0];f.off=best[1]}else{f.wall=keep[0];f.off=keep[1]}return bs}
+function bDefaultFx(b){const W=b.W,D=b.D,big=Math.min(W,D)>=1400&&Math.max(W,D)>=2000;let best=null,bs=1e9;
+  for(const zw of ['N','E','S','W'].filter(w=>w!==b.door.wall))for(const zt of big?['tub','shower']:['shower']){const L_=bLen(b,zw);if(zt==='tub'&&L_<1400)continue;
+    const mk=(t,opt,w)=>({id:uid(),t,opt,wall:zw,off:0,w:w??BFX[t].w});b.fx=[];const z=zt==='tub'?mk('tub','a15',Math.min(1700,L_)):mk('shower',big?'p1':'open',Math.min(900,L_));b.fx.push(z);bPlace(b,z,[zw]);
+    const rn=mk('rain','hb',300);rn.off=Math.round(z.off+z.w/2-150);b.fx.push(rn);const tl=mk('toilet','tp');b.fx.push(tl);bPlace(b,tl);const bs_=mk('basin','long');b.fx.push(bs_);bPlace(b,bs_);
+    const mr=mk('mirror','m8',Math.min(700,bs_.w+200));mr.wall=bs_.wall;mr.off=clamp(bs_.off+bs_.w/2-mr.w/2,0,bLen(b,mr.wall)-mr.w);mr.z=BFX.mirror.z;b.fx.push(mr);
+    const sc=bScore(b)+(zt==='shower'&&big?30:0);if(sc<bs){bs=sc;best=clone(b.fx)}}
+  b.fx=best||[]}
+const bLen=(b,w)=>w==='N'||w==='S'?b.W:b.D;
+function bPt(b,wall,u,v){return wall==='N'?[u,v]:wall==='E'?[b.W-v,u]:wall==='S'?[b.W-u,b.D-v]:[v,b.D-u]}
+function bRect(b,f){const d=BFX[f.t].d,[x0,y0]=bPt(b,f.wall,f.off,0),[x1,y1]=bPt(b,f.wall,f.off+f.w,d);return{x0:Math.min(x0,x1),x1:Math.max(x0,x1),y0:Math.min(y0,y1),y1:Math.max(y0,y1)}}
+const bHit=(a,c,g=0)=>a.x0<c.x1-g&&c.x0<a.x1-g&&a.y0<c.y1-g&&c.y0<a.y1-g;
+function bDoorRect(b){const o=b.door;if(o.swing!=='in')return null;const[x0,y0]=bPt(b,o.wall,o.off,0),[x1,y1]=bPt(b,o.wall,o.off+o.w,o.w);return{x0:Math.min(x0,x1),x1:Math.max(x0,x1),y0:Math.min(y0,y1),y1:Math.max(y0,y1)}}
+function bClear(b,f,dir){const r=bRect(b,f),obs=b.fx.filter(x=>x!==f&&BFX[x.t].fl&&!(x.t==='shower'&&x.opt==='open')).map(x=>bRect(b,x)),cx=(r.x0+r.x1)/2,cy=(r.y0+r.y1)/2,hz=f.wall==='N'||f.wall==='S';
+  if(dir==='side'){if(hz){const band=o=>o.y0<r.y1&&o.y1>r.y0;const L=Math.max(0,...obs.filter(o=>band(o)&&o.x1<=cx).map(o=>o.x1)),R_=Math.min(b.W,...obs.filter(o=>band(o)&&o.x0>=cx).map(o=>o.x0));return Math.min(cx-L,R_-cx)}
+    const band=o=>o.x0<r.x1&&o.x1>r.x0;const T_=Math.max(0,...obs.filter(o=>band(o)&&o.y1<=cy).map(o=>o.y1)),B_=Math.min(b.D,...obs.filter(o=>band(o)&&o.y0>=cy).map(o=>o.y0));return Math.min(cy-T_,B_-cy)}
+  const d=BFX[f.t].d;if(f.wall==='N'){const band=o=>o.x0<r.x1&&o.x1>r.x0;return Math.min(b.D,...obs.filter(o=>band(o)&&o.y0>=r.y1).map(o=>o.y0))-r.y1}
+  if(f.wall==='S'){const band=o=>o.x0<r.x1&&o.x1>r.x0;return r.y0-Math.max(0,...obs.filter(o=>band(o)&&o.y1<=r.y0).map(o=>o.y1))}
+  if(f.wall==='W'){const band=o=>o.y0<r.y1&&o.y1>r.y0;return Math.min(b.W,...obs.filter(o=>band(o)&&o.x0>=r.x1).map(o=>o.x0))-r.x1}
+  const band=o=>o.y0<r.y1&&o.y1>r.y0;return r.x0-Math.max(0,...obs.filter(o=>band(o)&&o.x1<=r.x0).map(o=>o.x1))}
+function bathIssues(b){const out=[],fl=b.fx.filter(f=>BFX[f.t].fl),nm=f=>BFX[f.t].l;
+  b.fx.forEach(f=>{const L_=bLen(b,f.wall);if(f.off<0||f.off+f.w>L_+1)out.push({lv:'bad',t:`${nm(f)}이(가) ${BWALL[f.wall]} 길이(${L_})를 넘습니다`,fix:'b-fix-free',id:f.id,fl:'벽 안으로 옮기기'})});
+  fl.forEach((f,i)=>fl.slice(i+1).forEach(g=>{if(bHit(bRect(b,f),bRect(b,g),5)&&![f,g].some(x=>x.t==='rain'||(x.t==='shower'&&x.opt==='open')))out.push({lv:'bad',w:4,t:`${nm(f)}와(과) ${nm(g)}이(가) 겹칩니다`,fix:'b-fix-free',id:g.id,fl:`${nm(g)} 빈 자리로`})}));
+  const dr=bDoorRect(b);if(dr)fl.forEach(f=>{if(bHit(dr,bRect(b,f),5))out.push({lv:'bad',t:`문이 안으로 열리다 ${nm(f)}에 부딪힙니다`,fix:'b-door-out',fl:'문을 밖여닫이로',fix2:'b-door-slide',fl2:'슬라이딩 문으로'})});
+  {const o=b.door,L_=bLen(b,o.wall);if(o.off<0||o.off+o.w>L_)out.push({lv:'bad',t:`문이 ${BWALL[o.wall]} 밖으로 나갑니다 (벽 ${L_})`})}
+  if(b.win.on){const o=b.win;b.fx.filter(f=>f.wall===o.wall).forEach(f=>{const z0=BFX[f.t].z??0,z1=z0+BFX[f.t].h;if(f.off<o.off+o.w&&o.off<f.off+f.w&&z0<o.z+o.h&&o.z<z1)out.push({lv:'warn',t:`창문이 ${nm(f)}와(과) 겹칩니다`})})}
+  b.fx.filter(f=>f.t==='toilet').forEach(f=>{const s=Math.round(bClear(b,f,'side')),fr=Math.round(bClear(b,f,'front'));
+    if(s<400)out.push({lv:'bad',t:`양변기 옆 공간 ${s}mm — 중심에서 옆까지 최소 400 (권장 450) 필요`,fix:'b-fix-free',id:f.id,fl:'넓은 자리로 옮기기'});else if(s<450)out.push({lv:'warn',t:`양변기 옆 공간 ${s}mm — 앉기 조금 좁습니다 (권장 450)`});
+    if(fr<600)out.push({lv:'bad',t:`양변기 앞 공간 ${fr}mm — 무릎 공간 최소 600 필요`,fix:'b-fix-free',id:f.id,fl:'넓은 자리로 옮기기'})});
+  b.fx.filter(f=>f.t==='basin'||f.t==='vanity').forEach(f=>{const fr=Math.round(bClear(b,f,'front'));if(fr<600)out.push({lv:'warn',t:`${nm(f)} 앞 공간 ${fr}mm — 세수할 때 좁습니다 (권장 700)`})});
+  b.fx.filter(f=>f.t==='rain').forEach(f=>{const c=bPt(b,f.wall,f.off+f.w/2,300),inn=b.fx.some(g=>(g.t==='tub'||g.t==='shower')&&(r=>c[0]>=r.x0&&c[0]<=r.x1&&c[1]>=r.y0&&c[1]<=r.y1)(bRect(b,g)));if(!inn&&b.fx.some(g=>g.t==='tub'||g.t==='shower'))out.push({lv:'warn',t:'샤워 수전이 욕조·샤워 공간 밖에 있어 물이 튑니다',fix:'b-rain-in',fl:'샤워 공간 위로 옮기기'})});
+  if(b.fx.some(f=>f.t==='mirror')&&!b.fx.some(f=>f.t==='basin'||f.t==='vanity'))out.push({lv:'warn',t:'거울장 아래에 세면대가 없습니다'});
+  b.fx.filter(f=>f.t==='mirror').forEach(m=>{const s=b.fx.find(g=>(g.t==='basin'||g.t==='vanity')&&g.wall===m.wall);if(s&&Math.abs((m.off+m.w/2)-(s.off+s.w/2))>60)out.push({lv:'warn',t:'거울장이 세면대 가운데에 있지 않습니다',fix:'b-mirror-c',id:m.id,fl:'세면대 가운데로'})});
+  if(b.method==='over'&&b.prevOver)out.push({lv:'bad',t:'이미 한 번 덧방한 욕실입니다 — 또 덧방하면 무게·두께 때문에 타일이 떨어질 수 있어 철거를 권합니다',fix:'b-demo',fl:'철거 공법으로'});
+  if(b.method==='over')out.push({lv:'info',t:'덧방은 기존 방수층이 멀쩡할 때만 됩니다 — 누수 흔적(아랫집 천장 얼룩)이 있으면 철거 + 방수로 하세요'});
+  if(!b.fx.some(f=>f.t==='toilet'))out.push({lv:'info',t:'양변기가 없습니다 (샤워실 전용이면 괜찮습니다)'});
+  return out}
+function bFree(b,f){const L_=bLen(b,f.wall),cands=[];for(let o=0;o<=L_-f.w;o+=50)cands.push(o);cands.push(Math.max(0,L_-f.w));const keep=f.off;let best=null,bs=-1;
+  for(const o of cands){f.off=o;const r=bRect(b,f),hit=b.fx.some(g=>g!==f&&BFX[g.t].fl&&BFX[f.t].fl&&bHit(r,bRect(b,g),5))||(bDoorRect(b)&&BFX[f.t].fl&&bHit(bDoorRect(b),r,5));if(hit)continue;let sc=1000-Math.abs(o-keep)/10;if(f.t==='toilet')sc+=Math.min(450,bClear(b,f,'side'))*3+Math.min(750,bClear(b,f,'front'));if(sc>bs){bs=sc;best=o}}
+  f.off=best??keep;return best!=null}
+/* 평면 SVG */
+function bathPlanSVG(b,{print=false,sel=null}={}){const W=b.W,D=b.D,t=120,pad=520,ft=btile(b.ft);let s='';const ln=(x1,y1,x2,y2,a='')=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" ${a}/>`,rc=(x,y,w,h,a='')=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" ${a}/>`,tx=(x,y,v,fs,a='')=>`<text x="${x}" y="${y}" font-size="${fs}" ${a}>${v}</text>`;
+  s+=rc(-t,-t,W+2*t,D+2*t,'fill="#3B3F45"')+rc(0,0,W,D,`fill="${ft.c}"`);for(let x=ft.w;x<W;x+=ft.w)s+=ln(x,0,x,D,`stroke="${ft.g}" stroke-width="3"`);for(let y=ft.h;y<D;y+=ft.h)s+=ln(0,y,W,y,`stroke="${ft.g}" stroke-width="3"`);
+  const op=(o,win)=>{const L_=bLen(b,o.wall),[ax,ay]=bPt(b,o.wall,o.off,0),[bx,by]=bPt(b,o.wall,o.off+o.w,0),[cx,cy]=bPt(b,o.wall,o.off,-t),[dx,dy]=bPt(b,o.wall,o.off+o.w,-t);const xs=[ax,bx,cx,dx],ys=[ay,by,cy,dy],x0=Math.min(...xs),y0=Math.min(...ys),w=Math.max(...xs)-x0,h=Math.max(...ys)-y0;let r=rc(x0,y0,w,h,`fill="${win?'#D8ECF3':'#fff'}"`);
+    if(win){r+=ln(ax,ay,bx,by,'stroke="#5B8FA3" stroke-width="10"')+ln(cx,cy,dx,dy,'stroke="#5B8FA3" stroke-width="10"');return r}
+    if(o.swing==='slide'){const[p,q]=bPt(b,o.wall,o.off,-40),[p2,q2]=bPt(b,o.wall,o.off+o.w,-40);r+=ln(p,q,p2,q2,'stroke="#7A5B3C" stroke-width="24"');return r}
+    const hl=o.hinge!=='R',hu=hl?o.off:o.off+o.w,fu=hl?o.off+o.w:o.off,sg=o.swing==='out'?-1:1,[hx,hy]=bPt(b,o.wall,hu,0),[ex,ey]=bPt(b,o.wall,hu,sg*o.w),[fx_,fy]=bPt(b,o.wall,fu,0);r+=ln(hx,hy,ex,ey,'stroke="#7A5B3C" stroke-width="20"')+`<path d="M${ex} ${ey} A ${o.w} ${o.w} 0 0 ${((ex-hx)*(fy-hy)-(ey-hy)*(fx_-hx))>0?1:0} ${fx_} ${fy}" fill="none" stroke="#7A5B3C" stroke-width="6" stroke-dasharray="30 20"/>`;return r};
+  s+=op(b.door,0);if(b.win.on)s+=op(b.win,1);
+  const labs=[];
+  [...b.fx].sort((a,c)=>(BFX[a.t].fl?0:1)-(BFX[c.t].fl?0:1)).forEach(f=>{const L=BFX[f.t],w=f.w,d=L.d,[px,py]=bPt(b,f.wall,f.off,0),on=sel===f.id,st=`stroke="${on?'#E8590C':'#4A4F55'}" stroke-width="${on?14:7}"`;let g='';
+    if(f.t==='toilet')g=rc(30,0,w-60,190,`fill="#fff" ${st} rx="20"`)+`<ellipse cx="${w/2}" cy="${190+(d-190)/2}" rx="${w/2-15}" ry="${(d-190)/2}" fill="#fff" ${st}/><ellipse cx="${w/2}" cy="${200+(d-190)/2}" rx="${w/2-75}" ry="${(d-190)/2-70}" fill="#EAF2F5" stroke="#9AA" stroke-width="5"/>`;
+    else if(f.t==='basin')g=rc(0,0,w,d,`fill="#fff" ${st} rx="70"`)+`<ellipse cx="${w/2}" cy="${d*.55}" rx="${w/2-70}" ry="${d*.32}" fill="#EAF2F5" stroke="#9AA" stroke-width="5"/>`+`<circle cx="${w/2}" cy="60" r="22" fill="#9AA"/>`;
+    else if(f.t==='vanity')g=rc(0,0,w,d,`fill="#E9DFD0" ${st}`)+`<ellipse cx="${w/2}" cy="${d*.55}" rx="${Math.min(220,w/2-60)}" ry="${d*.3}" fill="#fff" stroke="#9AA" stroke-width="5"/><circle cx="${w/2}" cy="60" r="22" fill="#9AA"/>`;
+    else if(f.t==='tub')g=rc(0,0,w,d,`fill="#fff" ${st} rx="${f.opt==='fs'?200:20}"`)+rc(70,70,w-140,d-140,`fill="#EAF2F5" stroke="#9AA" stroke-width="5" rx="${Math.min(160,d/2-80)}"`)+`<circle cx="${w-200}" cy="${d/2}" r="30" fill="#9AA"/>`;
+    else if(f.t==='shower'){g=rc(0,0,w,d,`fill="#DCEFF3" fill-opacity=".55" stroke="#5B8FA3" stroke-width="6" stroke-dasharray="40 25"`)+`<circle cx="${w/2}" cy="${d/2}" r="45" fill="none" stroke="#5B8FA3" stroke-width="8"/>`;const gl='stroke="#4A90A8" stroke-width="22"';
+      if(f.opt==='p1')g+=ln(w,0,w,d*.85,gl);else if(f.opt==='sq')g+=ln(w,0,w,d,gl)+ln(0,d,w*.45,d,gl);else if(f.opt==='sw')g+=ln(w,0,w,d,gl)+ln(0,d,w*.3,d,gl)+`<path d="M${w*.3} ${d} A ${w*.6} ${w*.6} 0 0 0 ${w*.3+ w*.6*Math.cos(Math.PI/3)} ${d+w*.6*Math.sin(Math.PI/3)}" fill="none" stroke="#4A90A8" stroke-width="6" stroke-dasharray="30 20"/>`;if(on)g+=rc(0,0,w,d,`fill="none" ${st}`)}
+    else if(f.t==='rain')g=rc(w/2-40,0,80,80,`fill="#9AA" ${st}`)+`<circle cx="${w/2}" cy="300" r="130" fill="#C5D3D8" fill-opacity=".6" stroke="#7E949B" stroke-width="6"/>`+ln(w/2,80,w/2,170,'stroke="#7E949B" stroke-width="20"');
+    else if(f.t==='mirror')g=rc(0,0,w,d,`fill="#D6E2E8" ${st} stroke-dasharray="20 14"`);
+    else if(f.t==='gendai')g=rc(0,0,w,d,`fill="#EDE8E0" ${st}`)+ln(0,d,w,0,'stroke="#B8B0A3" stroke-width="5"');
+    else if(f.t==='niche')g=rc(0,-90,w,90,`fill="#C9C3B8" ${st} stroke-dasharray="20 14"`);
+    else if(f.t==='washer')g=rc(0,0,w,d,`fill="#fff" ${st} rx="30"`)+`<circle cx="${w/2}" cy="${d*.55}" r="${Math.min(w,d)*.3}" fill="none" stroke="#9AA" stroke-width="8"/>`;
+    s+=`<g transform="translate(${px} ${py}) rotate(${BROT[f.wall]})" ${print?'':`data-bfx="${f.id}" style="cursor:grab;touch-action:none"`}>${g}${print?'':rc(0,-20,w,d+20,'fill="transparent"')}</g>`;
+    const hung=!L.fl,[cx,cy]=bPt(b,f.wall,f.off+w/2,hung?-200:d/2);labs.push(tx(cx,cy,L.l.replace(/ \(.*\)/,''),hung?80:110,'text-anchor="middle" dominant-baseline="middle" fill="#22262B" font-weight="600" paint-order="stroke" stroke="#fff" stroke-width="22" pointer-events="none"'));
+    if(on){const[a1,a2]=bPt(b,f.wall,0,-260),[c1,c2]=bPt(b,f.wall,f.off,-260),[e1,e2]=bPt(b,f.wall,f.off+w,-260);labs.push(ln(a1,a2,c1,c2,'stroke="#E8590C" stroke-width="6"')+ln(c1,c2,e1,e2,'stroke="#E8590C" stroke-width="14"')+tx((a1+c1)/2,(a2+c2)/2-30,f.off,100,'text-anchor="middle" fill="#E8590C" font-weight="700"')+tx((c1+e1)/2,(c2+e2)/2-30,w,100,'text-anchor="middle" fill="#E8590C" font-weight="700"'))}});
+  s+=labs.join('');
+  const dm='stroke="#555" stroke-width="5"',fs=120;s+=ln(0,-t-200,W,-t-200,dm)+ln(0,-t-260,0,-t-140,dm)+ln(W,-t-260,W,-t-140,dm)+tx(W/2,-t-240,W,fs,'text-anchor="middle" fill="#333"')+ln(-t-200,0,-t-200,D,dm)+ln(-t-260,0,-t-140,0,dm)+ln(-t-260,D,-t-140,D,dm)+tx(-t-240,D/2,D,fs,`text-anchor="middle" fill="#333" transform="rotate(-90 ${-t-240} ${D/2})"`);
+  
+  const vb=`${-t-pad} ${-t-pad} ${W+2*t+2*pad} ${D+2*t+2*pad}`;return`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" ${print?'':'style="width:100%;height:100%;display:block"'} font-family="${FONT}" id="${print?'':'bPlan'}">${s}</svg>`}
+/* 입면 SVG */
+function bTileGrid(t,u0,u1,z0,z1,clip){let s='',ox=0;const id='bc'+uid();s+=`<clipPath id="${id}"><rect x="${u0}" y="${-z1}" width="${u1-u0}" height="${z1-z0}"/></clipPath><g clip-path="url(#${id})"><rect x="${u0}" y="${-z1}" width="${u1-u0}" height="${z1-z0}" fill="${t.c}"/>`;
+  if(t.vein)for(let i=0;i<Math.ceil((u1-u0)/500);i++){const x=u0+i*500+130;s+=`<path d="M${x} ${-z0} q 120 ${-(z1-z0)*.3} -40 ${-(z1-z0)*.55} t 90 ${-(z1-z0)*.45}" fill="none" stroke="${t.vein}" stroke-width="5" opacity=".55"/>`}
+  if(t.dots)for(let i=0;i<(u1-u0)*(z1-z0)/90000;i++){const x=u0+((i*7919)%997)/997*(u1-u0),z=z0+((i*104729)%991)/991*(z1-z0);s+=`<circle cx="${x.toFixed(0)}" cy="${(-z).toFixed(0)}" r="${8+(i%3)*5}" fill="${['#B9AFA0','#8E9A94','#C9B9A6'][i%3]}" opacity=".7"/>`}
+  for(let z=z0+t.h,r=1;z<z1;z+=t.h,r++)s+=`<line x1="${u0}" y1="${-z}" x2="${u1}" y2="${-z}" stroke="${t.g}" stroke-width="4"/>`;
+  for(let r=0,z=z0;z<z1;z+=t.h,r++){const o=t.bond&&r%2?t.w/2:0;for(let x=u0+t.w-o;x<u1;x+=t.w)s+=`<line x1="${x}" y1="${-z}" x2="${x}" y2="${-Math.min(z1,z+t.h)}" stroke="${t.g}" stroke-width="4"/>`}
+  return s+'</g>'}
+function bathElevSVG(b,wall,{print=false,sel=null}={}){const L=bLen(b,wall),H=b.H,wt=btile(b.acc.on&&b.acc.wall===wall?b.acc.tile:b.wt);let s='';const rc=(x,z,w,h,a='')=>`<rect x="${x}" y="${-(z+h)}" width="${w}" height="${h}" ${a}/>`,ln=(x1,z1,x2,z2,a='')=>`<line x1="${x1}" y1="${-z1}" x2="${x2}" y2="${-z2}" ${a}/>`,tx=(x,z,v,fs,a='')=>`<text x="${x}" y="${-z}" font-size="${fs}" ${a}>${v}</text>`;
+  s+=rc(-120,-120,L+240,H+240,'fill="#3B3F45"')+bTileGrid(wt,0,L,0,H);
+  const adj=b.fx.filter(f=>f.wall!==wall&&BFX[f.t].fl).map(f=>{const r=bRect(b,f);const[u0,u1,dd]=wall==='N'?[r.x0,r.x1,r.y0]:wall==='S'?[b.W-r.x1,b.W-r.x0,b.D-r.y1]:wall==='E'?[r.y0,r.y1,b.W-r.x1]:[b.D-r.y1,b.D-r.y0,r.x0];return{f,u0,u1,dd}}).filter(o=>o.dd<200||true).filter(o=>{const opp={N:'S',S:'N',E:'W',W:'E'}[wall];return o.f.wall!==opp});
+  adj.forEach(({f,u0,u1})=>{const h=f.t==='shower'?1900:BFX[f.t].h;if(f.t==='shower'&&f.opt==='open')return;s+=rc(Math.max(0,u0),0,Math.min(L,u1)-Math.max(0,u0),h,`fill="${f.t==='shower'?'#CFE6EC':'#E4E6E8'}" fill-opacity="${f.t==='shower'?.45:.85}" stroke="#8C949B" stroke-width="5"`)+tx((u0+u1)/2,h+60,BFX[f.t].l.replace(/ \(.*\)/,'')+' (옆)',70,'text-anchor="middle" fill="#666"')});
+  const op=(o,win)=>{if(o.wall!==wall)return'';if(win)return rc(o.off,o.z,o.w,o.h,'fill="#D8ECF3" stroke="#5B8FA3" stroke-width="10"')+ln(o.off+o.w/2,o.z,o.off+o.w/2,o.z+o.h,'stroke="#5B8FA3" stroke-width="6"');
+    return rc(o.off-40,0,o.w+80,o.h+40,'fill="#6B5642"')+rc(o.off,0,o.w,o.h,'fill="#E9E4DA" stroke="#B7AE9F" stroke-width="5"')+(o.swing==='slide'?'':`<circle cx="${o.hinge==='R'?o.off+80:o.off+o.w-80}" cy="${-1000}" r="22" fill="#555"/>`)};
+  s+=op(b.door,0)+(b.win.on?op(b.win,1):'');
+  b.fx.filter(f=>f.wall===wall).sort((a,c)=>(BFX[a.t].z?1:0)-(BFX[c.t].z?1:0)).forEach(f=>{const u=f.off,w=f.w,on=sel===f.id,st=`stroke="${on?'#E8590C':'#4A4F55'}" stroke-width="${on?12:6}"`;let g='';
+    if(f.t==='toilet'){const tk=f.opt==='wh'?'':rc(u+40,420,w-80,360,`fill="#fff" ${st} rx="18"`);g=(f.opt==='wh'?rc(u+60,800,w-120,160,'fill="#ddd" stroke="#999" stroke-width="5" rx="10"'):'')+tk+`<path d="M${u+20} ${-420} L${u+w-20} ${-420} L${u+w-70} ${-(f.opt==='wh'?260:0)} L${u+70} ${-(f.opt==='wh'?260:0)} Z" fill="#fff" ${st}/>`+rc(u+10,400,w-20,30,`fill="#F2F2F2" ${st}`)}
+    else if(f.t==='basin'){if(f.opt==='top')g=rc(u,820,w,30,`fill="#F0EEEA" ${st}`)+`<path d="M${u+w*.2} ${-850} h ${w*.6} v -120 h ${-w*.6} Z" fill="#fff" ${st}/>`+rc(u+w/2-15,970,30,120,'fill="#9AA"');else g=rc(u,700,w,150,`fill="#fff" ${st} rx="20"`)+(f.opt==='long'?rc(u+w/2-90,0,180,700,`fill="#fff" ${st}`):rc(u+w/2-90,380,180,320,`fill="#fff" ${st}`))+rc(u+w/2-15,850,30,110,'fill="#9AA"')}
+    else if(f.t==='vanity')g=rc(u,150,w,670,`fill="#E9DFD0" ${st}`)+ln(u+w/2,150,u+w/2,820,'stroke="#A99A86" stroke-width="5"')+rc(u-10,820,w+20,30,`fill="#F4F2EE" ${st}`)+rc(u+w/2-15,850,30,110,'fill="#9AA"')+[u+w/2-60,u+w/2+40].map(x=>rc(x,640,20,120,'fill="#555"')).join('');
+    else if(f.t==='tub'){g=rc(u,0,w,550,`fill="#fff" ${st} rx="${f.opt==='fs'?120:10}"`);if(!b.fx.some(x=>x.t==='rain'&&x.wall===wall&&x.off>=u&&x.off<=u+w))g+=rc(u+w-260,620,160,40,'fill="#9AA"')}
+    else if(f.t==='shower'){if(f.opt==='open'){g=rc(u,0,w,1900,'fill="none" stroke="#5B8FA3" stroke-width="5" stroke-dasharray="40 25"')}else if(f.opt==='p1')g=rc(u+w-20,0,20,1900,`fill="#BFDDE6" ${st}`);else g=rc(u,0,w,1900,`fill="#CFE6EC" fill-opacity=".45" ${st}`)+rc(u+w*.3,900,30,250,'fill="#888"')}
+    else if(f.t==='rain'){const c=u+w/2;g=ln(c,1000,c,2050,'stroke="#8C9AA0" stroke-width="30"')+rc(c-90,950,180,90,'fill="#8C9AA0" rx="20"')+ln(c,2050,c+0,2050,'')+rc(c-150,2030,300,40,'fill="#8C9AA0" rx="10"')+(on?rc(u,950,w,1150,`fill="none" ${st}`):'')}
+    else if(f.t==='mirror'){const z=f.z??BFX.mirror.z;g=rc(u,z,w,BFX.mirror.h,`fill="#D6E2E8" ${st}`)+`<path d="M${u+80} ${-(z+120)} l 120 -160 M${u+150} ${-(z+120)} l 120 -160" stroke="#fff" stroke-width="14" opacity=".8"/>`}
+    else if(f.t==='gendai')g=bTileGrid(wt,u,u+w,0,BFX.gendai.h)+rc(u,0,w,BFX.gendai.h,`fill="none" ${st}`)+rc(u-10,BFX.gendai.h,w+20,30,`fill="#F4F2EE" ${st}`);
+    else if(f.t==='niche'){const z=f.z??BFX.niche.z;g=rc(u,z,w,BFX.niche.h,`fill="#A9A397" ${st}`)+rc(u+20,z+20,w-40,BFX.niche.h-40,'fill="#BDB7AB"')}
+    else if(f.t==='washer')g=rc(u+20,0,w-40,850,`fill="#fff" ${st} rx="20"`)+`<circle cx="${u+w/2}" cy="${-430}" r="${Math.min(220,w*.32)}" fill="#DDE3E6" stroke="#888" stroke-width="10"/>`;
+    s+=`<g ${print?'':`data-bfx="${f.id}"`}>${g}</g>`});
+  const dm='stroke="#555" stroke-width="5"';s+=ln(0,-260,L,-260,dm)+ln(0,-300,0,-220,dm)+ln(L,-300,L,-220,dm)+tx(L/2,-230,L,110,'text-anchor="middle" fill="#333"');
+  const pts=[...new Set([0,L,...b.fx.filter(f=>f.wall===wall&&BFX[f.t].fl).flatMap(f=>[f.off,f.off+f.w])].map(v=>Math.round(clamp(v,0,L))))].sort((a,c)=>a-c);if(pts.length>2)pts.slice(1).forEach((p,i)=>{const a=pts[i];if(p-a<60)return;s+=ln(a,-420,p,-420,dm)+ln(a,-450,a,-390,dm)+ln(p,-450,p,-390,dm)+tx((a+p)/2,-400,p-a,85,'text-anchor="middle" fill="#555"')});
+  s+=ln(L+260,0,L+260,H,dm)+tx(L+320,H/2,H,110,`fill="#333" transform="rotate(-90 ${L+320} ${-H/2})" text-anchor="middle"`);
+  s+=tx(0,H+170,`${BWALL[wall]} · 타일 ${esc(wt.n)}`,110,'fill="#333" font-weight="700"');
+  return`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-300} ${-(H+330)} ${L+760} ${H+830}" ${print?'':'style="width:100%;height:100%;display:block"'} font-family="${FONT}">${s}</svg>`}
+/* 견적 */
+function bathQuote(b){const L=[],add=(g,item,spec,qty,unit,price)=>{if(qty>0&&price>0)L.push({g,item,spec,qty,unit,price:Math.round(price),amt:Math.round(qty*price)})},W=b.W/1000,D=b.D/1000,H=b.H/1000,per=2*(W+D);
+  const dA=b.door.w*b.door.h/1e6,wA=b.win.on?b.win.w*b.win.h/1e6:0,tub=b.fx.find(f=>f.t==='tub'&&f.opt!=='fs');
+  const accA=b.acc.on?bLen(b,b.acc.wall)/1000*H-(b.door.wall===b.acc.wall?dA:0)-(b.win.on&&b.win.wall===b.acc.wall?wA:0):0;
+  const gend=b.fx.filter(f=>f.t==='gendai').reduce((a,f)=>a+f.w/1000*(BFX.gendai.h+BFX.gendai.d)/1000,0);
+  const wallA=Math.max(0,per*H-dA-wA-accA+gend),floorA=Math.max(0,W*D-(tub?tub.w*BFX.tub.d/1e6:0)),loss=1+bp('loss')/100,wt=btile(b.wt),ft=btile(b.ft),at=btile(b.acc.tile);
+  const lab=t=>Math.max(t.w,t.h)>=1200?bp('tileLabBig'):Math.min(t.w,t.h)<200?bp('tileLabSmall'):bp('tileLab');const r1=v=>Math.round(v*10)/10;
+  if(b.method==='demo'){add('철거·방수','기존 타일·도기 철거',`벽 ${r1(per*H)}㎡ + 바닥 ${r1(W*D)}㎡`,1,'식',Math.max(bp('demoMin'),(per*H+W*D)*bp('demoM2')));add('철거·방수','폐기물 처리','',1,'식',bp('waste'));add('철거·방수','바닥 미장 (물매 잡기)','',r1(W*D),'㎡',bp('plaster'));
+    const wa=W*D+per*1.2+(b.fx.some(f=>f.t==='shower'||f.t==='tub')?1.8*0.9*2:0);add('철거·방수','방수 (액체 + 도막 2중)','바닥 전체 + 벽 1.2m · 샤워 구역 1.8m',1,'식',Math.max(bp('waterMin'),wa*bp('water')));add('철거·방수','담수 테스트 (48시간)','',1,'식',bp('waterTest'))}
+  else{add('철거·방수','기존 도기·액세서리 철거 (덧방)','',1,'식',bp('overDemo'));add('철거·방수','덧방 프라이머·본드',`벽+바닥 ${r1(wallA+accA+floorA)}㎡`,r1(wallA+accA+floorA),'㎡',bp('overGlue'))}
+  add('타일',`벽 타일 · ${wt.n}`,`${r1(wallA)}㎡ + 손실 ${bp('loss')}%`,r1(wallA*loss),'㎡',btP(wt));if(accA>0)add('타일',`포인트 벽 · ${at.n}`,`${BWALL[b.acc.wall]} ${r1(accA)}㎡ + 손실`,r1(accA*loss),'㎡',btP(at));
+  add('타일',`바닥 타일 · ${ft.n}`,`${r1(floorA)}㎡ + 손실 ${bp('loss')}%`,r1(floorA*loss),'㎡',btP(ft));
+  add('타일','벽 타일 시공비',`${wt.w}×${wt.h}`,r1(wallA),'㎡',lab(wt));if(accA>0)add('타일','포인트 벽 시공비',`${at.w}×${at.h}`,r1(accA),'㎡',lab(at));add('타일','바닥 타일 시공비 (구배 포함)',`${ft.w}×${ft.h}`,r1(floorA),'㎡',lab(ft));
+  const cnt={};b.fx.forEach(f=>{const o=bfxOpt(f),k=f.t+'.'+o[0];if(BFX[f.t].perM){add('도기·수전',o[1].replace(' (m당)',''),`길이 ${f.w}`,r1(f.w/1000),'m',bfxP(f));return}(cnt[k]=cnt[k]||{f,n:0}).n++});
+  Object.values(cnt).forEach(({f,n})=>{const o=bfxOpt(f),g=f.t==='mirror'||f.t==='vanity'?'욕실장·거울':f.t==='niche'?'타일':'도기·수전';add(g,o[1],f.t==='tub'||f.t==='vanity'||f.t==='mirror'?`폭 ${f.w}`:f.t==='shower'?`${f.w}×${BFX.shower.d}`:'',n,'개',bfxP(f))});
+  const nb=b.fx.filter(f=>f.t==='basin'||f.t==='vanity').length;add('도기·수전','세면 수전','',nb,'개',bp('faucetB'));const tubN=b.fx.filter(f=>f.t==='tub').length,rainN=b.fx.filter(f=>f.t==='rain').length;add('도기·수전','욕조 수전','',Math.max(0,tubN-rainN),'개',bp('faucetT'));
+  const inst=b.fx.filter(f=>['toilet','basin','vanity','tub','shower','rain','mirror'].includes(f.t)&&!(f.t==='shower'&&f.opt==='open')).length;add('시공','도기·수전·욕실장 설치 (설비)','',inst,'개',bp('install'));
+  const drains=1+(b.fx.some(f=>f.t==='shower')&&!b.opt.trench?1:0)+(b.fx.some(f=>f.t==='washer')?1:0);add('마감·기타','배수구 유가',`${drains}곳`,drains,'개',bp('drain'));if(b.opt.trench)add('마감·기타','트렌치 유가 (샤워 구역)','',1,'개',bp('trench'));
+  const c=BCEIL[b.ceil];if(c&&c[1])add('천장·전기',c[0],`${r1(W*D)}㎡`,1,'식',Math.max(c[2],W*D*c[1]));
+  if(b.opt.fan)add('천장·전기','환풍기 (역류방지 댐퍼형)','',1,'개',bp('fan'));add('천장·전기','방습 LED등','',+b.opt.light||0,'개',bp('light'));if(b.opt.heater)add('천장·전기','욕실 천장 난방기','',1,'개',bp('heater'));if(b.opt.outlet)add('천장·전기','방수 콘센트','',1,'개',bp('outlet'));
+  if(b.opt.door)add('마감·기타','ABS 도어 교체 (문틀 포함)',`${b.door.w}×${b.door.h}`,1,'짝',bp('door'));if(b.opt.sill)add('마감·기타','인조대리석 문턱','',1,'개',bp('sill'));if(b.opt.acc)add('마감·기타','액세서리 세트 (수건걸이·휴지걸이·코너선반)','',1,'식',bp('acc'));
+  add('마감·기타','실리콘·줄눈·코너비드 마감','',1,'식',bp('silicon'));add('시공','배관 위치 변경','변기·세면대 자리 옮김',+b.opt.move||0,'곳',bp('move'));add('시공','운반·양중·보양','',1,'식',bp('transport'));
+  const sub=L.reduce((a,l)=>a+l.amt,0),vat=catalog.prices.vat?Math.round(sub*.1):0;return{L,sub,vat,total:sub+vat,wallA,floorA,accA}}
+const BGRP=['철거·방수','타일','도기·수전','욕실장·거울','천장·전기','마감·기타','시공'];
+function bathPage(b){const q=bathQuote(b),L=q.L,w=794,h=Math.max(1123,640+L.length*26+BGRP.length*26);
+  return{w,h,svg:tablePage({w,h,title:`욕실 견적서 · ${catalog.company.name}`,meta:[`수신: ${job.customer.name||'고객님'}  ·  현장: ${job.customer.addr||'-'}  ·  ${b.name}`,`크기 ${b.W}×${b.D} · 천장 ${b.H} · ${b.method==='demo'?'철거 후 방수·타일':'덧방 (기존 타일 위)'} · 벽 ${r2(q.wallA+q.accA)}㎡ · 바닥 ${r2(q.floorA)}㎡`,`견적일 ${today()} · No. ${job.docNo} · 문의 ${catalog.company.tel}`],
+    headers:['품목','규격','수량','단가','금액'],cols:[240,170,70,100,134],aligns:['l','l','r','r','r'],rows:BGRP.flatMap(g=>{const ls=L.filter(l=>l.g===g);if(!ls.length)return[];return[[`■ ${g}`,'','','소계',won(ls.reduce((a,l)=>a+l.amt,0))],...ls.map(l=>['  '+l.item,l.spec,`${nf(l.qty)}${l.unit}`,won(l.price),won(l.amt)])]}),
+    foot:y=>{const r=(lab,v,big,yy)=>`<text x="560" y="${yy}" font-size="${big?15:13}" fill="${big?'#111':'#555'}" text-anchor="end" ${big?'font-weight="700"':''}>${lab}</text><text x="754" y="${yy}" font-size="${big?20:13}" fill="#111" text-anchor="end" font-family="IBM Plex Mono, Menlo, monospace" ${big?'font-weight="600"':''}>${v}</text>`;
+      return r('공급가액',won(q.sub),0,y+30)+r('부가세 (10%)',won(q.vat),0,y+54)+`<line x1="420" y1="${y+68}" x2="754" y2="${y+68}" stroke="#111"/>`+r('합계 (VAT 포함)',`${won(q.total)}원`,1,y+96)+['· 벽 면적 = 둘레 × 천장높이 − 문·창, 타일은 손실분 포함 주문 수량','· 철거 시 방수 후 48시간 담수 테스트를 거쳐 타일을 붙입니다','· 현장 상태(배관·바닥 구배·누수)에 따라 금액이 달라질 수 있습니다'].map((t,i)=>`<text x="40" y="${y+140+i*22}" font-size="12" fill="#555">${t}</text>`).join('')}}),total:q.total}}
+function bathDrawPage(b){const W=1123,H=794;let s=`<rect width="${W}" height="${H}" fill="#fff"/><text x="30" y="40" font-size="20" font-weight="700">${esc(b.name)} 도면 · ${esc(job.customer.name||'')}</text><text x="30" y="62" font-size="12" fill="#555">${b.W}×${b.D} · 천장 ${b.H} · 벽 ${esc(btile(b.wt).n)} · 바닥 ${esc(btile(b.ft).n)} · 천장 ${BCEIL[b.ceil][0]} · 단위 mm</text>`;
+  s+=`<text x="30" y="92" font-size="13" font-weight="700">평면</text>`+nestSVG(bathPlanSVG(b,{print:true}),20,96,360,640);
+  ['N','E','S','W'].forEach((k,i)=>{const x=390+(i%2)*365,y=80+Math.floor(i/2)*355;s+=`<text x="${x}" y="${y+12}" font-size="13" font-weight="700">${BWALL[k]} 입면</text>`+nestSVG(bathElevSVG(b,k,{print:true}),x,y+18,355,320)});
+  return{w:W,h:H,svg:`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="${FONT}">${s}</svg>`}}
+/* 3D */
+function bTex(t){const T3=THREE,c=document.createElement('canvas'),k=256/t.w;c.width=256;c.height=Math.max(32,Math.round(t.h*k));const g=c.getContext('2d');g.fillStyle=t.c;g.fillRect(0,0,c.width,c.height);
+  if(t.vein){g.strokeStyle=t.vein;g.globalAlpha=.45;g.lineWidth=2;g.beginPath();g.moveTo(40,0);g.bezierCurveTo(120,c.height*.4,60,c.height*.6,170,c.height);g.stroke();g.globalAlpha=1}
+  if(t.dots)for(let i=0;i<40;i++){g.fillStyle=['#B9AFA0','#8E9A94','#C9B9A6'][i%3];g.beginPath();g.arc((i*53)%256,(i*97)%c.height,2+(i%3),0,7);g.fill()}
+  g.fillStyle=t.g;g.fillRect(0,c.height-3,256,3);g.fillRect(256-3,0,3,c.height);const tx=new T3.CanvasTexture(c);tx.wrapS=tx.wrapT=T3.RepeatWrapping;return tx}
+function bPieces(L,H,holes){const xs=[...new Set([0,L,...holes.flatMap(h=>[h[0],h[1]])].map(v=>clamp(v,0,L)))].sort((a,c)=>a-c),out=[];
+  for(let i=0;i<xs.length-1;i++){const a=xs[i],c=xs[i+1];if(c-a<1)continue;const hs=holes.filter(h=>h[0]<c-1&&h[1]>a+1).map(h=>[h[2],h[3]]).sort((p,q)=>p[0]-q[0]);let z=0;hs.forEach(([z0,z1])=>{if(z0>z)out.push([a,c,z,z0]);z=Math.max(z,z1)});if(z<H)out.push([a,c,z,H])}return out}
+function buildBath3D(b){const T3=THREE,grp=new T3.Group(),m=x=>x/1000,MS=(o)=>new T3.MeshStandardMaterial({roughness:.45,metalness:0,...o});
+  const wt=btile(b.wt),ft=btile(b.ft),base={};const texOf=t=>base[t.id]=base[t.id]||bTex(t);
+  const plane=(w,h,mat)=>new T3.Mesh(new T3.PlaneGeometry(m(w),m(h)),mat);
+  {const tx=texOf(ft).clone();tx.needsUpdate=true;tx.repeat.set(b.W/ft.w,b.D/ft.h);const p=plane(b.W,b.D,MS({map:tx,roughness:.7}));p.rotation.x=-Math.PI/2;p.position.set(m(b.W/2),0,m(b.D/2));p.receiveShadow=true;grp.add(p);
+    const sl=new T3.Mesh(new T3.BoxGeometry(m(b.W+240),.12,m(b.D+240)),MS({color:'#55595F'}));sl.position.set(m(b.W/2),-.061,m(b.D/2));grp.add(sl)}
+  const ROT={N:0,E:-Math.PI/2,S:Math.PI,W:Math.PI/2};
+  const place=(o,wall,u,v,z)=>{const[x,y]=bPt(b,wall,u,v);o.position.set(m(x),m(z),m(y));o.rotation.y=ROT[wall];return o};
+  ['N','E','S','W'].forEach(k=>{const L=bLen(b,k),t=btile(b.acc.on&&b.acc.wall===k?b.acc.tile:b.wt),holes=[];if(b.door.wall===k)holes.push([b.door.off,b.door.off+b.door.w,0,b.door.h]);if(b.win.on&&b.win.wall===k)holes.push([b.win.off,b.win.off+b.win.w,b.win.z,b.win.z+b.win.h]);
+    bPieces(L,b.H,holes).forEach(([u0,u1,z0,z1])=>{const tx=texOf(t).clone();tx.needsUpdate=true;tx.repeat.set((u1-u0)/t.w,(z1-z0)/t.h);tx.offset.set(u0/t.w,z0/t.h);const p=plane(u1-u0,z1-z0,MS({map:tx,roughness:.35}));p.receiveShadow=true;grp.add(place(p,k,(u0+u1)/2,0,(z0+z1)/2))});
+    const og=new T3.Group();og.userData.wall=k;grp.add(og);if(b.door.wall===k){const d=b.door;const lf=new T3.Mesh(new T3.BoxGeometry(m(d.w),m(d.h),.035),MS({color:'#E9E4DA'}));og.add(place(lf,k,d.off+d.w/2,-60,d.h/2));const fr=MS({color:'#6B5642'});[[d.off-25,d.off],[d.off+d.w,d.off+d.w+25]].forEach(([a,c])=>{const q=new T3.Mesh(new T3.BoxGeometry(m(c-a),m(d.h+25),.14),fr);og.add(place(q,k,(a+c)/2,-60,(d.h+25)/2))});const tp=new T3.Mesh(new T3.BoxGeometry(m(d.w+50),.025,.14),fr);og.add(place(tp,k,d.off+d.w/2,-60,d.h+12))}
+    if(b.win.on&&b.win.wall===k){const o=b.win,gl=plane(o.w,o.h,MS({color:'#CFE8F1',transparent:true,opacity:.55}));og.add(place(gl,k,o.off+o.w/2,-80,o.z+o.h/2))}});
+  const W_=MS({color:'#FFFFFF',roughness:.2}),IN=MS({color:'#E7EEF1',roughness:.2}),MET=MS({color:'#AEB7BD',metalness:.35,roughness:.3}),GL=MS({color:'#BFE3EA',transparent:true,opacity:.28,roughness:.05}),WOOD=MS({color:'#D9C7AE',roughness:.6}),STONE=MS({color:'#F4F2EE',roughness:.3});
+  const bx=(g,u0,u1,d0,d1,z0,z1,mat)=>{const q=new T3.Mesh(new T3.BoxGeometry(m(u1-u0),m(z1-z0),m(d1-d0)),mat);q.position.set(m((u0+u1)/2),m((z0+z1)/2),m((d0+d1)/2));q.castShadow=true;q.receiveShadow=true;g.add(q);return q};
+  const cyl=(g,u,d,r1,r2,z0,z1,mat,sx=1,sz=1)=>{const q=new T3.Mesh(new T3.CylinderGeometry(m(r1),m(r2),m(z1-z0),32),mat);q.position.set(m(u),m((z0+z1)/2),m(d));q.scale.set(sx,1,sz);q.castShadow=true;g.add(q);return q};
+  b.fx.forEach(f=>{const g=new T3.Group(),w=f.w,d=BFX[f.t].d;
+    if(f.t==='toilet'){const zb=f.opt==='wh'?260:0,bd=d-190;if(f.opt!=='wh')bx(g,40,w-40,0,180,400,780,W_);else bx(g,60,w-60,0,30,800,960,MS({color:'#ccc'}));const bw=new T3.Mesh(new T3.CylinderGeometry(1,.72,m(400-zb),32),W_);bw.scale.set(m(w/2-20),1,m(bd/2));bw.position.set(m(w/2),m((zb+400)/2),m(190+bd/2));bw.castShadow=true;g.add(bw);const se=new T3.Mesh(new T3.CylinderGeometry(1,1,.025,32),MS({color:'#F6F6F6'}));se.scale.set(m(w/2-15),1,m(bd/2+5));se.position.set(m(w/2),m(412),m(190+bd/2));g.add(se)}
+    else if(f.t==='basin'){if(f.opt==='top'){bx(g,0,w,0,d,820,850,STONE);cyl(g,w/2,d*.55,190,150,850,980,W_)}else{bx(g,0,w,0,d,700,850,W_);bx(g,w/2-180,w/2+180,d*.25,d*.85,800,852,IN);if(f.opt==='long')cyl(g,w/2,120,80,90,0,700,W_);else cyl(g,w/2,100,80,60,380,700,W_)}cyl(g,w/2,60,15,15,850,960,MET)}
+    else if(f.t==='vanity'){bx(g,0,w,0,d-20,150,820,WOOD);bx(g,-10,w+10,0,d,820,850,STONE);bx(g,w/2-Math.min(220,w/2-60),w/2+Math.min(220,w/2-60),d*.3,d*.85,800,852,IN);cyl(g,w/2,60,15,15,850,960,MET);bx(g,w/2-3,w/2+3,d-21,d-19,160,810,MS({color:'#A99A86'}))}
+    else if(f.t==='tub'){const r=60;bx(g,0,w,0,d,0,90,W_);bx(g,0,r,0,d,0,550,W_);bx(g,w-r,w,0,d,0,550,W_);bx(g,0,w,0,r,0,550,W_);bx(g,0,w,d-r,d,0,550,W_);bx(g,r,w-r,r,d-r,90,95,IN)}
+    else if(f.t==='shower'){const H1=1900;if(f.opt==='p1')bx(g,w-10,w,0,d*.85,0,H1,GL);else if(f.opt!=='open'){bx(g,w-10,w,0,d,0,H1,GL);bx(g,0,w,d-10,d,0,H1,GL)}cyl(g,w/2,d/2,45,45,0,4,MS({color:'#7E949B'}))}
+    else if(f.t==='rain'){const c=w/2;cyl(g,c,40,15,15,1000,2050,MET);bx(g,c-90,c+90,0,80,950,1040,MET);bx(g,c-12,c+12,40,300,2035,2060,MET);cyl(g,c,300,130,130,2010,2030,MET)}
+    else if(f.t==='mirror'){const z=f.z??BFX.mirror.z,hh=BFX.mirror.h;bx(g,0,w,0,d-5,z,z+hh,MS({color:'#F4F4F2'}));bx(g,10,w-10,d-5,d,z+10,z+hh-10,MS({color:'#C9D8DF',metalness:.1,roughness:.08,emissive:'#3A4A52',emissiveIntensity:.15}))}
+    else if(f.t==='gendai'){const tx=texOf(wt).clone();tx.needsUpdate=true;tx.repeat.set(w/wt.w,BFX.gendai.h/wt.h);bx(g,0,w,0,d,0,BFX.gendai.h,MS({map:tx}));bx(g,-10,w+10,0,d+20,BFX.gendai.h,BFX.gendai.h+30,STONE)}
+    else if(f.t==='niche'){const z=f.z??BFX.niche.z;bx(g,0,w,0,4,z,z+BFX.niche.h,MS({color:'#A9A397'}))}
+    else if(f.t==='washer'){bx(g,20,w-20,0,d,0,850,W_);cyl(g,w/2,d+1,1,1,430,431,MS({color:'#9AA6AC'}));const q=g.children[g.children.length-1];q.geometry=new T3.CylinderGeometry(m(Math.min(220,w*.32)),m(Math.min(220,w*.32)),.01,32);q.rotation.x=Math.PI/2;q.position.y=m(430)}
+    const pg_=place(g,f.wall,f.off,0,0);if(!BFX[f.t].fl)pg_.userData.wall=f.wall;grp.add(pg_)});
+  return grp}
+async function renderBath3D(el,b){if(!el)return;if(!window.THREE)el.innerHTML='<p class="hint" style="padding:20px">3D 화면을 준비하는 중…</p>';try{await load3D()}catch(e){el.innerHTML='<p class="hint" style="padding:20px">3D 도구를 불러오지 못했습니다. 인터넷 연결을 확인하세요.</p>';return}
+  if(!el.isConnected)return;const T3=THREE;
+  if(!BV){let ren;try{ren=new T3.WebGLRenderer({antialias:true,preserveDrawingBuffer:true})}catch(e){el.innerHTML='<p class="hint" style="padding:20px">이 기기에서는 3D를 표시할 수 없습니다.</p>';return}
+    ren.setPixelRatio(Math.min(2,window.devicePixelRatio||1));ren.shadowMap.enabled=true;const scene=new T3.Scene();scene.background=new T3.Color('#ECEAE5');scene.add(new T3.HemisphereLight(0xffffff,0x8a857c,.75));const dl=new T3.DirectionalLight(0xfff6e8,.55);dl.position.set(2,6,4);dl.castShadow=true;dl.shadow.mapSize.set(1024,1024);scene.add(dl);scene.add(dl.target);const pl=new T3.PointLight(0xffffff,.35,8);scene.add(pl);
+    const cam=new T3.PerspectiveCamera(45,1.5,.05,100);BV={ren,scene,cam,dl,pl,th:-.6,ph:.95,r:4,ptrs:new Map(),grp:null};const cv=ren.domElement;cv.style.cssText='touch-action:none;display:block;width:100%;height:100%';
+    cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);BV.ptrs.set(e.pointerId,[e.clientX,e.clientY])});
+    cv.addEventListener('pointermove',e=>{const p=BV.ptrs.get(e.pointerId);if(!p)return;if(BV.ptrs.size===1){BV.th-=(e.clientX-p[0])*.008;BV.ph=clamp(BV.ph+(e.clientY-p[1])*.006,.1,1.5)}else{const o=[...BV.ptrs.values()].find(q=>q!==p),d0=Math.hypot(p[0]-o[0],p[1]-o[1]),d1=Math.hypot(e.clientX-o[0],e.clientY-o[1]);if(d0>0&&d1>0)BV.r=clamp(BV.r*d0/d1,1.2,12)}BV.ptrs.set(e.pointerId,[e.clientX,e.clientY]);bvDraw()});
+    const up=e=>BV.ptrs.delete(e.pointerId);cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);cv.addEventListener('wheel',e=>{e.preventDefault();BV.r=clamp(BV.r*(e.deltaY>0?1.1:.9),1.2,12);bvDraw()},{passive:false})}
+  el.innerHTML='';el.appendChild(BV.ren.domElement);if(BV.grp)BV.scene.remove(BV.grp);BV.grp=buildBath3D(b);BV.scene.add(BV.grp);BV.b=b;if(BV.bid!==b.id){BV.r=Math.max(b.W,b.D,b.H)/1000*1.55+1;BV.bid=b.id}bvDraw()}
+function bvDraw(){if(!BV||!BV.b)return;const el=BV.ren.domElement.parentNode;if(!el)return;const w=el.clientWidth||600,h=el.clientHeight||420;BV.ren.setSize(w,h,false);BV.cam.aspect=w/h;BV.cam.updateProjectionMatrix();const b=BV.b,tg=[b.W/2000,b.H/2600,b.D/2000];
+  BV.cam.position.set(tg[0]+BV.r*Math.sin(BV.ph)*Math.sin(BV.th),tg[1]+BV.r*Math.cos(BV.ph),tg[2]+BV.r*Math.sin(BV.ph)*Math.cos(BV.th));BV.cam.lookAt(...tg);{const c=BV.cam.position,X=c.x*1000,Z=c.z*1000,ins={N:Z>0,S:Z<b.D,W:X>0,E:X<b.W};BV.grp?.children.forEach(o=>{if(o.userData.wall)o.visible=ins[o.userData.wall]})}BV.pl.position.set(tg[0],b.H/1000-.2,tg[2]);BV.dl.target.position.set(...tg);BV.ren.render(BV.scene,BV.cam)}
+/* 화면 */
+function bathUI(){const b=BS(),P=catalog.prices,iss=bathIssues(b),f=b.fx.find(x=>x.id===bSel),q=bathQuote(b);
+  const chips=`<div class="toolbar" style="margin:0 0 10px;flex-wrap:wrap">${job.baths.map((x,i)=>`<button type="button" class="chip" data-act="b-pick" data-i="${i}" aria-pressed="${i===job.bi}">${esc(x.name)}</button>`).join('')}<button type="button" class="btn sm" data-act="b-add">＋ 욕실 추가</button>${(()=>{const H=job.house,rs=(H?.rooms||[]).filter(r=>/욕실|화장실|파우더/.test(r.name||''));return rs.map(r=>`<button type="button" class="btn sm quiet" data-act="b-from-room" data-id="${r.id}" title="평면도의 방 크기로 맞춥니다">📐 평면도 '${esc(r.name)}' 크기로</button>`).join('')})()}<span style="flex:1"></span><span class="hint">합계 <b class="mono">${won(q.total)}</b>원</span></div>`;
+  const wallChips=(act,cur,extra='')=>Object.entries(BWALL).map(([k,l])=>`<button type="button" class="chip" data-act="${act}" data-v="${k}" ${extra} aria-pressed="${cur===k}">${l}</button>`).join('');
+  const num=(k,lab,v,w=90,un='mm')=>`<label class="hint" style="display:flex;gap:6px;align-items:center">${lab} <input class="input mono" style="width:${w}px;min-height:36px" inputmode="numeric" data-change="b-num" data-k="${k}" value="${v}"> ${un}</label>`;
+  const issHTML=iss.length?`<div class="side-card" style="display:grid;gap:6px;padding:10px 12px"><b>배치 점검 ${iss.filter(x=>x.lv==='bad').length?`<span class="st-bad">${iss.filter(x=>x.lv==='bad').length}건 문제</span>`:''}</b>${iss.map(x=>`<div class="issue" style="border-color:${x.lv==='bad'?'#E5484D':x.lv==='warn'?'#F5A524':'#9AA6AC'};padding:6px 8px"><span style="font-size:13px">${x.lv==='bad'?'⛔':x.lv==='warn'?'⚠️':'ℹ️'} ${esc(x.t)}</span>${x.fix?`<div class="toolbar" style="margin:4px 0 0"><button type="button" class="btn sm" data-act="${x.fix}" data-id="${x.id||''}">${x.fl}</button>${x.fix2?`<button type="button" class="btn sm quiet" data-act="${x.fix2}">${x.fl2}</button>`:''}</div>`:''}</div>`).join('')}</div>`:'<div class="side-card" style="padding:10px 12px"><b>배치 점검</b><p class="hint" style="margin:4px 0 0">✅ 겹침·통로 문제 없습니다</p></div>';
+  const tabs=`<div class="seg" style="margin-bottom:10px">${[['plan','평면'],['elev','벽 입면'],['3d','3D']].map(([k,l])=>`<button type="button" data-act="b-view" data-v="${k}" aria-pressed="${(bView)===k}">${l}</button>`).join('')}</div>${bView==='elev'?`<div class="toolbar" style="margin:0 0 8px">${wallChips('b-ewall',bWall)}</div>`:''}`;
+  const canvas=`${tabs}<div class="canvas" id="bBox" style="height:min(66vh,600px);background:#fff;border:1px solid var(--line,#e5e5e5);border-radius:12px;overflow:hidden">${bView==='plan'?bathPlanSVG(b,{sel:bSel}):bView==='elev'?bathElevSVG(b,bWall,{sel:bSel}):''}</div>${bView==='plan'?'<p class="hint" style="margin:6px 0 0">기기를 손가락으로 끌면 벽을 따라 움직이고, 다른 벽 쪽으로 끌면 그 벽에 붙습니다.</p>':bView==='3d'?'<p class="hint" style="margin:6px 0 0">끌면 돌아가고, 두 손가락으로 확대합니다. 앞쪽 벽은 비쳐 보이게 열어 둡니다.</p>':''}`;
+  let panel='';
+  if(bTab==='size')panel=`<div class="side-card" style="display:grid;gap:10px;padding:12px"><b>욕실 크기</b><div class="toolbar" style="margin:0;gap:8px;flex-wrap:wrap">${num('W','가로',b.W)}${num('D','세로',b.D)}${num('H','천장 높이',b.H)}</div><span class="hint">안쪽 타일 면 기준 · 바닥 ${r2(b.W*b.D/1e6)}㎡ (${r2(pyeong(b.W*b.D/1e6))}평) · 이름 <input class="input" style="width:130px;min-height:32px" data-change="b-name" value="${esc(b.name)}"></span>
+    <b>공법</b><div class="seg"><button type="button" data-act="b-method" data-v="demo" aria-pressed="${b.method==='demo'}">철거 + 방수</button><button type="button" data-act="b-method" data-v="over" aria-pressed="${b.method==='over'}">덧방 (기존 타일 위)</button></div>
+    <p class="hint" style="margin:0">${b.method==='demo'?'타일·도기를 모두 걷어내고 미장 → 방수 2중 → 담수 테스트 → 타일. 5~7일, 누수 걱정이 적습니다.':'기존 타일 위에 새 타일을 붙입니다. 2~4일, 싸지만 방수층이 멀쩡할 때만 됩니다.'}</p>
+    ${b.method==='over'?`<label class="toolbar" style="margin:0;gap:6px"><input type="checkbox" data-change="b-chk" data-k="prevOver" ${b.prevOver?'checked':''}> <span class="hint">이미 한 번 덧방한 욕실</span></label>`:''}</div>
+    <div class="side-card" style="display:grid;gap:8px;padding:12px"><b>문</b><div class="toolbar" style="margin:0;flex-wrap:wrap">${wallChips('b-dwall',b.door.wall)}</div><div class="toolbar" style="margin:0;gap:8px;flex-wrap:wrap">${num('door.off','벽 왼쪽 끝에서',b.door.off)}${num('door.w','폭',b.door.w,80)}${num('door.h','높이',b.door.h,80)}</div>
+    <div class="seg">${[['in','안여닫이'],['out','밖여닫이'],['slide','슬라이딩']].map(([k,l])=>`<button type="button" data-act="b-swing" data-v="${k}" aria-pressed="${b.door.swing===k}">${l}</button>`).join('')}</div>${b.door.swing!=='slide'?`<div class="seg">${[['L','경첩 왼쪽'],['R','경첩 오른쪽']].map(([k,l])=>`<button type="button" data-act="b-hinge" data-v="${k}" aria-pressed="${(b.door.hinge||'L')===k}">${l}</button>`).join('')}</div>`:''}<span class="hint">'왼쪽 끝'은 욕실 안에서 그 벽을 바라볼 때 왼쪽입니다.</span></div>
+    <div class="side-card" style="display:grid;gap:8px;padding:12px"><label class="toolbar" style="margin:0;gap:6px"><input type="checkbox" data-change="b-chk" data-k="win.on" ${b.win.on?'checked':''}> <b>창문</b></label>${b.win.on?`<div class="toolbar" style="margin:0;flex-wrap:wrap">${wallChips('b-wwall',b.win.wall)}</div><div class="toolbar" style="margin:0;gap:8px;flex-wrap:wrap">${num('win.off','왼쪽 끝에서',b.win.off)}${num('win.w','폭',b.win.w,80)}${num('win.h','높이',b.win.h,80)}${num('win.z','바닥에서',b.win.z,80)}</div>`:''}</div>`;
+  if(bTab==='fix'){const add=`<div class="side-card" style="display:grid;gap:8px;padding:12px"><b>기기 넣기</b><div class="chips" style="display:flex;flex-wrap:wrap;gap:6px">${Object.entries(BFX).map(([k,v])=>`<button type="button" class="chip" data-act="b-fx-add" data-v="${k}">＋ ${v.l}</button>`).join('')}</div><button type="button" class="btn sm quiet" data-act="b-fx-reset">기본 배치로 다시</button></div>`;
+    const ed=f?`<div class="side-card" style="display:grid;gap:8px;padding:12px;border-color:#E8590C"><b>${BFX[f.t].l}</b><div class="chips" style="display:flex;flex-wrap:wrap;gap:6px">${BFX[f.t].opts.map(o=>`<button type="button" class="chip" data-act="b-fx-opt" data-v="${o[0]}" aria-pressed="${bfxOpt(f)[0]===o[0]}">${o[1]} · ${won(catalog.prices.bath?.['fx.'+f.t+'.'+o[0]]??o[2])}</button>`).join('')}</div>
+      <div class="toolbar" style="margin:0;flex-wrap:wrap">${wallChips('b-fx-wall',f.wall)}</div><div class="toolbar" style="margin:0;gap:8px;flex-wrap:wrap">${num('fx.off','왼쪽 끝에서',Math.round(f.off))}${num('fx.w','폭',f.w,80)}${BFX[f.t].z!=null?num('fx.z','바닥에서',f.z??BFX[f.t].z,80):''}</div><div class="toolbar" style="margin:0"><button type="button" class="btn sm" data-act="b-fx-free" data-id="${f.id}">빈 자리로</button><button type="button" class="btn sm" data-act="b-fx-dup">복사</button><button type="button" class="btn sm quiet danger" data-act="b-fx-del">빼기</button><button type="button" class="btn sm quiet" data-act="b-fx-desel">선택 해제</button></div></div>`:'<p class="hint" style="margin:0">평면에서 기기를 누르면 종류·위치·폭을 바꿀 수 있습니다.</p>';
+    panel=add+ed+issHTML}
+  if(bTab==='fin'){const tc=(act,cur,use)=>`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px">${BTILE.filter(t=>t.use.includes(use)).map(t=>`<button type="button" class="plan-card" data-act="${act}" data-v="${t.id}" aria-pressed="${cur===t.id}" style="padding:6px;text-align:left"><svg viewBox="0 0 120 60" style="width:100%;height:46px;display:block;border-radius:6px">${bTileGrid({...t,w:t.w/10,h:t.h/10},0,120,-60,0).replace(/stroke-width="4"/g,'stroke-width="1"').replace(/stroke-width="5"/g,'stroke-width="1"')}</svg><span style="font-size:12px;line-height:1.3;display:block">${esc(t.n)}</span><span class="mono hint" style="font-size:11px">${won(btP(t))}/㎡</span></button>`).join('')}</div>`;
+    const ck=(k,l,extra='')=>`<label class="toolbar" style="margin:0;gap:6px"><input type="checkbox" data-change="b-chk" data-k="opt.${k}" ${b.opt[k]?'checked':''}> <span>${l}</span>${extra}</label>`;
+    panel=`<div class="side-card" style="display:grid;gap:8px;padding:12px"><b>벽 타일</b>${tc('b-wt',b.wt,'w')}<label class="toolbar" style="margin:0;gap:6px"><input type="checkbox" data-change="b-chk" data-k="acc.on" ${b.acc.on?'checked':''}> <b>포인트 벽</b> <span class="hint">한 벽만 다른 타일</span></label>${b.acc.on?`<div class="toolbar" style="margin:0;flex-wrap:wrap">${wallChips('b-accwall',b.acc.wall)}</div>${tc('b-acct',b.acc.tile,'w')}`:''}</div>
+    <div class="side-card" style="display:grid;gap:8px;padding:12px"><b>바닥 타일</b>${tc('b-ft',b.ft,'f')}<span class="hint">바닥은 미끄럼 방지(논슬립) 타일을 씁니다. 배수구 쪽으로 물매(경사)를 잡아 시공합니다.</span></div>
+    <div class="side-card" style="display:grid;gap:8px;padding:12px"><b>천장</b><div class="chips" style="display:flex;flex-wrap:wrap;gap:6px">${Object.entries(BCEIL).map(([k,v])=>`<button type="button" class="chip" data-act="b-ceil" data-v="${k}" aria-pressed="${b.ceil===k}">${v[0]}</button>`).join('')}</div></div>
+    <div class="side-card" style="display:grid;gap:6px;padding:12px"><b>전기·마감 옵션</b>${ck('fan','환풍기 (역류방지 댐퍼형)')}<label class="toolbar" style="margin:0;gap:6px"><span>방습 LED등</span><input class="input mono" style="width:60px;min-height:32px" inputmode="numeric" data-change="b-num" data-k="opt.light" value="${b.opt.light||0}"> 개</label>${ck('heater','욕실 천장 난방기')}${ck('outlet','방수 콘센트')}${ck('door','ABS 도어 교체 (문틀 포함)')}${ck('sill','인조대리석 문턱')}${ck('trench','샤워 구역 트렌치 유가 (긴 배수구)')}${ck('acc','액세서리 세트 (수건걸이·휴지걸이·코너선반)')}<label class="toolbar" style="margin:0;gap:6px"><span>배관 위치 변경</span><input class="input mono" style="width:60px;min-height:32px" inputmode="numeric" data-change="b-num" data-k="opt.move" value="${b.opt.move||0}"> 곳 <span class="hint">변기·세면대 자리를 옮길 때</span></label></div>`}
+  if(bTab==='est'){const g=BGRP.map(gn=>{const ls=q.L.filter(l=>l.g===gn);if(!ls.length)return'';return`<div style="display:block;min-width:0"><div class="toolbar" style="margin:6px 0 2px"><b>${gn}</b><span style="flex:1"></span><span class="mono">${won(ls.reduce((a,l)=>a+l.amt,0))}</span></div>${ls.map(l=>`<div style="display:flex;gap:8px;font-size:13px;padding:3px 0;border-bottom:1px dashed var(--line,#eee);align-items:baseline"><span style="flex:1;min-width:0">${esc(l.item)} <span class="hint">${esc(l.spec)}</span></span><span class="mono hint" style="white-space:nowrap">${nf(l.qty)}${l.unit} × ${won(l.price)}</span><span class="mono" style="min-width:90px;text-align:right">${won(l.amt)}</span></div>`).join('')}</div>`}).join('');
+    panel=`<div class="side-card" style="display:grid;gap:4px;padding:12px">${g}<div style="border-top:1px solid var(--line,#ddd);margin-top:8px;padding-top:8px;display:grid;gap:2px"><div class="toolbar" style="margin:0"><span>공급가</span><span style="flex:1"></span><span class="mono">${won(q.sub)}</span></div><div class="toolbar" style="margin:0"><span>부가세</span><span style="flex:1"></span><span class="mono">${won(q.vat)}</span></div><div class="toolbar" style="margin:0"><b>합계</b><span style="flex:1"></span><b class="mono" style="font-size:20px">${won(q.total)}원</b></div></div>
+      <div class="toolbar" style="margin:8px 0 0;flex-wrap:wrap"><button type="button" class="btn primary" data-act="b-pdf">견적서 PDF</button><button type="button" class="btn" data-act="b-draw-pdf">도면 PDF (평면+입면 4면)</button></div></div>
+      <details class="side-card" style="padding:10px 12px"><summary><b>욕실 단가 고치기</b> <span class="hint">거래처 단가로 바꾸면 모든 욕실 견적에 적용</span></summary><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;margin-top:8px">${Object.keys(BP0).map(k=>`<label class="hint" style="display:grid;gap:2px">${BPN[k]}<input class="input mono" style="min-height:32px" inputmode="numeric" data-change="b-price" data-k="${k}" value="${bp(k)}"></label>`).join('')}${BTILE.map(t=>`<label class="hint" style="display:grid;gap:2px">타일 ${esc(t.n)} (㎡)<input class="input mono" style="min-height:32px" inputmode="numeric" data-change="b-price" data-k="tile.${t.id}" value="${btP(t)}"></label>`).join('')}${Object.entries(BFX).flatMap(([k,v])=>v.opts.map(o=>`<label class="hint" style="display:grid;gap:2px">${esc(o[1])}<input class="input mono" style="min-height:32px" inputmode="numeric" data-change="b-price" data-k="fx.${k}.${o[0]}" value="${catalog.prices.bath?.['fx.'+k+'.'+o[0]]??o[2]}"></label>`)).join('')}</div></details>`}
+  return`<div class="panel">${chips}<div class="bath-grid"><div>${canvas}</div><div style="display:grid;gap:10px;align-content:start">${panel}</div></div></div>`}
+let bView='plan';
+function renderBath(){$('#steps').innerHTML=[['size','① 크기·문·공법'],['fix','② 도기 배치'],['fin','③ 타일·마감'],['est','④ 견적']].map(([k,l])=>`<button type="button" class="step-btn" data-act="b-tab" data-v="${k}" ${bTab===k?'aria-current="step"':''}>${l}</button>`).join('');$('#stage').innerHTML=bathUI();$('#side').innerHTML='';if(bView==='3d')renderBath3D($('#bBox'),BS());bindBath()}
+function bPtr(svg,e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse())}
+function bindBath(){const svg=$('#bPlan');if(!svg)return;let drag=null;
+  svg.addEventListener('pointerdown',e=>{const g=e.target.closest('[data-bfx]');if(!g)return;const b=BS(),f=b.fx.find(x=>x.id===g.dataset.bfx);if(!f)return;bSel=f.id;drag={f,moved:false,p0:bPtr(svg,e)};svg.setPointerCapture(e.pointerId);e.preventDefault()});
+  svg.addEventListener('pointermove',e=>{if(!drag)return;const b=BS(),p=bPtr(svg,e),f=drag.f;if(!drag.moved&&Math.hypot(p.x-drag.p0.x,p.y-drag.p0.y)<40)return;drag.moved=true;
+    const ds={N:Math.abs(p.y),S:Math.abs(b.D-p.y),W:Math.abs(p.x),E:Math.abs(b.W-p.x)};let wl=f.wall;const best=Object.entries(ds).sort((a,c)=>a[1]-c[1])[0];if(best[0]!==f.wall&&best[1]<ds[f.wall]-250)wl=best[0];
+    const u=wl==='N'?p.x:wl==='E'?p.y:wl==='S'?b.W-p.x:b.D-p.y,L_=bLen(b,wl);let off=Math.round((u-f.w/2)/10)*10;off=clamp(off,0,Math.max(0,L_-f.w));
+    const edges=[0,L_,...b.fx.filter(x=>x!==f&&x.wall===wl).flatMap(x=>[x.off,x.off+x.w])];for(const ed of edges){if(Math.abs(off-ed)<70){off=ed;break}if(Math.abs(off+f.w-ed)<70){off=ed-f.w;break}}
+    f.wall=wl;f.off=clamp(off,0,Math.max(0,L_-f.w));const box=$('#bBox');if(box)box.innerHTML=bathPlanSVG(b,{sel:bSel});bindBath()});
+  const end=()=>{if(!drag)return;drag=null;if(bTab!=='fix')bTab='fix';persist();renderBath()};svg.addEventListener('pointerup',end);svg.addEventListener('pointercancel',end)}
+function bSetPath(o,path,v){const ks=path.split('.');let t=o;ks.slice(0,-1).forEach(k=>t=t[k]=t[k]||{});t[ks[ks.length-1]]=v}
+function bathChange(c,t){const b=BS();
+  if(c==='b-num'){const k=t.dataset.k,v=Math.round(+t.value||0);if(k.startsWith('fx.')){const f=b.fx.find(x=>x.id===bSel);if(f){const kk=k.slice(3);f[kk]=kk==='w'?Math.max(100,v):Math.max(0,v)}}else if(['W','D','H'].includes(k)){if(v>=600)b[k]=v}else bSetPath(b,k,Math.max(0,v));persist();renderBath();return true}
+  if(c==='b-chk'){bSetPath(b,t.dataset.k,t.checked);persist();renderBath();return true}
+  if(c==='b-name'){b.name=t.value.trim()||b.name;persist();renderBath();return true}
+  if(c==='b-price'){catalog.prices.bath=catalog.prices.bath||{};const v=t.value.trim();if(v==='')delete catalog.prices.bath[t.dataset.k];else catalog.prices.bath[t.dataset.k]=+v.replace(/[^\d.]/g,'')||0;saveCatalog();renderBath();return true}
+  return false}
+const BACT={
+  'b-tab':b=>{bTab=b.dataset.v;if(bTab==='fin'&&bView==='plan')bView='elev';renderBath()},'b-view':b=>{bView=b.dataset.v;renderBath()},'b-ewall':b=>{bWall=b.dataset.v;renderBath()},
+  'b-pick':b=>{job.bi=+b.dataset.i;bSel=null;persist();renderBath()},
+  'b-add':()=>{BS();job.baths.push(newBath(job.baths.length===1?'안방 욕실':`욕실 ${job.baths.length+1}`,1400,2000));job.bi=job.baths.length-1;bSel=null;bTab='size';persist();renderBath()},
+  'b-from-room':x=>{const r=(job.house?.rooms||[]).find(q=>q.id===x.dataset.id);if(!r)return;const xs=r.pts.map(p=>p[0]),ys=r.pts.map(p=>p[1]),b=BS();b.W=Math.round(Math.max(...xs)-Math.min(...xs));b.D=Math.round(Math.max(...ys)-Math.min(...ys));if(r.H)b.H=+r.H;else if(job.house?.H)b.H=+job.house.H;b.name=r.name;bDefaultFx(b);persist();renderBath();toast(`평면도 '${r.name}' 크기 ${b.W}×${b.D}로 맞췄습니다`)},
+  'b-method':x=>{BS().method=x.dataset.v;persist();renderBath()},'b-demo':()=>{BS().method='demo';persist();renderBath()},
+  'b-dwall':x=>{const b=BS();b.door.wall=x.dataset.v;b.door.off=Math.min(b.door.off,Math.max(0,bLen(b,b.door.wall)-b.door.w));persist();renderBath()},
+  'b-wwall':x=>{const b=BS();b.win.wall=x.dataset.v;b.win.off=Math.min(b.win.off,Math.max(0,bLen(b,b.win.wall)-b.win.w));persist();renderBath()},
+  'b-swing':x=>{BS().door.swing=x.dataset.v;persist();renderBath()},'b-hinge':x=>{BS().door.hinge=x.dataset.v;persist();renderBath()},
+  'b-door-out':()=>{BS().door.swing='out';persist();renderBath();toast('문을 밖으로 열리게 바꿨습니다')},'b-door-slide':()=>{BS().door.swing='slide';persist();renderBath()},
+  'b-fx-add':x=>{const b=BS(),t=x.dataset.v,L=BFX[t],o=L.opts[0],f={id:uid(),t,opt:o[0],wall:'N',off:0,w:o[3]||L.w};if(L.z!=null)f.z=L.z;b.fx.push(f);if(!L.fl&&t!=='niche'){const z=t==='mirror'?b.fx.find(g=>g.t==='basin'||g.t==='vanity'):t==='rain'?(b.fx.find(g=>g.t==='shower')||b.fx.find(g=>g.t==='tub')):null;if(z){f.wall=z.wall;f.off=clamp(z.off+z.w/2-f.w/2,0,bLen(b,z.wall)-f.w)}else bPlace(b,f)}else bPlace(b,f);bSel=f.id;bTab='fix';persist();renderBath()},
+  'b-fx-reset':()=>{bDefaultFx(BS());bSel=null;persist();renderBath()},
+  'b-fx-opt':x=>{const f=BS().fx.find(q=>q.id===bSel);if(!f)return;f.opt=x.dataset.v;const o=bfxOpt(f);if(o[3])f.w=o[3];persist();renderBath()},
+  'b-fx-wall':x=>{const b=BS(),f=b.fx.find(q=>q.id===bSel);if(!f)return;f.wall=x.dataset.v;bPlace(b,f,[f.wall]);persist();renderBath()},
+  'b-fx-free':x=>{const b=BS(),f=b.fx.find(q=>q.id===(x.dataset.id||bSel));if(!f)return;const s0=bScore(b);bPlace(b,f,[f.wall]);if(bScore(b)>=100)bPlace(b,f);const s1=bScore(b);toast(s1<s0?`${BFX[f.t].l}을(를) ${BWALL[f.wall]} ${f.off}mm 자리로 옮겼습니다`:'더 나은 자리가 없습니다 · 욕실이 좁으면 기기를 빼거나 문을 밖여닫이로 바꿔 보세요');persist();renderBath()},'b-fix-free':x=>BACT['b-fx-free'](x),
+  'b-fx-dup':()=>{const b=BS(),f=b.fx.find(q=>q.id===bSel);if(!f)return;const n={...clone(f),id:uid()};b.fx.push(n);bPlace(b,n);bSel=n.id;persist();renderBath()},
+  'b-fx-del':()=>{const b=BS();b.fx=b.fx.filter(q=>q.id!==bSel);bSel=null;persist();renderBath()},'b-fx-desel':()=>{bSel=null;renderBath()},
+  'b-rain-in':()=>{const b=BS(),r=b.fx.find(f=>f.t==='rain'),z=b.fx.find(f=>f.t==='shower')||b.fx.find(f=>f.t==='tub');if(!r||!z)return;r.wall=z.wall;r.off=clamp(z.off+z.w/2-r.w/2,0,bLen(b,z.wall)-r.w);persist();renderBath()},
+  'b-mirror-c':x=>{const b=BS(),m=b.fx.find(f=>f.id===x.dataset.id),s=m&&b.fx.find(g=>(g.t==='basin'||g.t==='vanity')&&g.wall===m.wall);if(!s)return;m.off=clamp(s.off+s.w/2-m.w/2,0,bLen(b,m.wall)-m.w);persist();renderBath()},
+  'b-wt':x=>{BS().wt=x.dataset.v;persist();renderBath()},'b-ft':x=>{BS().ft=x.dataset.v;persist();renderBath()},'b-acct':x=>{BS().acc.tile=x.dataset.v;persist();renderBath()},'b-accwall':x=>{BS().acc.wall=x.dataset.v;bWall=x.dataset.v;persist();renderBath()},'b-ceil':x=>{BS().ceil=x.dataset.v;persist();renderBath()},
+  'b-pdf':()=>{const b=BS(),p=bathPage(b);savePDF(`${(job.customer.name||'현장').replace(/^예시\)\s*/,'')}_${b.name}_견적서.pdf`,[{...p,mm:210/794}])},
+  'b-draw-pdf':()=>{const b=BS(),p=bathDrawPage(b);savePDF(`${(job.customer.name||'현장').replace(/^예시\)\s*/,'')}_${b.name}_도면.pdf`,[{...p,mm:297/1123}])}};
+
+function renderMode(){const m=$('#modeSeg');if(m)m.innerHTML=[['measure','실측'],['house','평면·도배'],['bath','욕실'],['as','AS·고객']].map(([k,l])=>`<button type="button" data-act="mode" data-v="${k}" aria-pressed="${mode===k}">${l}</button>`).join('');
   document.querySelector('main.layout')?.classList.toggle('as-mode',mode!=='measure');document.querySelectorAll('.measure-only').forEach(e=>e.style.display=mode!=='measure'?'none':'')}
 function renderAS(){$('#steps').innerHTML=AS_TABS.map(([k,l])=>`<button type="button" class="step-btn" data-act="as-tab" data-v="${k}" ${asTab===k?'aria-current="step"':''}>${l}${k==='tickets'?` <span class="pill">${ASD.tickets.filter(t=>TK_OPEN.includes(t.status)).length||''}</span>`:''}</button>`).join('');
   const st=$('#stage'),y=window.scrollY;st.innerHTML=({dash:asDash,tickets:asTickets,customers:asCustomers,products:asProducts,plans:asPlans}[asTab])();$('#side').innerHTML='';window.scrollTo(0,y)}
@@ -4322,8 +4610,8 @@ async function importProducts(rows){const hi=rows.findIndex(r=>r.some(c=>/상품
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;
   if(a==='photo-tap'){photoTap(e);return}if(a==='sheet-back'){if(e.target===b)sheetCb?.cancel();return}ACT[a]?.(b,e)});
 document.addEventListener('input',e=>{const t=e.target;if(t.dataset.bind){job.customer[t.dataset.bind]=t.value;renderSide();persist()}});
-Object.assign(ACT,HACT);
-document.addEventListener('change',async e=>{const t=e.target,c=t.dataset.change;if(!c)return;if(mode==='house'&&houseChange(c,t))return;
+Object.assign(ACT,HACT,BACT);
+document.addEventListener('change',async e=>{const t=e.target,c=t.dataset.change;if(!c)return;if(mode==='house'&&houseChange(c,t))return;if(mode==='bath'&&bathChange(c,t))return;
   if(c==='dim'){const v=Math.round(+t.value);if(v>0){job.dims[t.dataset.k]=v}render()}
   if(c==='face-len'){const v=Math.round(+t.value),fc=job.faces.find(x=>x.key===t.dataset.k);if(v>0&&fc){fc.len=v;job.photos.forEach(p=>p.marks=p.marks.filter(m=>!(m.type==='W'&&(m.face||'A')===fc.key)))}render()}
   if(c==='isl'){const v=Math.round(+t.value);if(v>=0&&(v>0||['over','side'].includes(t.dataset.k)))job.island[t.dataset.k]=v;render()}
