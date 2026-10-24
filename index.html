@@ -1083,15 +1083,61 @@ function geom(j=job,fi=j.fi||0,rowsOverride,adjL=0){const cat=j.cat,c=CATS[cat],
       corners.push(up?{t:'tallc',x:tx,w:tw,z0,z1,n:0,r:0,i:'C',ghost:true}:{t:'tallc',x:tx,w:tw,z0,z1:Hm,n:4,r:0,i:'C',tall:true,tk:teM.k,fh:teM.fh,end:true,mid:true})}
     else{al=allocW(row.mods,Math.max(200,span));ws=al.ws}
     const mods=row.mods.map((m,i)=>{const rz=row.zone==='upper'?clamp(modRaise(m),0,Math.max(0,z1-z0-250)):0;if(xs)x=xs[i];const o={...m,x,w:ws[i],z0:z0+rz,z1,i,raise:rz};x+=ws[i];return o});
+    if(cat==='kitchen'&&!isl&&!teM&&row.zone==='lower'&&j.snap!==false&&!(al.over>0)&&mods.length){const eo=snapEdge(j,f,sL,sR,lc,rc,ep),sr=snapAny(mods,row.mods,s0,s0+span,eo);if(sr){if(!row.noAuto)Object.assign(al,snapAuto(mods.map(m=>({...m})),row.mods,s0,s0+span,eo,sr));let px=s0;mods.forEach((m,k)=>{m.x=px;m.w=sr.ws[k];px+=m.w});x=px;al={...al,ws:sr.ws,lo:0,gap:0,snapLt:sr.Lt,snapRelax:sr.relax};if(sr.R>0){if(!adjL&&!rowsOverride)al.lo=sr.R;else al.gap=sr.R}}}
     let fillA=teM?[al.gL,al.gR].filter(Boolean).map(q=>({t:'filler',x:q.x,w:q.w,z0,z1,n:0,r:0,i:'F',filler:true})):al.gap>0?[{t:'filler',x,w:al.gap,z0,z1,n:0,r:0,i:'F',filler:true}]:[],toC=0;
     if(!teM&&al.gap>0&&cat==='kitchen'&&j.fillAt==='corner'&&!isl){const cc=corners.find(c=>c.cfill)||corners.find(c=>c.blind&&c.side==='L');if(cc){const gp=al.gap;corners.filter(c=>c!==cc&&c.x>cc.x&&!(c.side==='R'||c.spacer==='R'||c.end&&c.x>=Wm-rc-1)).forEach(c=>c.x+=gp);cc.w+=gp;if(cc.blind)cc.cf=(cc.cf||0)+gp;mods.forEach(m=>m.x+=gp);fillA=[];toC=gp}}
-    return{lo:al.lo||0,zone:row.zone,rix:f.rows.indexOf(row),z0,z1,off,corners,mods,fill:fillA,gap:al.gap,toC,over:al.over,segs}});
-  if(fin==='filler'&&!isl&&!isMD(cat)&&!adjL&&!rowsOverride){const pr=rows.find(r=>r.zone!=='upper')||rows[0];if(pr&&pr.lo>0)return geom(j,fi,rowsOverride,pr.lo)}
-  if(cat==='kitchen'&&!isl&&j.upAlign!==false){const lo=rows.find(r=>r.zone==='lower'),up=rows.find(r=>r.zone==='upper'),tp=rows.find(r=>r.zone==='top');if(lo&&up)alignRow(up,lo,f);if(tp&&(up||lo))alignRow(tp,up||lo,f)}
+    return{snapLt:al.snapLt,snapRelax:al.snapRelax,wantEx:al.wantEx,wantAt:al.wantAt,dropAuto:al.dropAuto,lo:al.lo||0,zone:row.zone,rix:f.rows.indexOf(row),z0,z1,off,corners,mods,fill:fillA,gap:al.gap,toC,over:al.over,segs}});
+  if((fin==='filler'||cat==='kitchen')&&!isl&&!isMD(cat)&&!adjL&&!rowsOverride){const pr=rows.find(r=>r.zone!=='upper')||rows[0];if(pr&&pr.lo>0)return geom(j,fi,rowsOverride,pr.lo)}
+  if(cat==='kitchen'&&!isl&&j.snap!==false){const lo=rows.find(r=>r.zone==='lower'),up=rows.find(r=>r.zone==='upper'),tp=rows.find(r=>r.zone==='top'),al_=j.upAlign!==false;const eo_=r=>snapEdge(j,f,sL,sR,(r.corners||[]).filter(c=>c.x<=(r.mods[0]?.x??0)).length?1:0,(r.corners||[]).filter(c=>c.x>=(r.mods[r.mods.length-1]?.x??0)).length?1:0,ep);if(up)snapPost(up,lo,f,{align:al_,...eo_(up)});if(tp)snapPost(tp,up||lo,f,{align:al_,...eo_(tp)})}
+  else if(cat==='kitchen'&&!isl&&j.upAlign!==false){const lo=rows.find(r=>r.zone==='lower'),up=rows.find(r=>r.zone==='upper'),tp=rows.find(r=>r.zone==='top');if(lo&&up)alignRow(up,lo,f);if(tp&&(up||lo))alignRow(tp,up||lo,f)}
   rows.forEach(r=>hingeSolve(j,f,{cat,isl,sL,sR,fi,ep},r));
   const lr_=rows.find(r=>r.zone==='lower'),tl_=lr_?.corners.find(c=>c.tall&&!c.end),cb_=lr_?.corners.find(c=>c.blind&&c.side==='L'),talls_=(lr_?.corners||[]).filter(c=>c.tall).map(c=>({x:c.x,w:c.w,k:c.tk,end:!!c.end}));
   return{ep,shelfCF,bg:!isl?bgOf(j):0,bgUse:bgUse(j),topH:tH,topD:tD,talls:talls_,tallSum:talls_.reduce((a,t)=>a+t.w,0),pen:penOn(j)&&f.key==='B'?(+j.pen.over||0):null,tw:tl_?tl_.w:0,tx0:tl_?tl_.x:0,lidW:(!isl&&f.key==='A'&&cb_&&lidOn(j))?cb_.w:0,rem5,jref:j,cat,W,H,D,Wm,Hm,Dm,rows,clr,sL,sR,top,fin,pl,ct,ctc,ct0,face:f.key,island:isl,cut,len:+f.len,fi,side,tbl,isup:isl?supportById(j.island.support):null,ext:tbl?Math.max(0,tbl.x0+tbl.w-(W-clr)):side}}
 /* 상부장(윗줄) 칸 경계를 아랫줄 문 선에 맞춘다 — 칸 수는 그대로, 폭만 옮김 */
+/* ---------- 칸 폭 정규격 맞춤 (주방): 50mm 단위 · 쿡탑장 600/750/800/900 · 도어 400·350 우선 · 정면 균등 · 상하 선 맞춤 ---------- */
+const SNAP=50,COOK_W=[600,750,800,900],SNAP_LT=[400,350,450,300];
+const c50=v=>Math.ceil(v/SNAP-1e-6)*SNAP,r50=v=>Math.round(v/SNAP)*SNAP;
+const hasDoorM=m=>!m.filler&&!m.flap&&m.t!=='hood'&&!!(layout(m).zones||[]).some(z=>z.kind==='door');
+const leafPen=L=>L===400||L===350?0:L===450||L===300?1.5:L===500||L===250?2.5:L===150||L===200?3:L===550||L===600?3:6;
+function snapOpts(m,src,w0,relax=0){const unit=!!m.unit&&!!unitById(m.unit),uw=+src?.userW||0,need=relax>2?150:m.t==='cook'?minWOf(m):relax>1||(relax&&m.t!=='sink')?150:minWOf(m);
+
+  if(m.t==='hood')return[appNeed(m)||r50(w0)];if(unit)return[w0];
+  if(m.t==='cook'&&relax<3){const base=Math.max(need,uw||(src?.fix?w0:0)),L=COOK_W.filter(w=>w>=base);return L.length?(uw||src?.fix?[L[0]]:L):[c50(base)]}
+  if(uw)return[Math.max(c50(need),r50(uw))];if(src?.fix)return[Math.max(c50(need),r50(w0))];
+  const lo=Math.max(150,c50(need)),hi=relax?Math.max(1000,c50(w0)):Math.max(1000,c50(need)),o=[];for(let w=lo;w<=hi;w+=SNAP)o.push(w);return o}
+function snapRow(ms,srcs,b0,bn,o={}){const n=ms.length;if(!n)return null;const g0=o.grid0??b0,lines=o.lines,near=v=>!lines||lines.some(q=>Math.abs(q-v)<=1),onG=v=>{const r=(((v-g0)%SNAP)+SNAP)%SNAP;return r<.5||SNAP-r<.5};
+  const opt=ms.map((m,i)=>snapOpts(m,srcs[i],m.w,o.relax||0)),door=ms.map(hasDoorM),EX=o.extra?[150,200,250,300,350,400,700,800]:[];let best=null;
+  const edgeC=(pos,e,last)=>(!last&&lines&&!near(e)?3:0)+(!last&&!onG(e)?.5:0);
+  for(const Lt of SNAP_LT){let dp=new Map([[b0+'|0',{pos:b0,c:o.pref&&o.pref!==Lt?1:0,ws:[],ex:null}]]);
+    const push=(nx,st)=>{const key=st.pos+'|'+(st.ex?1:0),q=nx.get(key);if(!q||st.c<q.c)nx.set(key,st)};
+    const addEx=(nx,st,k)=>EX.forEach(e=>{const p=st.pos+e;if(p>bn+.5)return;push(nx,{pos:p,c:st.c+leafPen(e)+1+Math.abs(e-Lt)/SNAP*.2+edgeC(st.pos,p,false),ws:st.ws,ex:{at:k,w:e}})});
+    for(let k=0;k<n;k++){const m=ms[k],lockd=opt[k].length===1;
+      if(EX.length){const pre=new Map();dp.forEach(st=>{push(pre,st);if(!st.ex)addEx(pre,st,k)});dp=pre}
+      const nx=new Map();
+      dp.forEach(st=>opt[k].forEach(w=>{const pos=st.pos,e=pos+w;if(e>bn+.5)return;const leaf=door[k]&&w>650?w/2:w;
+        let c=st.c+Math.abs(w-m.w)/SNAP*.15;
+        if(m.t==='cook')c+=w===600?0:w===900?1.2:.8;else if(!lockd){if(door[k])c+=leafPen(leaf)+Math.abs(leaf-Lt)/SNAP*.8;else c+=(w>=400&&w<=600?0:w>=300&&w<=800?1.5:4)}
+        c+=edgeC(pos,e,k===n-1&&!EX.length);
+        if(door[k]&&w>650&&((k===0&&o.edgeL)||(k===n-1&&o.edgeR)))c+=4;
+        if(m.t==='hood'&&o.cookC!=null)c+=Math.abs(pos+w/2-o.cookC)/SNAP*4;
+        push(nx,{pos:e,c,ws:[...st.ws,w],ex:st.ex})}));
+      dp=nx;if(!dp.size)break}
+    if(EX.length){const pre=new Map();dp.forEach(st=>{push(pre,st);if(!st.ex)addEx(pre,st,n)});dp=pre}
+    dp.forEach(st=>{if(st.ws.length!==n)return;const R=bn-st.pos;if(R<-.5)return;const c=st.c+(R<SNAP-.5?R/SNAP*.5:3*R/SNAP)+(o.relax?20*o.relax:0);
+      if(!best||c<best.c)best={c,ws:st.ws,R:Math.max(0,Math.round(R*10)/10),Lt,relax:o.relax||0,ex:st.ex?.w,exAt:st.ex?.at}})}
+  return best}
+const snapEdge=(j,f,sL,sR,lc,rc,ep)=>{const nd=hProj(j)+5;return{edgeL:!lc&&!ep?.L&&sL<nd,edgeR:!rc&&!ep?.R&&sR<nd}};
+const snapAny=(ms,srcs,b0,bn,o={})=>snapRow(ms,srcs,b0,bn,o)||snapRow(ms,srcs,b0,bn,{...o,relax:1})||snapRow(ms,srcs,b0,bn,{...o,relax:2})||snapRow(ms,srcs,b0,bn,{...o,relax:3});
+/* 남는 자리를 작은 장(150~300)으로 채울지, 넣어 둔 작은 장을 뺄지 판단 */
+function snapAuto(ms,srcs,b0,bn,o,sr){const ai=srcs.findIndex(m=>m?.auto);if(ai<0){const sx=snapRow(ms,srcs,b0,bn,{...o,extra:true})||snapRow(ms,srcs,b0,bn,{...o,extra:true,relax:sr.relax});return sx&&sx.ex&&sx.c<sr.c-1?{wantEx:sx.ex,wantAt:sx.exAt}:{}}
+  const s2=snapAny(ms.filter((_,k)=>k!==ai),srcs.filter((_,k)=>k!==ai),b0,bn,o);return s2&&s2.c<=sr.c+.3&&s2.R<150?{dropAuto:true}:{}}
+function snapPost(row,ref,f,o={}){const ms=row.mods,n=ms.length;if(!n||row.over>0||row.segs)return;const src=f.rows[row.rix];if(!src)return;
+  for(let k=0;k<n-1;k++)if(Math.abs(ms[k].x+ms[k].w-ms[k+1].x)>1)return;
+  const b0=ms[0].x,bn=ms[n-1].x+ms[n-1].w+(row.gap||0),useL=o.align&&ref&&!src.manualW,cook=ref?.mods.find(m=>m.t==='cook');
+  const so={edgeL:o.edgeL,edgeR:o.edgeR,grid0:ref?.mods[0]?.x??b0,lines:useL?rowLines(ref):null,cookC:cook?cook.x+cook.w/2:null,pref:ref?.snapLt},r=snapAny(ms,src.mods,b0,bn,so);if(!r)return;if(!src.noAuto)Object.assign(row,snapAuto(ms.map(m=>({...m})),src.mods,b0,bn,so,r));
+  let px=b0;ms.forEach((m,k)=>{if(Math.abs(m.x-px)>.1||Math.abs(m.w-r.ws[k])>.1)row.alignMoved=true;m.x=px;m.w=r.ws[k];px+=m.w});
+  row.fill=(row.fill||[]).filter(q=>!(q.i==='F'&&q.x>=b0-1));row.gap=r.R;if(r.R>0)row.fill.push({t:'filler',x:px,w:r.R,z0:row.z0,z1:row.z1,n:0,r:0,i:'F',filler:true});
+  row.snapLt=r.Lt;if(useL){const L=rowLines(ref);row.aligned=ms.slice(0,-1).filter(m=>L.some(q=>Math.abs(q-(m.x+m.w))<=1)).length;row.alignN=n-1}}
 function rowLines(r){const L=[];rowAll(r).forEach(m=>{L.push(m.x,m.x+m.w);if(r.mods.includes(m)&&m.w>650&&!m.filler&&!m.flap&&layout(m).zones?.some(z=>z.kind==='door'))L.push(m.x+m.w/2)});return[...new Set(L.map(v=>Math.round(v*2)/2))].sort((a,b)=>a-b)}
 function alignRow(row,ref,f){const ms=row.mods,n=ms.length;row.aligned=0;if(n<2||row.gap>0||row.over>0||row.segs)return;const src=f.rows[row.rix];if(!src||src.manualW)return;
   for(let k=0;k<n-1;k++)if(Math.abs(ms[k].x+ms[k].w-ms[k+1].x)>1)return;
@@ -1554,7 +1600,9 @@ function techMiddoor(g,k){let s=Rc(0,0,g.Wm,g.Hm,'box')+Rc(0,g.Hm-60,g.Wm,60,'th
 function techExterior(g,door,k){let s='';if(isMD(g.cat))return techMiddoor(g,k);
   g.rows.forEach(row=>{const gh_=(row.corners||[]).filter(c=>c.ghost),bx_=Math.max(row.off||0,...gh_.filter(c=>c.x+c.w/2<g.Wm/2).map(c=>c.x+c.w)),bx2_=Math.min(g.Wm-(row.offR||0),...gh_.filter(c=>c.x+c.w/2>=g.Wm/2).map(c=>c.x));s+=Rc(bx_,row.z0,bx2_-bx_,row.z1-row.z0,'box');rowAll(row).forEach(m=>{const lay=layout(m);if(door?.kind==='none'||lay.openZ||!lay.zones.some(z=>z.kind==='door'))s+=techModule(m,k,false)})});
   if(g.pl)s+=Rc(0,0,g.Wm,g.pl,'thin');
-  if(!g.island){if(g.fin==='filler'){fillerZones(g).forEach(([a,b])=>{if(g.sL)s+=Rc(-g.sL,a,g.sL,b-a,'ln');if(g.sR)s+=Rc(g.Wm,a,g.sR,b-a,'ln')});s+=Rc(-g.sL,g.Hm,g.Wm+g.sL+g.sR,g.H-g.Hm,'ln')}
+  if(!g.island&&(g.ep?.L||g.ep?.R)){const kk=k,epx=sd=>sd==='L'?-g.sL:g.Wm;['L','R'].filter(sd=>g.ep?.[sd]).forEach(sd=>{const x=epx(sd),w=sd==='L'?g.sL:g.sR;g.rows.forEach(r=>{const z0=r.zone==='lower'?0:r.z0,z1=r.zone==='lower'?g.ct0:r.z1;s+=R(x,z0,w,z1-z0,'fill="#E8590C" fill-opacity=".18" stroke="#E8590C" stroke-width="1.2" vector-effect="non-scaling-stroke"')});
+    const lz=g.ct0/2,lx=sd==='L'?x-12*kk:x+w+12*kk;s+=`<text x="${f(lx)}" y="${f(-lz)}" font-size="${f(11*kk)}" fill="#C2410C" text-anchor="middle" transform="rotate(-90 ${f(lx)} ${f(-lz)})" style="paint-order:stroke;stroke:#fff;stroke-width:${f(3*kk)}">마감판 EP ${DOOR_T}T</text>`})}
+  if(!g.island){if(g.fin==='filler'){fillerZones(g).forEach(([a,b])=>{if(g.sL&&!g.ep?.L)s+=Rc(-g.sL,a,g.sL,b-a,'ln');if(g.sR&&!g.ep?.R)s+=Rc(g.Wm,a,g.sR,b-a,'ln')});s+=Rc(-g.sL,g.Hm,g.Wm+g.sL+g.sR,g.H-g.Hm,'ln')}
     else{s+=Lc(-g.sL,g.H,g.Wm+g.sR,g.H,'dash')}s+=Lc(-g.sL,0,-g.sL,g.H,'dash')+Lc(g.Wm+g.sR,0,g.Wm+g.sR,g.H,'dash')}
   if(g.cat==='kitchen')s+=(g.island?Rc(-g.side,g.ct0,g.Wm+2*g.side,g.ct.thick,'box'):ctSegs(g,-10,g.Wm+10).map(([a,b])=>Rc(a,g.ct0,b-a,g.ct.thick,'box')).join(''))+(g.lidW?TX(g.lidW/2,g.ct0-60,'리프트업 상판',Math.min(11,g.lidW/14)*(g.Wm/1400+.6),'class="t" text-anchor="middle"'):'')+(g.ct.back&&!g.island?Rc(-10,CTH,g.Wm+20,g.ct.back,'ln'):'')+ctSeams(g,'tech')+techTable(g,k);
   leaves(g,door).forEach(l=>{s+=Rc(l.x,l.zb,l.w,l.h,l.kind==='slide'?'box':'ln');if(l.glass)s+=Rc(l.x+30,l.zb+30,l.w-60,l.h-60,'thin')+TX(l.x+l.w/2,l.zb+l.h/2,'유리',Math.min(9*k,l.w/6),'class="t" text-anchor="middle"');
@@ -1830,7 +1878,7 @@ function drawingSVG(j=job,fi=j.fi){const g=gview(j,fi),fc_=j.faces[fi]||j.faces[
   let s=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="${FONT}"><style>${PAPER_CSS}</style><rect width="${W}" height="${H}" fill="#fff"/>`;
   s+=`<rect x="16" y="16" width="${W-32}" height="${H-32}" class="fr" stroke-width="2"/><text x="36" y="50" font-size="22" class="hd">제작 도면 · ${esc(CATS[g.cat].name)} · ${LAYOUTS[j.layout]}${j.faces.length>1?' · '+FACE_NAME(g.face):''}</text>`;
   s+=`<text x="${W-36}" y="50" font-size="13" class="lb" text-anchor="end">No. ${esc(j.docNo)} · 실측일 ${esc(j.customer.date)} · 단위 mm</text><line x1="16" y1="64" x2="${W-16}" y2="64" class="fr"/>`;
-  const ext=k=>{let t=techExterior(g,d,k)+obsTech(g,k,j);if(g.sL)t+=dimH(-g.sL,0,g.H+42*k,`${g.sL}`,k,g.H);t+=dimH(0,g.Wm,g.H+42*k,`${g.Wm}`,k,g.H);if(g.sR)t+=dimH(g.Wm,g.Wm+g.sR,g.H+42*k,`${g.sR}`,k,g.H);if(!g.island&&!isMD(g.cat))t+=dimH(-g.sL,g.Wm+g.sR,g.H+84*k,`실측 ${g.W}`,k);g.rows.filter(r=>r.zone==='upper').forEach(r=>r.mods.filter(m=>m.raise>0).forEach(m=>{t+=dimV(CTH,m.z0,m.x+m.w/2,`${m.z0-CTH}`,k)+TX(m.x+m.w/2,m.z0-18*k,`${m.raise} 올림`,8*k,'fill="#B4520F" text-anchor="middle"')}));if(g.tbl){t+=dimH(g.tbl.x0,g.tbl.x0+g.tbl.w,g.tbl.top+40*k,`${g.tbl.w}`,k,g.tbl.top);t+=dimV(0,g.tbl.top,g.tbl.x0+g.tbl.w+30*k,`${g.tbl.top}`,k,g.tbl.x0+g.tbl.w)}
+  const ext=k=>{let t=techExterior(g,d,k)+obsTech(g,k,j);if(g.sL)t+=dimH(-g.sL,0,g.H+42*k,`${g.ep?.L?'EP ':''}${g.sL}`,k,g.H);t+=dimH(0,g.Wm,g.H+42*k,`${g.Wm}`,k,g.H);if(g.sR)t+=dimH(g.Wm,g.Wm+g.sR,g.H+42*k,`${g.ep?.R?'EP ':''}${g.sR}`,k,g.H);if(!g.island&&!isMD(g.cat))t+=dimH(-g.sL,g.Wm+g.sR,g.H+84*k,`실측 ${g.W}`,k);g.rows.filter(r=>r.zone==='upper').forEach(r=>r.mods.filter(m=>m.raise>0).forEach(m=>{t+=dimV(CTH,m.z0,m.x+m.w/2,`${m.z0-CTH}`,k)+TX(m.x+m.w/2,m.z0-18*k,`${m.raise} 올림`,8*k,'fill="#B4520F" text-anchor="middle"')}));if(g.tbl){t+=dimH(g.tbl.x0,g.tbl.x0+g.tbl.w,g.tbl.top+40*k,`${g.tbl.w}`,k,g.tbl.top);t+=dimV(0,g.tbl.top,g.tbl.x0+g.tbl.w+30*k,`${g.tbl.top}`,k,g.tbl.x0+g.tbl.w)}
     let x=g.Wm+40*k;heightChain(g).forEach(([a,b])=>{if(b-a>0)t+=dimV(a,b,x,`${b-a}`,k,g.Wm)});t+=dimV(0,g.H,g.Wm+82*k,g.island?`높이 ${g.H}`:`실측 ${g.H}`,k);return t};
   const intr=k=>{let t=techInterior(g,k)+obsTech(g,k,j);if(isMD(g.cat)){midPanels(g).forEach(p=>t+=dimH(p.x,p.x+p.w,g.Hm+36*k,`${Math.round(p.w)}`,k,g.Hm));t+=dimH(0,g.Wm,g.Hm+78*k,`${g.Wm}`,k);return t}
     const top=g.rows[g.rows.length-1];top.mods.forEach(m=>t+=dimH(m.x,m.x+m.w,g.H+36*k,`${m.w}`,k,top.z1));t+=dimH(0,g.Wm,g.H+78*k,`${g.Wm}`,k);
@@ -3297,7 +3345,17 @@ document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.dataset&&d.datas
 const STEPS=[[1,'현장 실측'],[2,'디자인 플랜'],[3,'도어·마감'],[4,'결과물']];
 let toastT=0;function toast(m){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.className='toast';t.setAttribute('role','status');document.body.appendChild(t)}t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2600)}
 function renderSteps(){$('#steps').innerHTML=STEPS.map(([n,l])=>`<button type="button" class="step-btn" data-act="step" data-step="${n}" ${step===n?'aria-current="step"':''}><span class="n">${n}</span>${l}</button>`).join('')}
-function render(){if(job.cat==='kitchen'&&mode!=='house'&&mode!=='as'){try{fitSinkCabs()}catch(e){}}renderMode();netChip();if(mode==='as'){renderAS();persist();return}if(mode==='house'){renderHouse();persist();return}if(mode==='bath'){renderBath();persist();return}renderSteps();renderStage();renderSide();persist()}
+function stdNormalize(){if(job.cat!=='kitchen'||job.snap===false)return;const msg=[];
+  for(let it=0;it<4;it++){let ch=false;job.faces.forEach((f,fi)=>{if(f.key==='I')return;let g;try{g=geom(job,fi)}catch(e){return}
+    const pr=g.rows.find(r=>r.zone==='lower');const cand=[...g.rows].sort((a,b)=>(a===pr?0:1)-(b===pr?0:1));
+    for(const r of cand){const src=f.rows[r.rix];if(!src||src.noAuto)continue;
+      if(r.zone==='lower'&&r.snapRelax>=2&&src.mods.length>2){const cand=src.mods.map((m,k)=>({m,k,w:r.mods[k]?.w||0})).filter(x=>!x.m.unit&&!x.m.fix&&!x.m.userW&&!['sink','cook','dw','wash','oven','hood'].includes(x.m.t)).sort((a,b)=>a.w-b.w)[0];
+        if(cand){src.mods.splice(cand.k,1);f.edited=true;ch=true;msg.push(`${FACE_NAME(f.key)} 하부 자리가 모자라 ${TYPES[cand.m.t]?.label||'칸'} 하나를 뺐습니다`);break}}
+      if(r.wantEx){const t=r.zone==='lower'?'base':r.zone==='upper'?'upper':'topbox',m={...md(t,r.wantEx),auto:true,r:r.wantEx};if(r.zone==='lower'&&r.wantEx<=300)m.hw=['pullout'];src.mods.splice(r.wantAt??src.mods.length,0,m);f.edited=true;ch=true;msg.push(`${FACE_NAME(f.key)} ${r.zone==='lower'?'하부':'상부'} 끝에 ${r.wantEx} 장을 넣었습니다`);break}
+      if(r.dropAuto){src.mods=src.mods.filter(m=>!m.auto);f.edited=true;ch=true;break}}});if(!ch)break}
+  job.faces.forEach(f=>f.rows.forEach((r,ri)=>{if(job.faces[job.fi]===f&&job.sel?.row===ri&&job.sel.i>=r.mods.length)job.sel.i=Math.max(0,r.mods.length-1)}));
+  if(msg.length&&!stdNormalize.quiet)setTimeout(()=>toast(`규격 맞춤: ${msg.join(' · ')}`),0)}
+function render(){if(job.cat==='kitchen'&&mode!=='house'&&mode!=='as'){try{fitSinkCabs()}catch(e){}try{stdNormalize()}catch(e){}}renderMode();netChip();if(mode==='as'){renderAS();persist();return}if(mode==='house'){renderHouse();persist();return}if(mode==='bath'){renderBath();persist();return}renderSteps();renderStage();renderSide();persist()}
 function renderSide(){const g=geom(),q=quote(),d=doorById(job.doorId),pl=planById(cf().planId);
   $('#side').innerHTML=`<div class="side-card"><div class="label">현재 현장</div><div class="side-title">${esc(job.customer.name||'고객 이름 미입력')}</div>
     <dl class="kv"><dt>품목</dt><dd>${esc(itemName(job))} · ${LAYOUTS[job.layout]}${siteAll().length>1?` <span class="hint">(외 ${siteAll().length-1})</span>`:''}</dd>${job.serverStatus?`<dt>서버</dt><dd>${STATUS[job.serverStatus]}</dd>`:''}${job.faces.map(f=>`<dt>${FACE_NAME(f.key)}</dt><dd class="num">${f.len}${cornerCut(job,f)?` → ${f.len-cornerCut(job,f)}`:''}</dd>`).join('')}
@@ -3679,18 +3737,19 @@ function flowFix(){const t=job.tallEnd;if(job.cat!=='kitchen'||!t?.on||isCornerL
 const cookReq=a=>{try{const t=ctSpecJ(job,counterById(job.counterId))?.thick;return(+t||40)>=40?0:cookNeed(a)}catch(e){return cookNeed(a)}};
 const appNeed=m=>Math.max(0,...modApps(m).map(({a})=>a.kind==='sink'?sinkNeed(a):a.kind==='cooktop'?cookReq(a):['dw','wash','oven'].includes(a.kind)?(+a.w||0)+(a.kind==='oven'?2*T:0):a.kind==='dryer'?(+a.w||0)+2*T:a.kind==='hood'?(+m.hcab||+a.cab||+a.w||0):0));
 function appShortage(fi){const f=job.faces[fi];if(!f)return null;const fi0=job.fi;job.fi=fi;try{const g=geom();let worst=null;g.rows.forEach((row,ri)=>{if(row.zone!=='lower'&&row.zone!=='full')return;const span=row.mods.reduce((a,m)=>a+m.w,0),src=f.rows[ri]?.mods||[],hM=f.rows.find(r=>r.zone==='upper')?.mods.find(m=>m.t==='hood'),hW=hM?(appNeed(hM)||600):0;let need=0,parts=[];row.mods.forEach((m,i)=>{const n=src[i]?(m.t==='cook'&&row.zone==='lower'?Math.max(appNeed(src[i]),hW):appNeed(src[i])):0;if(n){need+=n;parts.push(`${TYPES[m.t]?.label||m.t} ${n}${m.t==='cook'&&hW?' (후드와 한 쌍)':''}`)}else need+=150});if(need>span+1&&(!worst||need-span>worst.short))worst={short:need-span,need,span,parts,talls:(g.talls||[]).reduce((a,t)=>a+t.w,0)}});return worst}finally{job.fi=fi0}}
-function fitAppCabs(){if(job.cat!=='kitchen')return;const fi0=job.fi;try{job.faces.forEach((f,fi)=>{job.fi=fi;
+let SMW_AUTO=false;
+function fitAppCabs(){if(job.cat!=='kitchen')return;const fi0=job.fi;SMW_AUTO=true;try{job.faces.forEach((f,fi)=>{job.fi=fi;
     const hoodM=f.rows.find(r=>r.zone==='upper')?.mods.find(m=>m.t==='hood'),hoodW=hoodM?(appNeed(hoodM)||600):0;f.rows.forEach((row,ri)=>{const keep=row.mods.map(m=>m.fix);let ch=false;row.mods.forEach((m,i)=>{const need=m.t==='cook'&&row.zone==='lower'?Math.max(appNeed(m),hoodW):appNeed(m);if(!need)return;const gm=geom().rows[ri]?.mods[i];if(gm&&gm.w<need-1){try{setModWidth(ri,i,need);ch=true}catch(e){}}else if(gm&&m.t==='sink'&&!keep[i]&&gm.w>need+200){try{setModWidth(ri,i,need+100)}catch(e){}}row.mods[i].fix=true});if(row.zone==='lower'&&hoodW){const ci=row.mods.findIndex(m=>m.t==='cook');if(ci===0||ci===row.mods.length-1){const want=Math.max(hoodW,appNeed(row.mods[ci])),gm=geom().rows[ri]?.mods[ci];if(gm&&Math.abs(gm.w-want)>2){row.mods[ci].fix=false;try{setModWidth(ri,ci,want)}catch(e){}}}}row.mods.forEach((m,i)=>{if(!keep[i])delete m.fix})});
     const g=geom(),lr=g.rows.findIndex(r=>r.zone==='lower'),ur=g.rows.findIndex(r=>r.zone==='upper');if(lr<0||ur<0)return;const ck=g.rows[lr].mods.find(m=>m.t==='cook'),hi=g.rows[ur].mods.findIndex(m=>m.t==='hood');if(!ck||hi<0)return;
     const urow=f.rows[ur],hmod=urow.mods[hi],hw=appNeed(hmod)||g.rows[ur].mods[hi].w,ug=g.rows[ur],ux0=Math.min(...ug.mods.map(m=>m.x)),ux1=Math.max(...ug.mods.map(m=>m.x+m.w)),hx=clamp(ck.x+ck.w/2-hw/2,ux0,ux1-hw);
     {const others=urow.mods.filter(m=>m!==hmod),ow=ug.mods.filter((m,i)=>i!==hi);let k=0,acc=ux0;while(k<ow.length&&acc+ow[k].w/2<hx){acc+=ow[k].w;k++}if(hx-ux0>=150&&k===0)k=1;if(hx-ux0<150)k=0;if(ux1-(hx+hw)<150)k=others.length;if(ux1-(hx+hw)>=150&&k===others.length&&others.length)k=others.length-1;
       const nw=[...others.slice(0,k),hmod,...others.slice(k)];if(nw.some((m,i)=>m!==urow.mods[i])){urow.mods.splice(0,urow.mods.length,...nw);f.edited=true}}
     const keep=urow.mods.map(m=>m.fix);try{const hi2=urow.mods.indexOf(hmod);let hm=geom().rows[ur].mods[hi2];if(Math.abs(hm.w-hw)>2)setModWidth(ur,hi2,hw);hmod.fix=true;
-      for(let it=0;it<3;it++){hm=geom().rows[ur].mods[hi2];const d=Math.round(hx-hm.x);if(Math.abs(d)<=4)break;if(hi2>0){const nm=geom().rows[ur].mods[hi2-1];setModWidth(ur,hi2-1,Math.max(150,nm.w+d))}else if(hi2+1<urow.mods.length){const nm=geom().rows[ur].mods[hi2+1];setModWidth(ur,hi2+1,Math.max(150,nm.w-d))}else break}}catch(e){}finally{urow.mods.forEach((m,i)=>{if(!keep[i])delete m.fix})}})}finally{job.fi=fi0}}
+      if(job.snap===false)for(let it=0;it<3;it++){hm=geom().rows[ur].mods[hi2];const d=Math.round(hx-hm.x);if(Math.abs(d)<=4)break;if(hi2>0){const nm=geom().rows[ur].mods[hi2-1];setModWidth(ur,hi2-1,Math.max(150,nm.w+d))}else if(hi2+1<urow.mods.length){const nm=geom().rows[ur].mods[hi2+1];setModWidth(ur,hi2+1,Math.max(150,nm.w-d))}else break}}catch(e){}finally{urow.mods.forEach((m,i)=>{if(!keep[i])delete m.fix})}})}finally{job.fi=fi0;SMW_AUTO=false}}
 const fitSinkCabs=fitAppCabs;
 function setModWidth(ri,i,wmm){const g=geom(),row=g.rows[ri],src=cf().rows[ri].mods,sg=row.segs?row.segs.find(q=>q.idx.includes(i)):null,inS=j=>!sg||sg.idx.includes(j),span=sg?sg.w:row.mods.reduce((a,m)=>a+m.w,0)+(row.gap||0);
   const fixO=src.reduce((a,m,j)=>j!==i&&inS(j)&&m.fix?a+row.mods[j].w:a,0),flex=src.map((m,j)=>j).filter(j=>j!==i&&inS(j)&&!src[j].fix);
-  const w=clamp(Math.round(wmm/5)*5,150,Math.max(150,span-fixO-150*flex.length));
+  const K_=job.cat==='kitchen'&&job.snap!==false,w=clamp(Math.round(wmm/(K_?SNAP:5))*(K_?SNAP:5),150,Math.max(150,span-fixO-150*flex.length));if(K_&&!SMW_AUTO){src[i].userW=w;if(Math.abs(w-wmm)>=1)setTimeout(()=>toast(`칸 폭은 50mm 단위라 ${w}mm로 맞췄습니다`),0)}
   if(src[i].fix||!flex.length){src[i].r=w;src[i].fix=true;cf().edited=true;return}
   const others=flex.reduce((a,j)=>a+row.mods[j].w,0)||1,rest=span-fixO-w;flex.forEach(j=>src[j].r=Math.max(150,row.mods[j].w*rest/others));src[i].r=w;cf().edited=true}
 
@@ -3727,6 +3786,7 @@ function prodCheck(j=job){const out=[],add=(lvl,cat,msg)=>out.push({lvl,cat,msg}
       if(r.over>0)add('bad','폭 합계',`${nm(g,r)}: 고정 폭 칸이 많아 ${r.over}mm 모자랍니다 · 칸을 줄이거나 고정을 푸세요`);
       if(md)return;
       r.mods.forEach((m,i)=>{if(m.filler)return;if(m.w<150)add('bad','칸 폭',`${nm(g,r,i)}: 폭 ${m.w}mm — 150mm보다 좁아 만들 수 없습니다`);
+        if(j.cat==='kitchen'&&j.snap!==false&&!g.island&&m.t!=='hood'&&!m.unit&&m.w%50)add('warn','규격',`${nm(g,r,i)}: 폭 ${m.w}mm — 50mm 단위가 아닙니다`);if(j.cat==='kitchen'&&m.t==='cook'&&r.zone==='lower'&&!COOK_W.includes(m.w))add('bad','규격',`${nm(g,r,i)}: 쿡탑장 ${m.w}mm — 600·750·800·900 중 하나여야 합니다 (자리가 모자랍니다)`);
         const lay=layout(m);if(lay.drawers.length&&m.w-2*T-26<200)add('warn','칸 폭',`${nm(g,r,i)}: 서랍 박스 안쪽 ${m.w-2*T-26}mm — 너무 좁습니다 (칸 폭 ${m.w})`);
         if(lay.shelves.length&&m.w-2*T>900){shelfW++;add('warn','선반',`${nm(g,r,i)}: 선반 길이 ${m.w-2*T}mm — 900 넘으면 처집니다 · 25T 선반이나 중간 칸막이 권장`)}
         if(m.z1-m.z0<150)add('bad','칸 높이',`${nm(g,r,i)}: 높이 ${Math.round(m.z1-m.z0)}mm — 너무 낮습니다`)});
@@ -3963,7 +4023,7 @@ const ACT={
   'var-del':b=>{if(!b.dataset.armed){b.dataset.armed='1';b.textContent='한 번 더';return}(job.variants||[]).splice(+b.dataset.i,1);render()},
   plan:b=>{const p=planById(b.dataset.id);cf().planId=p.id;cf().rows=clone(p.rows).filter(r=>cf().key!=='I'||r.zone!=='upper');cf().edited=false;job.sel={row:0,i:0};fitSinkCabs();render()},
   'mod-sel':b=>{job.sel={row:+b.dataset.row,i:+b.dataset.i};renderStage()},
-  'mod-even':()=>{const row=cf().rows[job.sel.row];row.mods.forEach(m=>{if(!m.fix&&!m.filler)m.r=1});const up=job.cat==='kitchen'&&(row.zone==='upper'||row.zone==='top')&&job.upAlign!==false;if(up)row.manualW=true;cf().edited=true;render();toast(up?'같은 폭으로 나눴습니다 · 이 줄은 하부장 줄맞춤에서 빠집니다':'고정 안 된 칸을 같은 폭으로 나눴습니다')},
+  'mod-even':()=>{const row=cf().rows[job.sel.row];row.mods.forEach(m=>{delete m.userW;if(!m.fix&&!m.filler)m.r=1});const up=job.cat==='kitchen'&&(row.zone==='upper'||row.zone==='top')&&job.upAlign!==false;if(up)row.manualW=true;cf().edited=true;render();toast(up?'같은 폭으로 나눴습니다 · 이 줄은 하부장 줄맞춤에서 빠집니다':'고정 안 된 칸을 같은 폭으로 나눴습니다')},
   'mod-hinge':b=>{const m=cf().rows[job.sel.row].mods[job.sel.i];if(b.dataset.v)m.hinge=b.dataset.v;else delete m.hinge;cf().edited=true;render()},
   'clash-fix':b=>{const x=lastClash[+b.dataset.n];if(x?.fix){applyFix(x.fix);render();toast('적용했습니다')}},
   'clash-all':()=>{autoFixAll();render();const left=clashIssues().filter(x=>x.lvl==='bad').length;toast(left?`자동으로 못 푼 문제 ${left}건이 남았습니다`:'간섭을 모두 해결했습니다')},
@@ -3990,7 +4050,7 @@ const ACT={
   'mod-add':b=>{const row=cf().rows[job.sel.row],g=geom().rows[job.sel.row];row.mods.forEach((m,i)=>m.r=g.mods[i].w);const cur=row.mods[job.sel.i];
     const nm={t:cur.t,n:cur.n,r:Math.round(g.mods.reduce((a,m)=>a+m.w,0)/row.mods.length)};const at=job.sel.i+(+b.dataset.side);row.mods.splice(at,0,nm);job.sel.i=at;cf().edited=true;render()},
   'mod-split':()=>{const row=cf().rows[job.sel.row],g=geom().rows[job.sel.row];row.mods.forEach((m,i)=>m.r=g.mods[i].w);const cur=row.mods[job.sel.i];cur.r=cur.r/2;row.mods.splice(job.sel.i+1,0,{...cur});cf().edited=true;render()},
-  'mod-del':()=>{const row=cf().rows[job.sel.row];if(row.mods.length<2)return;const g=geom().rows[job.sel.row];row.mods.forEach((m,i)=>m.r=g.mods[i].w);row.mods.splice(job.sel.i,1);job.sel.i=Math.max(0,job.sel.i-1);cf().edited=true;render()},
+  'mod-del':()=>{const row=cf().rows[job.sel.row];if(row.mods.length<2)return;if(row.mods[job.sel.i]?.auto)row.noAuto=true;const g=geom().rows[job.sel.row];row.mods.forEach((m,i)=>m.r=g.mods[i].w);row.mods.splice(job.sel.i,1);job.sel.i=Math.max(0,job.sel.i-1);cf().edited=true;render()},
   'plan-save':()=>{const nm=($('#planName')?.value||'').trim();if(!nm){toast('플랜 이름을 입력하세요');$('#planName')?.focus();return}
     const g=geom();const rows=clone(cf().rows);rows.forEach((r,ri)=>r.mods.forEach((m,i)=>m.r=g.rows[ri].mods[i].w));const p={id:'u'+uid(),cat:job.cat,name:nm,rows};catalog.plans.push(p);saveCatalog();cf().planId=p.id;cf().edited=false;toast('내 플랜으로 저장했습니다');render()},
   'plan-reset':()=>{const p=planById(cf().planId);if(p){cf().rows=clone(p.rows).filter(r=>cf().key!=='I'||r.zone!=='upper');cf().edited=false;job.sel={row:0,i:0};render()}},
