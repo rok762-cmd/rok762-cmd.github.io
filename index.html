@@ -682,7 +682,7 @@ const GLASS_OK=t=>['upper','shelf','base','drawerOnly','hang','hang2','shoe','dr
 const TALL_K={fspace:'냉장고 자리 (빈 공간+위 수납)',combo:'콤비장 (전자레인지+오븐)',oven:'오븐장',fridge:'냉장고장',pantry:'팬트리(수납)장'};
 const frOf=j=>{const r=j.fridge;if(!r?.id)return null;if(r.id==='custom'){const c=r.custom||{},free=c.type!=='built';return{...r,a:{id:'custom',kind:'fridge',type:free?'free':'built',name:`직접 입력 냉장고 (${free?'일반':'빌트인'})`,tag:'직접 입력',w:+c.w||912,h:+c.h||1850,d:+c.d||(free?920:700),gs:free?50:4,gt:free?20:15,gr:free?50:0,nd:700,price:+c.price||0}}}const a=appById(r.id);return a?{...r,a}:null};
 function frNiche(j){const r=frOf(j);if(!r)return null;const a=r.a,c5=v=>Math.ceil(v/5)*5,free=a.type==='free',iw=c5(a.w+2*(+a.gs||4)),ih=c5(a.h+(+a.gt||15)),id=free?c5(a.d+(+a.gr||50)):Math.max(+a.nd||700,a.d);return{a,free,iw,ih,id,ow:iw+(r.housing!==false?2*T:0),housing:r.housing!==false,inRun:r.inRun!==false,stick:Math.max(0,id-kD(j))}}
-const tallEndOf=(j,f)=>{const t=j.tallEnd;if(!t?.on||j.cat!=='kitchen'||!f||f.key==='I'||t.face!==f.key)return null;const corner=isCornerLay(j);if(corner&&j.layout==='U'&&f.key==='A')return null;const side=corner?'R':(t.side==='L'?'L':'R');const nn=(t.k==='fspace')?frNiche(j):null;if(nn&&!nn.inRun)return null;return{w:nn?nn.ow:Math.max(300,Math.min(1200,Math.round((+t.w||600)/5)*5)),k:t.k||'combo',side}};
+const tallEndOf=(j,f)=>{const t=j.tallEnd;if(!t?.on||j.cat!=='kitchen'||!f||f.key==='I'||t.face!==f.key)return null;const corner=isCornerLay(j);if(corner&&j.layout==='U'&&f.key==='A')return null;const side=t.side==='M'?'M':corner?'R':(t.side==='L'?'L':'R');const nn=(t.k==='fspace')?frNiche(j):null;if(nn&&!nn.inRun)return null;return{w:nn?nn.ow:Math.max(300,Math.min(1200,Math.round((+t.w||600)/5)*5)),k:t.k||'combo',side,x:+t.x||0}};
 const isCornerLay=j=>['L','U','Lisland'].includes(j.layout);
 const cKind=(j,z)=>{const c=j.corner||{},k=j.cat==='kitchen';let lo=c.lower||'blind';if(!k&&['pullout','cdrawer','tall'].includes(lo))lo='blind';if(lo==='tall'&&j.layout==='U')lo='blind';
   if(z==='upper'){const t=c.upper||'blind';return lo==='tall'||['magic','pullout','cdrawer','tall'].includes(t)?'blind':t}return lo};
@@ -1041,16 +1041,22 @@ function geom(j=job,fi=j.fi||0,rowsOverride,adjL=0){const cat=j.cat,c=CATS[cat],
     if(zc==='upper'&&isCornerLay(j)&&!isl&&!isMD(cat)&&!tallOn(j)){const hu=k=>{const ff=j.faces.find(x=>x.key===k);return!!ff&&ff.rows.some(r=>r.zone==='upper')&&!(penOn(j)&&k==='B')};
       if(f.key==='A'){if(!hu('B')){const c0=corners.filter(c=>c.side==='L'||(c.x<lc&&c.side!=='R'));c0.forEach(c=>corners.splice(corners.indexOf(c),1));lc=0}if(j.layout==='U'&&!hu('C')){const c1=corners.filter(c=>c.side==='R');c1.forEach(c=>{corners.splice(corners.indexOf(c),1);rc-=c.w})}}
       else if(!hu('A')){corners.splice(0,corners.length,...corners.filter(c=>!c.cfill));off=-cut}}
-    {const te=tallEndOf(j,f);if(te&&!isl){const up=row.zone==='upper'||row.zone==='top';if(te.side==='R'){rc+=te.w;corners.push(up?{t:'tallc',x:Wm-rc,w:te.w,z0,z1,n:0,r:0,i:'C',ghost:true}:{t:'tallc',x:Wm-rc,w:te.w,z0,z1:Hm,n:4,r:0,i:'C',tall:true,tk:te.k,end:true})}
+    let teM=null;{const te=tallEndOf(j,f);if(te&&!isl&&te.side==='M')teM=te;else if(te&&!isl){const up=row.zone==='upper'||row.zone==='top';if(te.side==='R'){rc+=te.w;corners.push(up?{t:'tallc',x:Wm-rc,w:te.w,z0,z1,n:0,r:0,i:'C',ghost:true}:{t:'tallc',x:Wm-rc,w:te.w,z0,z1:Hm,n:4,r:0,i:'C',tall:true,tk:te.k,end:true})}
       else{corners.push(up?{t:'tallc',x:off+lc,w:te.w,z0,z1,n:0,r:0,i:'C',ghost:true}:{t:'tallc',x:off+lc,w:te.w,z0,z1:Hm,n:4,r:0,i:'C',tall:true,tk:te.k,end:true});lc+=te.w}}}
     if(!isMD(cat)){const sp=f.sp||{},spL=+sp[row.zone+':L']||0,spR=+sp[row.zone+':R']||0;
       if(spL>0){corners.push({t:'filler',x:off+lc,w:spL,z0,z1,n:0,r:0,i:'S',filler:true,spacer:'L'});lc+=spL}
       if(spR>0){rc+=spR;corners.push({t:'filler',x:Wm-rc,w:spR,z0,z1,n:0,r:0,i:'S',filler:true,spacer:'R'})}}
-    const span=(isMD(cat)?Wm-2*MFRAME:Wm)-off-lc-rc;const al=allocW(row.mods,Math.max(200,span)),ws=al.ws;let x=(isMD(cat)?MFRAME:0)+off+lc;
-    const mods=row.mods.map((m,i)=>{const rz=row.zone==='upper'?clamp(modRaise(m),0,Math.max(0,z1-z0-250)):0,o={...m,x,w:ws[i],z0:z0+rz,z1,i,raise:rz};x+=ws[i];return o});
-    let fillA=al.gap>0?[{t:'filler',x,w:al.gap,z0,z1,n:0,r:0,i:'F',filler:true}]:[],toC=0;
-    if(al.gap>0&&cat==='kitchen'&&j.fillAt==='corner'&&!isl){const cc=corners.find(c=>c.cfill)||corners.find(c=>c.blind&&c.side==='L');if(cc){const gp=al.gap;corners.filter(c=>c!==cc&&c.x>cc.x&&!(c.side==='R'||c.spacer==='R'||c.end&&c.x>=Wm-rc-1)).forEach(c=>c.x+=gp);cc.w+=gp;if(cc.blind)cc.cf=(cc.cf||0)+gp;mods.forEach(m=>m.x+=gp);fillA=[];toC=gp}}
-    return{lo:al.lo||0,zone:row.zone,rix:f.rows.indexOf(row),z0,z1,off,corners,mods,fill:fillA,gap:al.gap,toC,over:al.over}});
+    const span=(isMD(cat)?Wm-2*MFRAME:Wm)-off-lc-rc;let al,ws,segs=null,xs=null;const s0=(isMD(cat)?MFRAME:0)+off+lc;let x=s0;
+    if(teM){const up=row.zone==='upper'||row.zone==='top',e0=s0+span,tw=teM.w,tx=clamp(Math.round(teM.x/5)*5,s0,Math.max(s0,e0-tw)),wl=tx-s0,wr=e0-tx-tw,pa=allocW(row.mods,Math.max(200,span-tw)).ws;let acc=0;const sd=pa.map(w=>{const c=acc+w/2;acc+=w;return c<wl?0:1});
+      const iL=row.mods.map((m,i)=>i).filter(i=>sd[i]===0),iR=row.mods.map((m,i)=>i).filter(i=>sd[i]===1),A=(ix,w)=>ix.length&&w>=150?allocW(ix.map(i=>row.mods[i]),w):{ws:ix.map(()=>0),gap:Math.max(0,w),over:0},aL=A(iL,wl),aR=A(iR,wr);ws=row.mods.map(()=>0);xs=row.mods.map(()=>0);
+      let px=s0;iL.forEach((i,k)=>{ws[i]=aL.ws[k];xs[i]=px;px+=ws[i]});const gL=aL.gap>0?{x:px,w:aL.gap}:null;px=tx+tw;iR.forEach((i,k)=>{ws[i]=aR.ws[k];xs[i]=px;px+=ws[i]});const gR=aR.gap>0?{x:px,w:aR.gap}:null;
+      al={ws,gap:(aL.gap||0)+(aR.gap||0),over:(aL.over||0)+(aR.over||0),lo:0,gL,gR};segs=[{idx:iL,w:wl},{idx:iR,w:wr}];
+      corners.push(up?{t:'tallc',x:tx,w:tw,z0,z1,n:0,r:0,i:'C',ghost:true}:{t:'tallc',x:tx,w:tw,z0,z1:Hm,n:4,r:0,i:'C',tall:true,tk:teM.k,end:true,mid:true})}
+    else{al=allocW(row.mods,Math.max(200,span));ws=al.ws}
+    const mods=row.mods.map((m,i)=>{const rz=row.zone==='upper'?clamp(modRaise(m),0,Math.max(0,z1-z0-250)):0;if(xs)x=xs[i];const o={...m,x,w:ws[i],z0:z0+rz,z1,i,raise:rz};x+=ws[i];return o});
+    let fillA=teM?[al.gL,al.gR].filter(Boolean).map(q=>({t:'filler',x:q.x,w:q.w,z0,z1,n:0,r:0,i:'F',filler:true})):al.gap>0?[{t:'filler',x,w:al.gap,z0,z1,n:0,r:0,i:'F',filler:true}]:[],toC=0;
+    if(!teM&&al.gap>0&&cat==='kitchen'&&j.fillAt==='corner'&&!isl){const cc=corners.find(c=>c.cfill)||corners.find(c=>c.blind&&c.side==='L');if(cc){const gp=al.gap;corners.filter(c=>c!==cc&&c.x>cc.x&&!(c.side==='R'||c.spacer==='R'||c.end&&c.x>=Wm-rc-1)).forEach(c=>c.x+=gp);cc.w+=gp;if(cc.blind)cc.cf=(cc.cf||0)+gp;mods.forEach(m=>m.x+=gp);fillA=[];toC=gp}}
+    return{lo:al.lo||0,zone:row.zone,rix:f.rows.indexOf(row),z0,z1,off,corners,mods,fill:fillA,gap:al.gap,toC,over:al.over,segs}});
   if(fin==='filler'&&!isl&&!isMD(cat)&&!adjL&&!rowsOverride){const pr=rows.find(r=>r.zone!=='upper')||rows[0];if(pr&&pr.lo>0)return geom(j,fi,rowsOverride,pr.lo)}
   rows.forEach(r=>hingeSolve(j,f,{cat,isl,sL,sR,fi},r));
   const lr_=rows.find(r=>r.zone==='lower'),tl_=lr_?.corners.find(c=>c.tall&&!c.end),cb_=lr_?.corners.find(c=>c.blind&&c.side==='L'),talls_=(lr_?.corners||[]).filter(c=>c.tall).map(c=>({x:c.x,w:c.w,k:c.tk,end:!!c.end}));
@@ -3167,7 +3173,7 @@ function step2(){const plans=plansFor(job.cat),g=gview(job,job.fi),mir=isMir(job
   if(g.rows.length>1)g.rows[0].mods.forEach(m=>ed+=dimH(m.x,m.x+m.w,-50*k,`${m.w}`,k,0));
   g.rows.forEach((row,ri)=>row.mods.forEach((m,i)=>{const sel=ri===job.sel.row&&i===job.sel.i;if(sel)ed+=Rc(m.x,m.z0,m.w,m.z1-m.z0,'sel');ed+=R(m.x,m.z0,m.w,m.z1-m.z0,`class="hit" data-act="mod-sel" data-row="${ri}" data-i="${i}"`);
     if(sel&&row.zone==='upper')ed+=R(m.x+m.w*.2,m.z0-20*k,m.w*.6,40*k,`id="raiseHandle" data-drag="raise" fill="#E8590C" rx="${f(10*k)}" style="cursor:ns-resize;touch-action:none"`)+`<text id="raiseLabel" x="${f(m.x+m.w/2)}" y="${f(-(m.z0-60*k))}" font-size="${f(12*k)}" fill="#E8590C" text-anchor="middle">${m.raise}mm 올림</text>`}));
-  ed+=obsTech(g,k,job,true);
+  ed+=obsTech(g,k,job,true);if(job.cat==='kitchen')(g.talls||[]).forEach(t=>{ed+=R(t.x,0,t.w,g.H,`fill="transparent" data-drag="tall" style="cursor:ew-resize;touch-action:none"`)+TX(t.x+t.w/2,g.H-60*k,'⇔ 끌어서 이동',10*k,'fill="#2F6BFF" text-anchor="middle" font-weight="700"')});
   const row=cf().rows[job.sel.row],m=row.mods[job.sel.i],gm=g.rows[job.sel.row].mods[job.sel.i],ty=TYPES[m.t];
   const types=CAT_TYPES[rowKey()];
   return`<div class="panel"><div class="panel-head"><h2>디자인 플랜</h2><p class="hint">구성을 고르고, 도면에서 칸을 눌러 바꾸세요.</p></div>
@@ -3234,6 +3240,12 @@ document.addEventListener('pointerdown',e=>{const hnd=e.target.closest?.('[data-
 document.addEventListener('pointermove',e=>{if(!dragS)return;const v=clamp(Math.round((dragS.start+(dragS.y-e.clientY)*dragS.mmpp)/10)*10,0,dragS.max);dragS.val=v;
   dragS.hnd.setAttribute('y',f(dragS.y0-(v-dragS.start)));const lb=$('#raiseLabel');if(lb){lb.textContent=`${v}mm 올림`;lb.setAttribute('y',f(+dragS.y0-(v-dragS.start)-40))}});
 document.addEventListener('pointerup',()=>{if(!dragS)return;const{m,val}=dragS;dragS=null;m.raise=val;cf().edited=true;render()});
+let dragT=null;
+document.addEventListener('pointerdown',e=>{const hnd=e.target.closest?.('[data-drag="tall"]');if(!hnd)return;const svg=hnd.ownerSVGElement,ctm=svg?.getScreenCTM();if(!ctm||!job.tallEnd?.on)return;const g0=geom(job,job.fi),vg=gview(job,job.fi),t0=g0.talls?.[0],v0=vg.talls?.[0];if(!t0||!v0)return;
+  dragT={x:e.clientX,mm:1/ctm.a,start:t0.x,w:t0.w,vx:v0.x,mir:!!vg.mirrored,Wm:g0.Wm,H:vg.H,svg,k:(svg.viewBox.baseVal.width||820)/820*1.6,nx:t0.x,moved:false};try{hnd.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault()});
+document.addEventListener('pointermove',e=>{if(!dragT)return;const D=dragT,dx=(e.clientX-D.x)*D.mm;if(!D.moved&&Math.abs(e.clientX-D.x)<6)return;D.moved=true;D.nx=clamp(Math.round((D.start+(D.mir?-dx:dx))/10)*10,0,Math.max(0,D.Wm-D.w));const vx=D.vx+(D.mir?-1:1)*(D.nx-D.start);
+  let G=D.svg.querySelector('#tallG');if(!G){G=document.createElementNS('http://www.w3.org/2000/svg','g');G.id='tallG';D.svg.appendChild(G)}const yc=-D.H*.55;G.innerHTML=`<rect x="${vx}" y="${-D.H}" width="${D.w}" height="${D.H}" fill="#2F6BFF" fill-opacity=".12" stroke="#2F6BFF" stroke-width="${3*D.k}" stroke-dasharray="${10*D.k} ${6*D.k}"/>`+dimL(0,yc,vx,yc,`${Math.round(vx)}`,D.k,'#E8590C',-1)+dimL(vx+D.w,yc,D.Wm,yc,`${Math.round(D.Wm-vx-D.w)}`,D.k,'#E8590C',-1)});
+document.addEventListener('pointerup',()=>{if(!dragT)return;const D=dragT;dragT=null;if(!D.moved){render();return}const corner=isCornerLay(job),t=job.tallEnd;if(D.nx<60&&!corner){t.side='L'}else if(D.nx>D.Wm-D.w-60){t.side='R'}else{t.side='M';t.x=D.nx}toast(t.side==='M'?`키큰장을 왼쪽 끝에서 ${D.nx}mm로 옮겼습니다`:`키큰장을 ${t.side==='L'?'왼쪽':'오른쪽'} 끝으로 붙였습니다`);render()});
 let dragO=null;
 document.addEventListener('pointerdown',e=>{const hnd=e.target.closest?.('[data-drag="obs"]');if(!hnd)return;const o=(job.obstacles||[]).find(x=>x.id===hnd.dataset.id);const svg=hnd.ownerSVGElement,ctm=svg?.getScreenCTM();if(!o||!ctm)return;
   dragO={o,x:e.clientX,y:e.clientY,mm:1/ctm.a,g:svg.querySelector(`g[data-obsg="${o.id}"]`),dx:0,dz:0,moved:false,svg,k:(svg.viewBox.baseVal.width||820)/820*1.6};dragO.lbl=dragO.g?.querySelector('[data-obslbl]');try{hnd.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault()});
@@ -3265,7 +3277,8 @@ function handleUI(){const hs=job.hs,k=job.cat==='kitchen';const zs=k?[['upper','
 function tallUI(){if(job.cat!=='kitchen')return'';const t=job.tallEnd||{},on=!!t.on,faces=job.faces.filter(f=>f.key!=='I'&&!(job.layout==='U'&&f.key==='A')).map(f=>f.key),corner=isCornerLay(job);
   return`<div style="display:grid;gap:8px"><label class="toolbar" style="margin:0;gap:8px"><input type="checkbox" data-change="te-on" ${on?'checked':''}> <b>키큰장 넣기</b> <span class="hint">바닥~천장 한 덩어리 (전자레인지·오븐·냉장고·수납)</span></label>
   ${on?`<div class="toolbar" style="margin:0;flex-wrap:wrap"><span class="hint" style="min-width:48px">종류</span><div class="seg">${Object.entries(TALL_K).map(([v,l])=>`<button type="button" data-act="te-k" data-v="${v}" aria-pressed="${(t.k||'combo')===v}">${l}</button>`).join('')}</div></div>
-  <div class="toolbar" style="margin:0;flex-wrap:wrap"><span class="hint" style="min-width:48px">위치</span><div class="seg">${faces.map(k=>`<button type="button" data-act="te-face" data-v="${k}" aria-pressed="${(t.face||'A')===k}">${FACE_NAME(k)} ${corner?'끝':''}</button>`).join('')}</div>${!corner?`<div class="seg"><button type="button" data-act="te-side" data-v="L" aria-pressed="${t.side==='L'}">왼쪽 끝</button><button type="button" data-act="te-side" data-v="R" aria-pressed="${t.side!=='L'}">오른쪽 끝</button></div>`:''}<input class="input mono" style="width:80px;min-height:36px" inputmode="numeric" data-change="te-w" value="${t.w||600}" aria-label="키큰장 폭"><span class="hint">mm 폭</span></div>`:''}</div>`}
+  <div class="toolbar" style="margin:0;flex-wrap:wrap"><span class="hint" style="min-width:48px">위치</span><div class="seg">${faces.map(k=>`<button type="button" data-act="te-face" data-v="${k}" aria-pressed="${(t.face||'A')===k}">${FACE_NAME(k)} ${corner?'끝':''}</button>`).join('')}</div><div class="seg">${!corner?`<button type="button" data-act="te-side" data-v="L" aria-pressed="${t.side==='L'}">왼쪽 끝</button>`:''}<button type="button" data-act="te-side" data-v="R" aria-pressed="${t.side!=='L'&&t.side!=='M'}">${corner?'끝 (코너 반대쪽)':'오른쪽 끝'}</button><button type="button" data-act="te-side" data-v="M" aria-pressed="${t.side==='M'}">중간 (위치 지정)</button></div><input class="input mono" style="width:80px;min-height:36px" inputmode="numeric" data-change="te-w" value="${t.w||600}" aria-label="키큰장 폭"><span class="hint">mm 폭</span></div>
+  ${t.side==='M'?`<div class="toolbar" style="margin:0;flex-wrap:wrap"><span class="hint" style="min-width:48px">위치</span><span class="hint">왼쪽 끝에서</span><input class="input mono" style="width:90px;min-height:36px;text-align:center" inputmode="numeric" data-change="te-x" value="${Math.round(+t.x||0)}"><span class="hint">mm</span>${[[-100,'◀◀100'],[-10,'◀10'],[10,'10▶'],[100,'100▶▶']].map(([v,l])=>`<button type="button" class="btn sm" data-act="te-nudge" data-v="${v}">${l}</button>`).join('')}</div><span class="hint">도면에서 키큰장을 손가락으로 끌어도 옮겨져요. 양쪽 칸들은 자동으로 나눠 들어가요.</span>`:'<span class="hint">도면에서 키큰장을 끌면 원하는 자리(중간)로 옮길 수 있어요.</span>'}`:''}</div>`}
 function cornerUI(){if(!isCornerLay(job)||isMD(job.cat))return'';const c=job.corner,k=job.cat==='kitchen';
   const seg=(z,opts)=>`<div class="seg" role="group" aria-label="${z} 코너">${opts.map(t=>`<button type="button" data-act="corner" data-z="${z}" data-v="${t}" aria-pressed="${(c[z]||'blind')===t}">${CORNER_T[t]}</button>`).join('')}</div>`;
   return`<div class="panel" style="padding:12px 14px;margin-bottom:12px;background:var(--surface-2);display:grid;gap:8px"><div class="label" style="margin:0">코너 처리 (${job.layout==='U'?'2곳':'1곳'})</div>
@@ -3284,8 +3297,8 @@ function fitAppCabs(){if(job.cat!=='kitchen')return;const fi0=job.fi;try{job.fac
     const urow=f.rows[ur],keep=urow.mods.map(m=>m.fix);try{let hm=g.rows[ur].mods[hi];const hw=Math.max(ck.w,appNeed(urow.mods[hi])||0);if(Math.abs(hm.w-hw)>2){setModWidth(ur,hi,hw)}urow.mods[hi].fix=true;hm=geom().rows[ur].mods[hi];const want=ck.x+ck.w/2-hw/2,d=Math.round(want-hm.x);
       if(Math.abs(d)>4){const nb=hi>0?hi-1:hi+1;if(nb<urow.mods.length){const nm=geom().rows[ur].mods[nb];setModWidth(ur,nb,nm.w+(hi>0?d:-d))}}}catch(e){}finally{urow.mods.forEach((m,i)=>{if(!keep[i])delete m.fix})}})}finally{job.fi=fi0}}
 const fitSinkCabs=fitAppCabs;
-function setModWidth(ri,i,wmm){const g=geom(),row=g.rows[ri],src=cf().rows[ri].mods,span=row.mods.reduce((a,m)=>a+m.w,0)+(row.gap||0);
-  const fixO=src.reduce((a,m,j)=>j!==i&&m.fix?a+row.mods[j].w:a,0),flex=src.map((m,j)=>j).filter(j=>j!==i&&!src[j].fix);
+function setModWidth(ri,i,wmm){const g=geom(),row=g.rows[ri],src=cf().rows[ri].mods,sg=row.segs?row.segs.find(q=>q.idx.includes(i)):null,inS=j=>!sg||sg.idx.includes(j),span=sg?sg.w:row.mods.reduce((a,m)=>a+m.w,0)+(row.gap||0);
+  const fixO=src.reduce((a,m,j)=>j!==i&&inS(j)&&m.fix?a+row.mods[j].w:a,0),flex=src.map((m,j)=>j).filter(j=>j!==i&&inS(j)&&!src[j].fix);
   const w=clamp(Math.round(wmm/5)*5,150,Math.max(150,span-fixO-150*flex.length));
   if(src[i].fix||!flex.length){src[i].r=w;src[i].fix=true;cf().edited=true;return}
   const others=flex.reduce((a,j)=>a+row.mods[j].w,0)||1,rest=span-fixO-w;flex.forEach(j=>src[j].r=Math.max(150,row.mods[j].w*rest/others));src[i].r=w;cf().edited=true}
@@ -3414,7 +3427,8 @@ function setCat(c){if(job.cat===c)return;const sampleOnly=job.photos.length&&job
 const ACT={
   corner:b=>{job.corner[b.dataset.z]=b.dataset.v;render()},
   'isl-front':b=>{job.island.front=b.dataset.v;render()},
-  'te-k':b=>{job.tallEnd={...(job.tallEnd||{}),k:b.dataset.v};render()},'te-face':b=>{job.tallEnd={...(job.tallEnd||{}),face:b.dataset.v};render()},'te-side':b=>{job.tallEnd={...(job.tallEnd||{}),side:b.dataset.v};render()},
+  'te-k':b=>{job.tallEnd={...(job.tallEnd||{}),k:b.dataset.v};render()},'te-face':b=>{job.tallEnd={...(job.tallEnd||{}),face:b.dataset.v};render()},'te-side':b=>{const v=b.dataset.v,t={...(job.tallEnd||{}),side:v};if(v==='M'&&!(+t.x>0)){const f=job.faces.find(q=>q.key===(t.face||'A'));t.x=Math.round(((+f?.len||2400)-(+t.w||600))/2/10)*10}job.tallEnd=t;render()},
+  'te-nudge':b=>{const t=job.tallEnd;if(!t)return;t.x=Math.max(0,(+t.x||0)+ +b.dataset.v);render()},
   'tall-k':b=>{job.corner.tallK=b.dataset.v;render()},
   raise:b=>{const m=cf().rows[job.sel.row].mods[job.sel.i];m.raise=clamp(modRaise(m)+(+b.dataset.d),0,600);cf().edited=true;render()},
   'raise-set':b=>{const m=cf().rows[job.sel.row].mods[job.sel.i];m.raise=+b.dataset.v;cf().edited=true;render()},
@@ -4049,6 +4063,7 @@ document.addEventListener('change',async e=>{const t=e.target,c=t.dataset.change
   if(c==='prop-price'){job.propPrice=t.checked;render();return}
   if(c==='sketch-in'){const f_=t.files[0];t.value='';if(f_)readSketch(f_);return}
   if(c==='te-on'){job.tallEnd={face:'A',k:'combo',w:600,side:'L',...(job.tallEnd||{}),on:t.checked};if(t.checked&&isCornerLay(job))job.tallEnd.side='R';render();return}
+  if(c==='te-x'){job.tallEnd={...(job.tallEnd||{}),side:'M',x:Math.max(0,Math.round(+t.value||0))};render();return}
   if(c==='te-w'){job.tallEnd={...(job.tallEnd||{}),w:Math.max(300,Math.min(1200,Math.round((+t.value||600)/5)*5))};render();return}
   if(c==='pen-on'){job.pen={over:300,...(job.pen||{}),on:t.checked};render();return}
   if(c==='pen-over'){job.pen={...(job.pen||{}),over:Math.max(0,Math.min(600,Math.round(+t.value||0)))};render();return}
