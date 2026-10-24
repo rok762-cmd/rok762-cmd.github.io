@@ -30,6 +30,11 @@ function doPost(e) {
       const file = f.createFile(blob);
       return out_({ ok: true, id: file.getId() });
     }
+    if (p.action === 'email') {
+      const att = Utilities.newBlob(Utilities.base64Decode(p.b64 || ''), 'application/pdf', String(p.name || '견적서.pdf'));
+      GmailApp.sendEmail(String(p.to), String(p.subject || ''), String(p.body || ''), { attachments: [att], name: String(p.from || '') });
+      return out_({ ok: true });
+    }
     if (p.action === 'inbox') {
       const f = sub_(r, '보낼현장'), it = f.getFiles(), files = [];
       let size = 0;
