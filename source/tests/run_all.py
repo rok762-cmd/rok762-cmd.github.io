@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+"""전체 점검: 빌드 → 모듈별 점검 → 오프라인·앱 두 빌드 회귀. 하나라도 실패하면 종료 코드 1."""
+import subprocess, sys, os, re, glob
+ROOT = '/home/claude'
+OFF = 'file://' + ROOT + '/실측스튜디오_오프라인.html'
+APP = 'file://' + ROOT + '/pwa/index.html'
+def run(args, label):
+    r = subprocess.run([sys.executable] + args, capture_output=True, text=True, cwd=ROOT, timeout=900)
+    out = (r.stdout + r.stderr).strip().splitlines()
+    tail = out[-1] if out else ''
+    bad = r.returncode != 0 or 'FAIL' in tail and not re.search(r'FAIL 0\b', tail) or "errs ['" in '\n'.join(out) or 'Traceback' in '\n'.join(out)
+    print(('✗ ' if bad else '✓ ') + label + ' · ' + tail[:140])
+    return not bad
+ok = run(['build/build.py'], '빌드 (src/ 모듈 → 한 파일)')
+# 모듈 구조: 파일 이름 순서대로 합친 결과가 원본과 같은지
+js = ''.join(open(p, encoding='utf-8').read() for p in sorted(glob.glob(ROOT + '/src/js/*.js')))
+ok &= js in open(ROOT + '/silcheuk-studio.html', encoding='utf-8').read() and print('✓ 모듈 합치기 일치 · ' + str(len(glob.glob(ROOT + '/src/js/*.js'))) + '개') is None
+for t, lab in [('t_rules.py', '현장 규칙 표'), ('t_ep.py', '끝 마감 EP · 뒷선반 코너 휠라'), ('t_qedit.py', '견적 직접 수정'),
+               ('t_tall2.py', '냉장고+키큰장 · 최대 폭'), ('t_tdoor.py', '키큰장 도어'), ('t_snap.py', '칸 폭 정규격 (길이별)')]:
+    ok &= run(['tests/' + t], lab)
+ok &= run(['tests/regress.py', OFF], '전체 회귀 · 오프라인 파일')
+ok &= run(['tests/regress.py', APP], '전체 회귀 · 앱')
+print('\n전체 결과:', '통과' if ok else '실패')
+sys.exit(0 if ok else 1)
