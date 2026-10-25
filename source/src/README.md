@@ -45,6 +45,7 @@
 16-validator    제작 검증기
 17-manager      제품·단가 관리 (현장 규칙 탭 포함)
 18-actions      버튼 동작 모음 (ACT)
+18b-photo-zoom  실측 사진 확대 (두 손가락·휠·＋－ 버튼)
 19-drawing-set  측면·배면·평면·상판 도면, 제작지시서
 20-as-data … 22-as-ui   AS·고객
 21-bath         욕실

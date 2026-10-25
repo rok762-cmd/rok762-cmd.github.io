@@ -252,3 +252,11 @@ details.sec>.sec-body{padding:0 14px 14px;display:grid;gap:12px;min-width:0}
 .fsm-empty{display:grid;gap:10px;justify-items:center;text-align:center;color:#C9D3DC}
 .fsm-empty b{font-size:20px;color:#fff}
 @media (max-width:700px){.fsm{grid-template-columns:64px 1fr 0}.fsm-right{display:none}.fsm-btn{width:56px;min-height:52px}.fsm-btn .lb{font-size:10px}.fsm-dims{display:none}}
+
+/* 실측 사진 확대 */
+.photo-wrap>img,.photo-wrap>svg{transform:translate(var(--pzx,0px),var(--pzy,0px)) scale(var(--pz,1));transform-origin:0 0}
+.photo-wrap{touch-action:pan-y}.fsm .photo-wrap,.photo-wrap.pz-on{touch-action:none}
+.pz-btns{position:absolute;right:8px;bottom:8px;display:flex;flex-direction:column;gap:6px;z-index:3}
+.pz-btns button{min-width:48px;min-height:44px;border-radius:12px;border:0;background:rgba(20,24,28,.78);color:#fff;font-size:20px;font-weight:700;padding:0 8px;box-shadow:0 2px 8px #0006}
+.pz-btns #pzLbl{font-size:13px}
+.fsm-bottom .tool-hint b{color:#fff}

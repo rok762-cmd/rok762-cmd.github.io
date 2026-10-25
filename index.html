@@ -665,6 +665,14 @@ details.sec>.sec-body{padding:0 14px 14px;display:grid;gap:12px;min-width:0}
 .fsm-empty{display:grid;gap:10px;justify-items:center;text-align:center;color:#C9D3DC}
 .fsm-empty b{font-size:20px;color:#fff}
 @media (max-width:700px){.fsm{grid-template-columns:64px 1fr 0}.fsm-right{display:none}.fsm-btn{width:56px;min-height:52px}.fsm-btn .lb{font-size:10px}.fsm-dims{display:none}}
+
+/* 실측 사진 확대 */
+.photo-wrap>img,.photo-wrap>svg{transform:translate(var(--pzx,0px),var(--pzy,0px)) scale(var(--pz,1));transform-origin:0 0}
+.photo-wrap{touch-action:pan-y}.fsm .photo-wrap,.photo-wrap.pz-on{touch-action:none}
+.pz-btns{position:absolute;right:8px;bottom:8px;display:flex;flex-direction:column;gap:6px;z-index:3}
+.pz-btns button{min-width:48px;min-height:44px;border-radius:12px;border:0;background:rgba(20,24,28,.78);color:#fff;font-size:20px;font-weight:700;padding:0 8px;box-shadow:0 2px 8px #0006}
+.pz-btns #pzLbl{font-size:13px}
+.fsm-bottom .tool-hint b{color:#fff}
 </style>
 
 <div class="app">
@@ -3424,12 +3432,12 @@ function measureFS(p){const ar=p?p.w/p.h:1.5,tl=['ref','W','H','D','spot','obs',
   return`<div class="fsm" id="fsm">
     <div class="fsm-rail fsm-left">${tl.map(t=>`<button type="button" class="fsm-btn" data-act="tool" data-tool="${t}" aria-pressed="${tool===t}" style="--c:${MC[t]||'#888'}"><span class="ic">${FS_IC[t]||'•'}</span><span class="lb">${ML[t]}</span></button>`).join('')}${tool?`<button type="button" class="fsm-btn" data-act="tool" data-tool=""><span class="ic">✓</span><span class="lb">측정 끝</span></button>`:''}</div>
     <div class="fsm-top">${(tool==='W'||tool==='calib'||tool==='spot'||job.faces.length>1)&&job.faces.length>1?`<div class="fsm-faces">${faceTabs()}</div>`:'<span></span>'}<div class="fsm-topr">${cam}<button type="button" class="fsm-btn" data-act="fs-off"><span class="ic">☰</span><span class="lb">정보 입력</span></button></div></div>
-    <div class="fsm-stage">${p?`<div class="photo-wrap ${tool?'armed':''}" id="photoWrap" style="width:min(calc(100vw - 196px),calc((100dvh - 150px)*${ar.toFixed(4)}))"><img id="photoImg" src="${photoSrc(p)}" alt="현장 사진"><svg id="photoSvg" viewBox="0 0 ${p.w} ${p.h}" preserveAspectRatio="none" data-act="photo-tap"></svg>${p.src==='sample'?'<span class="badge">예시 현장 사진</span>':''}</div>`:`<div class="fsm-empty"><b>벽 사진을 찍어 시작하세요</b><span>사진 위에서 두 점을 눌러 길이를 잽니다</span><div style="display:flex;gap:10px">${cam}</div></div>`}</div>
+    <div class="fsm-stage">${p?`<div class="photo-wrap ${tool?'armed':''}" id="photoWrap" style="width:min(calc(100vw - 196px),calc((100dvh - 150px)*${ar.toFixed(4)}))"><img id="photoImg" src="${photoSrc(p)}" alt="현장 사진"><svg id="photoSvg" viewBox="0 0 ${p.w} ${p.h}" preserveAspectRatio="none" data-act="photo-tap"></svg>${p.src==='sample'?'<span class="badge">예시 현장 사진</span>':''}${pzBtns()}</div>`:`<div class="fsm-empty"><b>벽 사진을 찍어 시작하세요</b><span>사진 위에서 두 점을 눌러 길이를 잽니다</span><div style="display:flex;gap:10px">${cam}</div></div>`}</div>
     <div class="fsm-rail fsm-right">${job.photos.map((ph,i)=>`<button type="button" class="fsm-thumb" data-act="photo-sel" data-i="${i}" aria-pressed="${i===job.active}" aria-label="사진 ${i+1}"><img src="${photoSrc(ph)}" alt=""></button>`).join('')}</div>
     <div class="fsm-bottom"><div class="tool-hint" id="toolHint"></div><div class="fsm-dims">${dimTxt}</div><button type="button" class="btn primary" data-act="step" data-step="2">다음 →</button></div></div>`}
 function step1(){if(fsOn())return measureFS(job.photos[job.active]);const p=job.photos[job.active],g=geom();
   const tools=['ref','W','H','D','note','calib','spot','obs'].map(t=>`<button type="button" class="chip" data-act="tool" data-tool="${t}" aria-pressed="${tool===t}"><span class="dot" style="background:${MC[t]}"></span>${ML[t]}${['W','H','D'].includes(t)?' 재기':''}</button>`).join('');
-  const photo=p?`<div class="photo-wrap ${tool?'armed':''}" id="photoWrap"><img id="photoImg" src="${photoSrc(p)}" alt="현장 사진"><svg id="photoSvg" viewBox="0 0 ${p.w} ${p.h}" preserveAspectRatio="none" data-act="photo-tap"></svg>${p.src==='sample'?'<span class="badge">예시 현장 사진</span>':''}</div>`
+  const photo=p?`<div class="photo-wrap ${tool?'armed':''}" id="photoWrap"><img id="photoImg" src="${photoSrc(p)}" alt="현장 사진"><svg id="photoSvg" viewBox="0 0 ${p.w} ${p.h}" preserveAspectRatio="none" data-act="photo-tap"></svg>${p.src==='sample'?'<span class="badge">예시 현장 사진</span>':''}${pzBtns()}</div>`
     :`<div class="empty-photo"><b>현장 사진을 추가하세요</b><span>태블릿 카메라로 바로 찍거나 앨범에서 고를 수 있습니다.</span><span style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><label class="btn primary file-btn">📷 카메라로 촬영<input type="file" accept="image/*" capture="environment" data-change="photo-add"></label><label class="btn file-btn">🖼 앨범에서 고르기<input type="file" accept="image/*" multiple data-change="photo-add"></label></span></div>`;
   const marks=job.photos.flatMap((ph,pi)=>ph.marks.map(m=>({...m,pi})));
   return`<div class="panel"><div class="panel-head"><h2>현장 실측</h2><p class="hint">사진에서 두 점을 누르고 줄자 값을 넣으세요.</p></div>
@@ -3592,7 +3600,7 @@ function tableUI(){const t=job.table,sel=(k,opts)=>`<select class="input" id="tb
 function layoutWarn(){let w='';if(job.layout==='II'){const p=(+job.span)-2*(+job.dims.D);w=p<800?`통로 폭이 ${p}mm로 좁습니다. 보통 800mm 이상 남깁니다.`:''}
   if((job.layout==='island'||job.layout==='Lisland')&&+job.island.gap<900)w=`통로 폭 ${job.island.gap}mm는 좁습니다. 보통 900~1200mm를 권합니다.`;
   return w?`<p class="make" style="margin:6px 0 0;color:var(--warn)">${w}</p>`:''}
-function drawOverlay(){const svg=$('#photoSvg');if(!svg)return;const p=job.photos[job.active],u=p.w/1600;let s='';
+function drawOverlay(){const svg=$('#photoSvg');if(!svg)return;const p=job.photos[job.active],u=p.w/1600/(typeof PZ!=='undefined'&&PZ.z>1?Math.sqrt(PZ.z)*1.15:1);let s='';
   p.marks.forEach(m=>{const c=MC[m.type];if(m.type==='note'){const[x,y]=m.a;s+=`<circle cx="${x}" cy="${y}" r="${16*u}" fill="${c}" stroke="#fff" stroke-width="${5*u}"/>`;
       const t=m.text||'메모',tw=(t.length*26+30)*u;s+=`<rect x="${x+22*u}" y="${y-24*u}" width="${tw}" height="${48*u}" rx="${12*u}" fill="rgba(20,20,24,.82)"/><text x="${x+37*u}" y="${y+10*u}" font-size="${28*u}" fill="#fff" font-family="${FONT}">${esc(t)}</text>`;return}
     const[a,b]=[m.a,m.b];s+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#fff" stroke-width="${12*u}" stroke-linecap="round" opacity=".85"/><line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${c}" stroke-width="${6*u}" stroke-linecap="round"/>`;
@@ -3608,7 +3616,7 @@ function drawOverlay(){const svg=$('#photoSvg');if(!svg)return;const p=job.photo
     s+=`<rect x="${x}" y="${y}" width="${w}" height="${hh}" fill="${c}" fill-opacity=".22" stroke="${c}" stroke-width="${5*u}"/><rect x="${x}" y="${y-44*u}" width="${((OBS[o.type]||OBS.etc).label.length*24+24)*u}" height="${40*u}" rx="${8*u}" fill="${c}"/><text x="${x+12*u}" y="${y-15*u}" font-size="${24*u}" font-weight="700" fill="#fff" font-family="${FONT}">${esc((OBS[o.type]||OBS.etc).label)}</text>`});
   if(pending)s+=`<circle cx="${pending[0]}" cy="${pending[1]}" r="${16*u}" fill="none" stroke="${MC[tool]||'#fff'}" stroke-width="${6*u}"/><circle cx="${pending[0]}" cy="${pending[1]}" r="${5*u}" fill="#fff"/>`;
   svg.innerHTML=s}
-function updateHint(){const h=$('#toolHint');if(!h)return;const cp=job.photos[job.active];h.innerHTML=tool==='ref'?`<b>기준물 · ${esc(job.refObj?.l||'')} ${job.refObj?.w}×${job.refObj?.h}</b> 사진 속 기준물의 <b>네 모서리</b>를 아무 순서로 누르세요. (${refPts.length}/4) · 확대해서 정확히 누를수록 오차가 줄어요`:tool==='calib'?`<b>벽 맞추기 · ${FACE_NAME(cf().key)}</b> 사진에서 장이 들어갈 벽의 <b>네 모서리</b>(바닥·천장과 만나는 꼭짓점)를 <b>아무 순서로</b> 누르세요. (${calibPts.length}/4)`
+function updateHint(){const h=$('#toolHint');if(!h)return;const cp=job.photos[job.active];h.innerHTML=tool==='ref'?`<b>기준물 · ${esc(job.refObj?.l||'')} ${job.refObj?.w}×${job.refObj?.h}</b> 사진 속 기준물의 <b>네 모서리</b>를 아무 순서로 누르세요. (${refPts.length}/4) · 두 손가락으로 벌려 확대해서 정확히 누를수록 오차가 줄어요`:tool==='calib'?`<b>벽 맞추기 · ${FACE_NAME(cf().key)}</b> 사진에서 장이 들어갈 벽의 <b>네 모서리</b>(바닥·천장과 만나는 꼭짓점)를 <b>아무 순서로</b> 누르세요. (${calibPts.length}/4)`
   :tool==='spot'?(pending?'<b>위치 표시</b> 반대쪽 끝을 누르세요.':`<b>위치 표시</b> 냉장고·쿡탑·싱크·출입문·키큰장 자리의 한쪽 끝을 누르세요. 표시한 곳에 장이 맞춰집니다.${cp?.calib?'':' 벽 맞추기를 먼저 하면 위치가 mm로 자동 계산됩니다.'}`)
   :tool==='obs'?(pending?'<b>설비 표시</b> 반대쪽 모서리를 누르세요.':`<b>설비 표시</b> 분배기·수도·보일러·점검구의 한쪽 모서리를 누르세요.${cp?.calib?'':' 벽 맞추기를 먼저 하면 위치가 mm로 자동 계산됩니다.'}`):!tool?`${cp?.ref?`<b style="color:${MC.ref}">${esc(cp.ref.l)} 기준 저장됨</b> · 가로·높이를 재면 길이가 자동으로 나옵니다 <button type="button" class="btn sm quiet" data-act="ref-del">기준 지우기</button><br>`:'사진에 <b>A4 용지 같은 기준물</b>을 벽에 붙여 찍었다면 <b>기준물</b>을 먼저 누르세요. '}`+'측정하려면 위에서 <b>가로·높이·깊이</b> 도구를 고르세요. 사진 합성을 하려면 <b>벽 맞추기</b>를 하세요.':tool==='note'?'<b>메모</b>할 위치(콘센트, 배관, 스위치 등)를 누르세요.':pending?`<b>${ML[tool]}</b> 끝점을 누르세요.`:`<b>${ML[tool]}${tool==='W'&&job.faces.length>1?' · '+FACE_NAME(cf().key):''}</b> 시작점을 누르세요. 같은 도구로 여러 번 잴 수 있습니다.`}
 function photoTap(e){if(!tool)return;const svg=$('#photoSvg'),p=job.photos[job.active],r=svg.getBoundingClientRect();const pt=[Math.round((e.clientX-r.left)/r.width*p.w),Math.round((e.clientY-r.top)/r.height*p.h)];
@@ -4287,6 +4295,29 @@ Object.assign(ACT,{'rules-reset':b=>{if(!b.dataset.armed){b.dataset.armed='1';b.
 Object.assign(ACT,{'gap-k':b=>{const m=cf().rows[job.sel.row].mods[job.sel.i];if(!isGap(m))return;m.gk=b.dataset.v;cf().edited=true;render()}});
 Object.assign(ACT,{'mod-tk':b=>{const m=cf().rows[job.sel.row].mods[job.sel.i];if(m.t!=='tallc')return;m.tk=b.dataset.v;cf().edited=true;render()}});
 Object.assign(ACT,{'fs-on':()=>{fsM=true;render()},'fs-off':()=>{fsM=false;render();window.scrollTo({top:0})}});
+/* ---------- 실측 사진 확대: 두 손가락 벌리기·좁히기, 확대 중 한 손가락 끌어 이동, 마우스 휠, ＋/－/맞춤 버튼 ----------
+   사진과 표시(svg)에 같은 변환을 걸기 때문에 누른 점 계산(getBoundingClientRect)은 그대로 맞습니다. */
+const PZ={z:1,x:0,y:0,pid:null,pts:new Map(),pin:null,pan:null,swallow:0};
+const pzWrap=()=>document.getElementById('photoWrap');
+function pzSet(){const r=document.documentElement.style,w=pzWrap();if(w){const W=w.clientWidth,H=w.clientHeight;PZ.z=Math.min(8,Math.max(1,PZ.z));PZ.x=Math.min(0,Math.max(W*(1-PZ.z),PZ.x));PZ.y=Math.min(0,Math.max(H*(1-PZ.z),PZ.y));w.classList.toggle('pz-on',PZ.z>1.01)}
+  if(PZ.z<=1.01){PZ.z=1;PZ.x=0;PZ.y=0}r.setProperty('--pz',PZ.z);r.setProperty('--pzx',PZ.x+'px');r.setProperty('--pzy',PZ.y+'px');const l=document.getElementById('pzLbl'),t=PZ.z>1?'×'+PZ.z.toFixed(1):'맞춤';if(l&&l.textContent!==t)l.textContent=t;const zk=Math.round(PZ.z*10);if(zk!==PZ.zk){PZ.zk=zk;cancelAnimationFrame(PZ.raf);PZ.raf=requestAnimationFrame(()=>{try{drawOverlay()}catch(e){}})}}
+function pzSync(){const pid=job?.photos?.[job.active]?.id??null;if(pid!==PZ.pid){PZ.pid=pid;PZ.z=1;PZ.x=0;PZ.y=0}pzSet()}
+function pzAt(z,cx,cy){const nz=Math.min(8,Math.max(1,z)),k=nz/PZ.z;PZ.x=cx-(cx-PZ.x)*k;PZ.y=cy-(cy-PZ.y)*k;PZ.z=nz;pzSet()}
+const pzBtns=()=>`<div class="pz-btns"><button type="button" data-act="pz" data-v="in" aria-label="확대">＋</button><button type="button" data-act="pz" data-v="fit" id="pzLbl" aria-label="원래 크기">${PZ.z>1?'×'+PZ.z.toFixed(1):'맞춤'}</button><button type="button" data-act="pz" data-v="out" aria-label="축소">－</button></div>`;
+ACT.pz=b=>{const w=pzWrap();if(!w)return;const v=b.dataset.v;if(v==='fit'){PZ.z=1;pzSet();return}pzAt(PZ.z*(v==='in'?1.6:1/1.6),w.clientWidth/2,w.clientHeight/2)};
+const pzLocal=(e,w)=>{const r=w.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+document.addEventListener('pointerdown',e=>{const w=pzWrap();if(!w||!w.contains(e.target)||e.target.closest('.pz-btns'))return;PZ.pts.set(e.pointerId,pzLocal(e,w));
+  if(PZ.pts.size===2){const[a,b]=[...PZ.pts.values()];PZ.pin={d:Math.hypot(a[0]-b[0],a[1]-b[1])||1,m:[(a[0]+b[0])/2,(a[1]+b[1])/2],z:PZ.z,x:PZ.x,y:PZ.y};PZ.pan=null}
+  else if(PZ.pts.size===1)PZ.pan={s:pzLocal(e,w),x:PZ.x,y:PZ.y,moved:false}},true);
+document.addEventListener('pointermove',e=>{if(!PZ.pts.has(e.pointerId))return;const w=pzWrap();if(!w)return;PZ.pts.set(e.pointerId,pzLocal(e,w));
+  if(PZ.pin&&PZ.pts.size>=2){const[a,b]=[...PZ.pts.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]),m=[(a[0]+b[0])/2,(a[1]+b[1])/2],P=PZ.pin,z=Math.min(8,Math.max(1,P.z*d/P.d)),cx=(P.m[0]-P.x)/P.z,cy=(P.m[1]-P.y)/P.z;PZ.z=z;PZ.x=m[0]-cx*z;PZ.y=m[1]-cy*z;PZ.swallow=Date.now()+400;pzSet();e.preventDefault();return}
+  if(PZ.pan&&PZ.z>1){const p=pzLocal(e,w),dx=p[0]-PZ.pan.s[0],dy=p[1]-PZ.pan.s[1];if(!PZ.pan.moved&&Math.hypot(dx,dy)<10)return;PZ.pan.moved=true;PZ.x=PZ.pan.x+dx;PZ.y=PZ.pan.y+dy;PZ.swallow=Date.now()+400;pzSet();e.preventDefault()}},{passive:false});
+const pzEnd=e=>{if(!PZ.pts.delete(e.pointerId))return;if(PZ.pts.size<2)PZ.pin=null;if(!PZ.pts.size)PZ.pan=null};
+document.addEventListener('pointerup',pzEnd);document.addEventListener('pointercancel',pzEnd);
+document.addEventListener('click',e=>{if(Date.now()<PZ.swallow&&pzWrap()?.contains(e.target)&&!e.target.closest('.pz-btns')){e.stopPropagation();e.preventDefault();PZ.swallow=0}},true);
+document.addEventListener('wheel',e=>{const w=pzWrap();if(!w||!w.contains(e.target))return;e.preventDefault();const[cx,cy]=pzLocal(e,w);pzAt(PZ.z*Math.exp(-e.deltaY*.0015),cx,cy)},{passive:false});
+document.addEventListener('dblclick',e=>{const w=pzWrap();if(!w||!w.contains(e.target)||tool)return;const[cx,cy]=pzLocal(e,w);if(PZ.z>1){PZ.z=1;pzSet()}else pzAt(2.5,cx,cy)});
+let pzLastW=null;try{new MutationObserver(()=>{const w=pzWrap();if(w&&w!==pzLastW){pzLastW=w;pzSync()}}).observe(document.body,{childList:true,subtree:true})}catch(e){}
 /* ---------- 도면 세트: 평면 상세·측면·배면·상판 ---------- */
 let drawTab='front';
 function pageHead(j,title,sub=''){const W=1400,H=990;return`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="${FONT}"><style>${PAPER_CSS}</style><rect width="${W}" height="${H}" fill="#fff"/>`+
