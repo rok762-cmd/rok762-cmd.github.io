@@ -25,10 +25,11 @@ with sync_playwright() as p:
     check(r['hc'] and abs(r['hc']-r['cc'])<=100,'후드가 쿡탑 위 '+str(r['hc']))
     # 오른쪽 아래 버튼(장 배치 화면 · 설비 칩)으로 출입문 넣기
     pg.evaluate("()=>{job.sel={row:0,i:0};const o={id:uid(),type:'sp_door',face:'A',x:0,z:0,w:900,h:2100};job.obstacles.push(o);toast(autoPlace(job,o));stdNormalize(job);render()}")
-    r=pg.evaluate("""()=>{const g=geom(job,0),lo=g.rows.find(r=>r.zone==='lower'),up=g.rows.find(r=>r.zone==='upper'),gd=lo.mods.find(m=>m.t==='gap'),gu=up.mods.find(m=>m.t==='gap');return{gx:gd&&gd.x,gw:gd&&gd.w,uw:gu&&gu.w,ux:gu&&gu.x}}""")
+    r=pg.evaluate("""()=>{let ep;const g=geom(job,0),lo=g.rows.find(r=>r.zone==='lower'),up=g.rows.find(r=>r.zone==='upper'),gd=lo.mods.find(m=>m.t==='gap'),gu=up.mods.find(m=>m.t==='gap');return{gx:gd&&gd.x,gw:gd&&(gd.open||gd.w),uw:gu&&(gu.open||gu.w),ux:gu&&gu.x,ep:ep=endPanels(job).filter(e=>e.gap).length}}""")
     print(r)
     check(r['gw']==900 and r['gx']<=60,'출입문 빈 칸 왼쪽 '+str(r))
     check(r['uw']==900 and r['ux']==r['gx'],'상부도 같은 자리 비움')
+    check(r['ep']>=2,'문 옆 상·하부 EP '+str(r['ep']))
     # 목록에 표시 + 삭제하면 빈 칸도 빠짐
     pg.evaluate("()=>{step=1;render()}")
     html=pg.content();check('이 자리에 맞춰 장을 배치합니다' in html,'목록 표시')

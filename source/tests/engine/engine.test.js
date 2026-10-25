@@ -42,7 +42,7 @@ const mod=(t,w,extra={})=>({t,w,x:0,z0:120,z1:820,n:S.TYPES?.[t]?.n??1,...extra}
   add('sp_sink',2200,800);add('sp_cook',800,600);let g=E.geom(j,0),lo=g.rows.find(r=>r.zone==='lower'),off=g.cut+g.sL;
   const c=t=>{const m=lo.mods.find(m=>m.t===t);return m?m.x+m.w/2+off:null};
   check(Math.abs(c('sink')-2600)<=250,'싱크 위치 표시 '+c('sink'));check(Math.abs(c('cook')-1100)<=250,'쿡탑 위치 표시 '+c('cook'));check([600,750,800,900].includes(lo.mods.find(m=>m.t==='cook').w),'쿡탑 위치 표시 후 규격');
-  add('sp_door',0,900);g=E.geom(j,0);lo=g.rows.find(r=>r.zone==='lower');const gd=lo.mods.find(m=>m.t==='gap');check(gd&&gd.w===900&&gd.x+off<=100,'출입문 위치 표시 '+(gd&&gd.x));
+  add('sp_door',0,900);g=E.geom(j,0);lo=g.rows.find(r=>r.zone==='lower');const gd=lo.mods.find(m=>m.t==='gap');check(gd&&(gd.open||gd.w)===900&&gd.w===900+20*((gd.epL?1:0)+(gd.epR?1:0))&&gd.x+off<=100,'출입문 위치 표시 '+(gd&&gd.x));
   add('sp_fridge',2680,920);check(j.tallEnd?.on&&j.tallEnd.k==='fspace'&&j.tallEnd.side==='R','냉장고 자리 오른쪽 '+J(j.tallEnd));}
 
 /* ---------- 2. 견적 단위 점검 ---------- */

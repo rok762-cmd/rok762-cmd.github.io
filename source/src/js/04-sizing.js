@@ -44,7 +44,7 @@ const snapAny=(ms,srcs,b0,bn,o={})=>snapRow(ms,srcs,b0,bn,o)||(o.pins?snapAny(ms
 function snapAuto(ms,srcs,b0,bn,o,sr){const ai=srcs.map((m,k)=>m?.auto?k:-1).filter(k=>k>=0);
   if(ai.length){const k=ai[ai.length-1],pins2=o.pins?Object.fromEntries(Object.entries(o.pins).filter(([q])=>+q!==k).map(([q,v])=>[+q>k?+q-1:+q,v])):null,s2=snapAny(ms.filter((_,q)=>q!==k),srcs.filter((_,q)=>q!==k),b0,bn,{...o,pins:pins2});if(s2&&s2.c<=sr.c+.3&&s2.R<150)return{dropAuto:true}}
   if(ai.length>=3)return{};const sx=snapRow(ms,srcs,b0,bn,{...o,extra:true})||snapRow(ms,srcs,b0,bn,{...o,extra:true,relax:sr.relax});return sx&&sx.ex&&sx.c<sr.c-1?{wantEx:sx.ex,wantAt:sx.exAt}:{}}
-function snapPost(row,ref,f,o={}){const ms=row.mods,n=ms.length;if(n&&row.over>0)row.tooMany=true;if(!n||row.over>0||row.segs)return;const src=f.rows[row.rix];if(!src)return;
+function snapPost(row,ref,f,o={}){const ms=row.mods,n=ms.length;if(n&&row.over>0)row.tooMany=true;if(!n||row.over>0||row.segs)return;const src=f.rows[row.rix]?epGapRow(f.rows[row.rix]):null;if(!src)return;
   for(let k=0;k<n-1;k++)if(Math.abs(ms[k].x+ms[k].w-ms[k+1].x)>1)return;
   const b0=ms[0].x,bn=ms[n-1].x+ms[n-1].w+(row.gap||0),useL=o.align&&ref&&!src.manualW,cook=ref?.mods.find(m=>m.t==='cook');
   let pins=null;if(ref){src.mods.forEach((sm,k)=>{if(sm?.link){const lg=ref.mods.find(x=>x.gid===sm.link);if(lg){pins=pins||{};pins[k]=lg.x}}})}
@@ -57,7 +57,7 @@ function snapPost(row,ref,f,o={}){const ms=row.mods,n=ms.length;if(n&&row.over>0
   row.fill=(row.fill||[]).filter(q=>!(q.i==='F'&&q.x>=b0-1));row.gap=r.R;if(r.R>0)row.fill.push({t:'filler',x:px,w:r.R,z0:row.z0,z1:row.z1,n:0,r:0,i:'F',filler:true});
   row.snapLt=r.Lt;if(useL){const L=rowLines(ref);row.aligned=ms.slice(0,-1).filter(m=>L.some(q=>Math.abs(q-(m.x+m.w))<=1)).length;row.alignN=n-1}}
 function rowLines(r){const L=[];rowAll(r).forEach(m=>{L.push(m.x,m.x+m.w);if(r.mods.includes(m)&&m.w>650&&!m.filler&&!m.flap&&layout(m).zones?.some(z=>z.kind==='door'))L.push(m.x+m.w/2)});return[...new Set(L.map(v=>Math.round(v*2)/2))].sort((a,b)=>a-b)}
-function alignRow(row,ref,f){const ms=row.mods,n=ms.length;row.aligned=0;if(n<2||row.gap>0||row.over>0||row.segs)return;const src=f.rows[row.rix];if(!src||src.manualW)return;
+function alignRow(row,ref,f){const ms=row.mods,n=ms.length;row.aligned=0;if(n<2||row.gap>0||row.over>0||row.segs)return;const src=f.rows[row.rix]?epGapRow(f.rows[row.rix]):null;if(!src||src.manualW)return;
   for(let k=0;k<n-1;k++)if(Math.abs(ms[k].x+ms[k].w-ms[k+1].x)>1)return;
   const R=rowLines(ref),b0=ms[0].x,bn=ms[n-1].x+ms[n-1].w,TOL=250,near=v=>R.some(q=>Math.abs(q-v)<=1);
   const lock=ms.map((m,k)=>m.t==='hood'||!!src.mods[k]?.fix),minW=k=>Math.min(ms[k].w,250),maxW=k=>Math.max(ms[k].w,1000);

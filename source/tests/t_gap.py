@@ -12,7 +12,7 @@ with sync_playwright() as p:
     r=pg.evaluate("""()=>{job=newJob('kitchen');job.faces[0].len=4200;stdNormalize.quiet=1;render();step=2;job.sel={row:0,i:0};render();
       ACT['mod-type']({dataset:{t:'gap'}});setModWidth(0,0,900);render();
       const g=geom(job,0),lo=g.rows.find(r=>r.zone==='lower'),gm=lo.mods.find(m=>m.t==='gap'),q=quote();
-      return{gap:gm&&gm.w,gaps:g.gaps,others:lo.mods.filter(m=>m.t!=='gap').map(m=>m.w),segs:ctSegs(g,-10,g.Wm+10),ct:q.lines.filter(l=>/상판|하부장 본체/.test(l.item)).map(l=>l.item+' '+l.qty),leaves:leaves(g,doorById(job.doorId)).filter(l=>l.x>=gm.x-1&&l.x<gm.x+gm.w-5&&l.zone==='lower').length,Wm:g.Wm}}""")
+      return{gap:gm&&(gm.open||gm.w),gw:gm&&gm.w,gaps:g.gaps,others:lo.mods.filter(m=>m.t!=='gap').map(m=>m.w),segs:ctSegs(g,-10,g.Wm+10),ct:q.lines.filter(l=>/상판|하부장 본체/.test(l.item)).map(l=>l.item+' '+l.qty),leaves:leaves(g,doorById(job.doorId)).filter(l=>l.x>=gm.x-1&&l.x<gm.x+gm.w-5&&l.zone==='lower').length,Wm:g.Wm}}""")
     print(r)
     check(r['gap']==900,'gap width 900')
     check(all(w%50==0 for w in r['others']),'others snapped')

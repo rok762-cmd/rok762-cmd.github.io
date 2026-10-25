@@ -90,6 +90,7 @@ function upperH(Hm){return clamp(Hm-1450,500,900)}
 function geom(j=job,fi=j.fi||0,rowsOverride,adjL=0){const cat=j.cat,c=CATS[cat],P=catalog.prices,f=j.faces[fi]||j.faces[0],isl=f.key==='I';
   const cut=cornerCut(j,f),fin=j.finish||'full';let sL,sR,top;
   if(isl||cat==='single'){sL=sR=top=0}else if(isMD(cat)){sL=sR=5;top=10}else if(fin==='filler'){sL=sR=Math.max(+P.fillerW||0,+f.fw||0);top=+P.moldingH||0}else{sL=sR=(+P.fullSide||0)/2;top=+P.fullTop||0}
+  const mold=cat==='kitchen'&&!isl&&fin!=='filler'&&(+RULES.moldH||0)>0?+RULES.moldH:0;if(mold)top=mold;
   if(cut>0)sL=0;
   /* 한쪽만 벽: 트인 쪽(마감판 켬)은 휠라 없이 마감판(EP) 두께만 · ㄱ자 뒷선반: A면 코너 쪽 벽 휠라 → 코너 휠라 */
   const cSd=sd=>isCornerLay(j)&&(sd==='L'||(f.key==='A'&&j.layout==='U')),ep={L:false,R:false};
@@ -104,7 +105,7 @@ function geom(j=job,fi=j.fi||0,rowsOverride,adjL=0){const cat=j.cat,c=CATS[cat],
   const TB=j.table;let tbl=null;if(cat==='kitchen'&&TB?.on&&TB.face===f.key){const perp=TB.dir==='perp';tbl={dir:TB.dir,len:+TB.len||1000,depth:+TB.depth||700,top:TB.h==='low'?750:CTH,sup:supportById(TB.support),x0:perp?W-clr-(+TB.depth||700):W-clr+side,w:perp?(+TB.depth||700):(+TB.len||1000)}}
   let src=rowsOverride||f.rows;if(isl||(penOn(j)&&f.key==='B'))src=src.filter(r=>r.zone!=='upper');
   const tH=src.some(r=>r.zone==='top')?clamp(+f.topH||400,200,900):0,tD=+f.topD||450;
-  const rows=src.map(row=>{let z0,z1;const zc=row.zone==='top'?(cat==='kitchen'?'upper':'full'):row.zone;
+  const rows=src.map(row0=>{const row=epGapRow(row0);let z0,z1;const zc=row.zone==='top'?(cat==='kitchen'?'upper':'full'):row.zone;
     if(row.zone==='top'){z1=Hm;z0=Hm-tH}else if(row.zone==='lower'){z0=pl;z1=ct0}else if(row.zone==='upper'){z1=Hm-tH;z0=Hm-(KH&&KH.uni?KH.B:upperH(Hm))}else{z0=pl;z1=Hm-tH}
     let off=0,lc=0,rc=0;const corners=[];
     if(isCornerLay(j)&&!isl&&!isMD(cat)&&!isTallWall(j,f)){const zt=cType(j,zc),lg=cLeg(j,zc),ck=zt==='diag'?'corner_diag':cKind(j,zc)==='cdrawer'?'corner_dr':'corner_l',cfw=(zt==='blind'||zt==='magic')?cFill(j):0;
@@ -123,6 +124,8 @@ function geom(j=job,fi=j.fi||0,rowsOverride,adjL=0){const cat=j.cat,c=CATS[cat],
       else{corners.push(up?{t:'tallc',x:off+lc,w:te.w,z0,z1,n:0,r:0,i:'C',ghost:true}:{t:'tallc',x:off+lc,w:te.w,z0,z1:Hm,n:4,r:0,i:'C',tall:true,tk:te.k,fh:te.fh,end:true});lc+=te.w}}}
     {const t2=tall2Of(j,f);if(t2&&!isl){const up=row.zone==='upper'||row.zone==='top';if(t2.side==='R'){rc+=t2.w;corners.push(up?{t:'tallc',x:Wm-rc,w:t2.w,z0,z1,n:0,r:0,i:'C',ghost:true}:{t:'tallc',x:Wm-rc,w:t2.w,z0,z1:Hm,n:4,r:0,i:'C',tall:true,tk:t2.k,fh:t2.fh,end:true,t2:true})}
       else{corners.push(up?{t:'tallc',x:off+lc,w:t2.w,z0,z1,n:0,r:0,i:'C',ghost:true}:{t:'tallc',x:off+lc,w:t2.w,z0,z1:Hm,n:4,r:0,i:'C',tall:true,tk:t2.k,fh:t2.fh,end:true,t2:true});lc+=t2.w}}}
+    {const te=tallEndOf(j,f);if(te&&!isl&&te.side!=='M'){const eT=RULES.epT,up=row.zone==='upper'||row.zone==='top',hollow=te.k==='fspace'&&!tall2Of(j,f)&&frNiche(j)&&!frNiche(j).housing,c={t:'filler',w:eT,z0,z1:up||hollow?z1:Hm,n:0,r:0,i:'E',filler:true,epIn:true,tk:tall2Of(j,f)?.k||te.k,ghost:up&&!hollow};
+      if(te.side==='R'){rc+=eT;c.x=Wm-rc;c.side='R'}else{c.x=off+lc;lc+=eT;c.side='L'}corners.push(c)}}
     if(!isMD(cat)){const sp=f.sp||{},spL=+sp[row.zone+':L']||0,spR=+sp[row.zone+':R']||0;
       if(spL>0){corners.push({t:'filler',x:off+lc,w:spL,z0,z1,n:0,r:0,i:'S',filler:true,spacer:'L'});lc+=spL}
       if(spR>0){rc+=spR;corners.push({t:'filler',x:Wm-rc,w:spR,z0,z1,n:0,r:0,i:'S',filler:true,spacer:'R'})}}
@@ -139,7 +142,7 @@ function geom(j=job,fi=j.fi||0,rowsOverride,adjL=0){const cat=j.cat,c=CATS[cat],
     let fillA=teM?[al.gL,al.gR].filter(Boolean).map(q=>({t:'filler',x:q.x,w:q.w,z0,z1,n:0,r:0,i:'F',filler:true})):al.gap>0?[{t:'filler',x,w:al.gap,z0,z1,n:0,r:0,i:'F',filler:true}]:[],toC=0;
     if(!teM&&al.gap>0&&cat==='kitchen'&&j.fillAt==='corner'&&!isl){const cc=corners.find(c=>c.cfill)||corners.find(c=>c.blind&&c.side==='L');if(cc){const gp=al.gap;corners.filter(c=>c!==cc&&c.x>cc.x&&!(c.side==='R'||c.spacer==='R'||c.end&&c.x>=Wm-rc-1)).forEach(c=>c.x+=gp);cc.w+=gp;if(cc.blind)cc.cf=(cc.cf||0)+gp;mods.forEach(m=>m.x+=gp);fillA=[];toC=gp}}
     if(isTallWall(j,f)&&row.zone==='full'){if(al.over>0)al.tooMany=true;fillA=al.gap>0?[{t:'gap',gk:'free',x,w:al.gap,z0,z1,n:0,r:0,i:'G'}]:[];al={...al,gap:0}}
-    return{tooMany:al.tooMany,snapLt:al.snapLt,snapRelax:al.snapRelax,wantEx:al.wantEx,wantAt:al.wantAt,dropAuto:al.dropAuto,lo:al.lo||0,zone:row.zone,rix:f.rows.indexOf(row),z0,z1,off,corners,mods,fill:fillA,gap:al.gap,toC,over:al.over,segs}});
+    return{tooMany:al.tooMany,snapLt:al.snapLt,snapRelax:al.snapRelax,wantEx:al.wantEx,wantAt:al.wantAt,dropAuto:al.dropAuto,lo:al.lo||0,zone:row.zone,rix:f.rows.indexOf(row0),z0,z1,off,corners,mods,fill:fillA,gap:al.gap,toC,over:al.over,segs}});
   if((fin==='filler'||cat==='kitchen')&&!isl&&!isMD(cat)&&!adjL&&!rowsOverride){const pr=rows.find(r=>r.zone!=='upper')||rows[0];if(pr&&pr.lo>0)return geom(j,fi,rowsOverride,pr.lo)}
   if(cat==='kitchen'&&!isl&&j.snap!==false){const lo=rows.find(r=>r.zone==='lower'),up=rows.find(r=>r.zone==='upper'),tp=rows.find(r=>r.zone==='top'),al_=j.upAlign!==false;const eo_=r=>snapEdge(j,f,sL,sR,(r.corners||[]).filter(c=>c.x<=(r.mods[0]?.x??0)).length?1:0,(r.corners||[]).filter(c=>c.x>=(r.mods[r.mods.length-1]?.x??0)).length?1:0,ep);if(up)snapPost(up,lo,f,{align:al_,...eo_(up)});if(tp)snapPost(tp,up||lo,f,{align:al_,...eo_(tp)})}
   else if(cat==='kitchen'&&!isl&&j.upAlign!==false){const lo=rows.find(r=>r.zone==='lower'),up=rows.find(r=>r.zone==='upper'),tp=rows.find(r=>r.zone==='top');if(lo&&up)alignRow(up,lo,f);if(tp&&(up||lo))alignRow(tp,up||lo,f)}
@@ -147,5 +150,9 @@ function geom(j=job,fi=j.fi||0,rowsOverride,adjL=0){const cat=j.cat,c=CATS[cat],
   rows.forEach(r=>hingeSolve(j,f,{cat,isl,sL,sR,fi,ep},r));
   const lr_=rows.find(r=>r.zone==='lower'),tl_=lr_?.corners.find(c=>c.tall&&!c.end),cb_=lr_?.corners.find(c=>c.blind&&c.side==='L'),talls_=[...(lr_?.corners||[]).filter(c=>c.tall).map(c=>({x:c.x,w:c.w,k:c.tk,end:!!c.end})),...(cat==='kitchen'?(rows.find(r=>r.zone==='full')?.mods||[]).filter(m=>m.t==='tallc').map(m=>({x:m.x,w:m.w,k:m.tk||'pantry',end:true,wall:true})):[])];
   const gaps_=(rows.find(r=>r.zone==='lower'||r.zone==='full')?.mods||[]).filter(isGap).map(m=>({x:m.x,w:m.w,k:m.gk||'door'}));
-  return{gaps:gaps_,gapSum:gaps_.reduce((a,q)=>a+q.w,0),ep,shelfCF,bg:!isl?bgOf(j):0,bgUse:bgUse(j),topH:tH,topD:tD,talls:talls_,tallSum:talls_.reduce((a,t)=>a+t.w,0),pen:penOn(j)&&f.key==='B'?(+j.pen.over||0):null,tw:tl_?tl_.w:0,tx0:tl_?tl_.x:0,lidW:(!isl&&f.key==='A'&&cb_&&lidOn(j))?cb_.w:0,rem5,jref:j,cat,W,H,D,Wm,Hm,Dm,rows,clr,sL,sR,top,fin,pl,ct,ctc,ct0,face:f.key,island:isl,cut,len:+f.len,fi,side,tbl,isup:isl?supportById(j.island.support):null,ext:tbl?Math.max(0,tbl.x0+tbl.w-(W-clr)):side}}
+  return{mold,gaps:gaps_,gapSum:gaps_.reduce((a,q)=>a+q.w,0),ep,shelfCF,bg:!isl?bgOf(j):0,bgUse:bgUse(j),topH:tH,topD:tD,talls:talls_,tallSum:talls_.reduce((a,t)=>a+t.w,0),pen:penOn(j)&&f.key==='B'?(+j.pen.over||0):null,tw:tl_?tl_.w:0,tx0:tl_?tl_.x:0,lidW:(!isl&&f.key==='A'&&cb_&&lidOn(j))?cb_.w:0,rem5,jref:j,cat,W,H,D,Wm,Hm,Dm,rows,clr,sL,sR,top,fin,pl,ct,ctc,ct0,face:f.key,island:isl,cut,len:+f.len,fi,side,tbl,isup:isl?supportById(j.island.support):null,ext:tbl?Math.max(0,tbl.x0+tbl.w-(W-clr)):side}}
 /* 상부장(윗줄) 칸 경계를 아랫줄 문 선에 맞춘다 — 칸 수는 그대로, 폭만 옮김 */
+
+/* 보이는 옆면은 전부 마감판(EP): 문·통로·창·빈 벽 옆 칸은 빈 칸 안쪽에 EP 두께만큼 자리를 잡음 (기둥·벽 옆은 제외) */
+const epGapSide=(m,nb)=>isGap(m)&&m.gk!=='pillar'&&nb&&!isGap(nb)&&!nb.filler;
+function epGapRow(row){if(!row.mods.some(isGap))return row;const eT=RULES.epT;return{...row,mods:row.mods.map((m,k,a)=>{if(!isGap(m))return m;const L=epGapSide(m,a[k-1]),R=epGapSide(m,a[k+1]);if(!L&&!R)return m;const add=eT*((L?1:0)+(R?1:0)),uw=+m.userW||+m.r||900;return{...m,userW:uw+add,r:uw+add,epL:L,epR:R,open:uw}})}}

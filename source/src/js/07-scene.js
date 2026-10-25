@@ -93,7 +93,7 @@ function sceneSVG(j,{open=false,caption=true,px=1600,fi=j.fi,bare=false}={}){con
     if(g.pl)s+=R(0,0,W,g.pl,`fill="${j.plCol==='door'?front.color:j.plCol||shade(front.color,-.42)}"`);
     if(!g.island){const ff=`fill="${solidFill(P,front)}" stroke="${shade(front.color,-.25)}" stroke-width="3"`;
       if(g.fin==='filler'){fillerZones(g).forEach(([a,b])=>{if(g.sL)s+=R(-g.sL,a,g.sL,b-a,ff);if(g.sR)s+=R(W,a,g.sR,b-a,ff)});s+=R(-g.sL,g.Hm,W+g.sL+g.sR,g.H-g.Hm,ff)}
-      else{s+=R(-g.sL,0,g.sL,g.H,'fill="#000" opacity=".22"')+R(W,0,g.sR,g.H,'fill="#000" opacity=".22"')+R(0,g.Hm,W,g.H-g.Hm,'fill="#000" opacity=".18"')}}
+      else{s+=R(-g.sL,0,g.sL,g.H,'fill="#000" opacity=".22"')+R(W,0,g.sR,g.H,'fill="#000" opacity=".22"')+(g.mold?R(0,g.Hm,W,g.H-g.Hm,ff):R(0,g.Hm,W,g.H-g.Hm,'fill="#000" opacity=".18"'))}}
     const showInside=open||d.kind==='none'||['glass','satin','fluted'].includes(d.tex);
     g.rows.forEach(row=>rowAll(row).forEach(m=>{const lay=layout(m);if(lay.noBox)return;if(showInside||m.tall||m.glass||lay.washers||lay.openZ||!lay.zones.some(z=>z.kind==='door'||(z.kind==='panel'&&modApps(m).some(x=>x.a.panel))))s+=interiorCust(m,body,P,front,m.i+(row.zone==='upper'?5:0))}));
     if(j.lt?.show!==false){const cc=CCT[j.lt?.cct||'3000'][1],gl=`fill="url(#${P}-glow)"`,ok=t=>t;

@@ -16,7 +16,7 @@ with sync_playwright() as p:
         ctLines:q.lines.filter(l=>/^상판/.test(l.item)).map(l=>l.spec),tall:q.lines.filter(l=>/키큰장/.test(l.item)).map(l=>l.qty),eps:endPanels(job).map(x=>x.lab)}}""")
     print(r)
     check(r['te']['face']=='A' and r['te']['k']=='fspace','fridge on A end')
-    check(any('door900' in x for x in r['C']) and any('pantry600' in x for x in r['C']),'C wall door+tall')
+    check(any(('door900' in x or 'door920' in x) for x in r['C']) and any('pantry600' in x for x in r['C']),'C wall door+tall')
     check(r['ctC']==0,'no counter on C')
     check('fspace' in r['A'],'fridge housing on A')
     check(r['tall']==[3],'tall priced 3m')

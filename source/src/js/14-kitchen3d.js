@@ -30,6 +30,8 @@ function build3D(j,open,o3={}){let EPS_=null;const T3=THREE,grp=new T3.Group(),d
     const room=isl&&j.island?.front==='room',iov=g.D-cab,bgL=zone=>(zone==='upper'||zone==='top')?0:(g.bg||0),fv=zone=>{const dep=zone==='upper'?UPD():zone==='top'?g.topD:cab,o=bgL(zone);return isl?(room?[g.D-DOOR_T,g.D]:[0,DOOR_T]):[dep-DOOR_T+o,dep+o]},bv=zone=>{const dep=zone==='upper'?UPD():zone==='top'?g.topD:cab,o=bgL(zone);return isl?(room?[iov,g.D-DOOR_T]:[DOOR_T,dep]):[o,dep-DOOR_T+o]};
     g.rows.forEach(row=>{const lowerish=row.zone!=='upper';
       rowAll(row).forEach(m=>{curUD=udOf(gi,g,row,m.i);const z=m.tall?'lower':row.zone,[b0,b1]=bv(z),[f0,f1]=fv(z);
+        if(m.epIn){box(P,m.x,m.x+m.w,b0,f1,m.z0,m.z1,none?body:dCol);return}
+        if(isGap(m)&&(m.epL||m.epR)){const eT=RULES.epT;[m.epL?m.x:null,m.epR?m.x+m.w-eT:null].forEach(ex=>{if(ex!=null)box(P,ex,ex+eT,b0,f1,m.z0,m.z1,none?body:dCol)})}
         if(m.filler){box(P,m.x,m.x+m.w,f0,f1,m.z0,m.z1,none?body:dCol);return}
         if(isMD(g.cat))return;
         if(layout(m).noBox)return;const fs_=m.tall&&m.tk==='fspace'&&!!frNiche(j);
@@ -62,7 +64,8 @@ function build3D(j,open,o3={}){let EPS_=null;const T3=THREE,grp=new T3.Group(),d
       else if(p.kind==='knob')box(P,p.cx-14,p.cx+14,o[0],o[1],p.cz-14,p.cz+14,hc,{},false);
       else if(p.kind==='edge')box(P,p.x1,p.x2,o[0],o[1]-14,p.bottom?p.ez-4:p.ez-14,p.bottom?p.ez+10:p.ez,hc,{},false)});
     if(!isMD(g.cat)){const EPT=18,epm=d_=>d_&&d_.tex==='wood'?{wood:1}:{};curUD={lab:'마감판넬 (EP)'};
-      if(!isl){(EPS_||(EPS_=endPanels(j))).filter(e=>e.face===g.face).forEach(e=>{const zk=e.zone==='tall'?'lower':e.zone,row=g.rows.find(r_=>r_.zone===e.zone),[b0]=bv(zk),[,f1]=fv(zk),z0=e.zone==='tall'||e.zone==='lower'?0:row?.z0,z1=e.zone==='tall'?g.Hm:e.zone==='lower'?g.ct0:row?.z1;if(z0==null||z1==null)return;
+      if(g.mold&&!isl&&g.H>g.Hm){const mc=none?body:dCol;g.rows.forEach(row=>{const up=row.zone==='upper'||row.zone==='top';rowAll(row).forEach(m=>{if(isGap(m)||m.ghost||!(up||m.tall||(m.epIn&&m.z1>=g.Hm-1)))return;const z=up?'upper':'lower',[,f1]=fv(z),[b0]=bv(z);box(P,m.x,m.x+m.w,b0,f1,g.Hm,g.H,mc)})})}
+      if(!isl){(EPS_||(EPS_=endPanels(j))).filter(e=>e.face===g.face&&!e.gap&&!e.inner).forEach(e=>{const zk=e.zone==='tall'?'lower':e.zone,row=g.rows.find(r_=>r_.zone===e.zone),[b0]=bv(zk),[,f1]=fv(zk),z0=e.zone==='tall'||e.zone==='lower'?0:row?.z0,z1=e.zone==='tall'?g.Hm:e.zone==='lower'?g.ct0:row?.z1;if(z0==null||z1==null)return;
         const ld=none?{color:body}:leafDoor(j,{zone:e.zone,tall:e.zone==='tall'},door),x0=e.side==='L'?((g.sL||0)>=EPT?-EPT:-(g.sL||0)-EPT):((g.sR||0)>=EPT?g.Wm:g.Wm+(g.sR||0));box(P,x0,x0+EPT,b0,f1+(zk==='lower'||zk==='upper'||zk==='top'?0:0),z0,z1,ld.color||body,epm(ld))})}
       else if(j.island?.finish!=='none'){const ld=none?{color:body}:door,c=ld.color||body,v0=room?iov:0,v1=room?g.D:cab;
         box(P,-EPT,0,v0,v1,0,g.ct0,c,epm(ld));box(P,g.Wm,g.Wm+EPT,v0,v1,0,g.ct0,c,epm(ld));
@@ -77,9 +80,9 @@ function build3D(j,open,o3={}){let EPS_=null;const T3=THREE,grp=new T3.Group(),d
       const sinkGeo=m=>{const sa=modApps(m).find(q=>q.a.kind==='sink'&&q.a.w)?.a,cx=m.x+m.w/2,hw=sa?Math.min((+sa.cw||sa.w-40)/2,m.w/2-T-5):Math.min(330,m.w/2-50),dd=Math.min(+sa?.cd||(sa?.d||420)-40,520),sv=isl&&!room?[vd-470,vd-470+dd]:isl?[g.D-470,g.D-470+dd]:[Math.max(30,470-dd)+(g.bg||0),470+(g.bg||0)];return{sa,cx,hw,dd,sv,bd:Math.min(260,Math.max(160,+sa?.h||220))}};
       const cuts=(g.rows.find(r=>r.zone==='lower')?.mods||[]).filter(m=>m.t==='sink').map(sinkGeo).map(q=>({c0:q.cx-q.hw,c1:q.cx+q.hw,v0:Math.min(q.sv[0],q.sv[1]),v1:Math.max(q.sv[0],q.sv[1])})).sort((a,b)=>a.c0-b.c0);
       (isl?[[u0,u1]]:ctSegs(g,u0,u1)).forEach(([a,b])=>{let x=a;cuts.filter(c=>c.c1>a&&c.c0<b).forEach(c=>{box(P,x,c.c0,pv0,vd,g.ct0,CTH,ct);box(P,c.c0,c.c1,pv0,c.v0,g.ct0,CTH,ct);box(P,c.c0,c.c1,c.v1,vd,g.ct0,CTH,ct);x=c.c1});box(P,x,b,pv0,vd,g.ct0,CTH,ct)});
-      if(g.bg&&g.bgUse==='shelf'){const sh=Math.max(0,+(j.bgap?.sh??100)||0);box(P,u0,u1,0,g.bg,CTH+sh-20,CTH+sh,ct);if(sh>20)box(P,u0,u1,g.bg-20,g.bg,CTH,CTH+sh-20,ct)}
+      if(g.bg&&g.bgUse==='shelf'){const sh=Math.max(0,+(j.bgap?.sh??100)||0);ctSegs(g,u0,u1).forEach(([a,b])=>{box(P,a,b,0,g.bg,CTH+sh-20,CTH+sh,ct);if(sh>20)box(P,a,b,g.bg-20,g.bg,CTH,CTH+sh-20,ct)})}
       if(g.pen!=null){const lo_=g.rows.find(r=>r.zone==='lower');if(lo_){const all=rowAll(lo_);const a=Math.min(...all.map(m=>m.x)),b=Math.max(...all.map(m=>m.x+m.w));box(P,a,b,-DOOR_T,0,0,g.ct0,none?body:dCol)}}
-      if(g.ct.back&&!isl){box(P,u0,u1,pv0,pv0+20,CTH,CTH+g.ct.back,ct);if(g.face==='A'&&isCornerLay(j)){box(P,u0,u0+20,pv0,vd,CTH,CTH+g.ct.back,ct);if(j.layout==='U')box(P,u1-20,u1,pv0,vd,CTH,CTH+g.ct.back,ct)}}
+      if(g.ct.back&&!isl){ctSegs(g,u0,u1).forEach(([a,b])=>box(P,a,b,pv0,pv0+20,CTH,CTH+g.ct.back,ct));if(g.face==='A'&&isCornerLay(j)){box(P,u0,u0+20,pv0,vd,CTH,CTH+g.ct.back,ct);if(j.layout==='U')box(P,u1-20,u1,pv0,vd,CTH,CTH+g.ct.back,ct)}}
       if(g.ct.front==='nose')box(P,u0,u1,vd-15,vd,CTH,CTH+8,ct);else if(g.ct.front==='groove')box(P,u0,u1,vd-45,vd-35,CTH,CTH+.6,'#9a9a9a');
       const lo=g.rows.find(r=>r.zone==='lower');lo?.mods.forEach(m=>{const cx=m.x+m.w/2;
         if(m.t==='sink'){const q=sinkGeo(m),{cx,hw,sv,bd}=q,v0=Math.min(sv[0],sv[1]),v1=Math.max(sv[0],sv[1]),zb=CTH-bd,wc='#D3D7DA',bc='#8E9599',W_=3;
