@@ -13,7 +13,7 @@ const RULE_META=[
   ['epT','마감판(EP) 두께 (mm)','num','트인 쪽 끝 마감판 두께 · 도면에 표기']];
 let RULES={...RULES_DEF};
 const ruleList=v=>(Array.isArray(v)?v:String(v||'').split(/[,\s·/]+/)).map(Number).filter(x=>x>0).sort((a,b)=>a-b);
-function applyRules(){const r=(typeof catalog!=='undefined'&&catalog&&catalog.rules)||{};const o={...RULES_DEF};
+function applyRules(){try{SNAP_CACHE.clear()}catch(e){}const r=(typeof catalog!=='undefined'&&catalog&&catalog.rules)||{};const o={...RULES_DEF};
   RULE_META.forEach(([k,,t])=>{const v=r[k];if(v==null||v==='')return;if(t==='list'){const L=ruleList(v);if(L.length)o[k]=L}else if(+v>0)o[k]=+v});
   if(k_ok(o)){RULES=o;try{SNAP=o.unit;SNAP_MAX=o.maxW;COOK_W=o.cookWs;SNAP_LT=[...o.doorLeaf,...[400,350,450,300].filter(x=>!o.doorLeaf.includes(x))];TALL_WS=o.tallWs;TALL_MAX=Math.max(...o.tallWs)}catch(e){}}}
 function k_ok(o){return o.unit>=5&&o.maxW>=o.unit*3&&o.prefW>0&&o.cookWs.length&&o.doorLeaf.length&&o.tallWs.length}

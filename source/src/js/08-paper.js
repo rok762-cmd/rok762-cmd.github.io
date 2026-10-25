@@ -66,7 +66,7 @@ function planInner(j,k,active,ui){const pg=planGeo(j);let s='';
     const fl=(x,y,w,h,lab)=>`<rect x="${f(x)}" y="${f(y)}" width="${f(w)}" height="${f(h)}" fill="#E8590C" fill-opacity=".25" stroke="#E8590C" stroke-width="${f(1.5*k)}"/>`;
     const gA_=geom(j,Math.max(0,j.faces.findIndex(q=>q.key==='A'))),bi_=j.faces.findIndex(q=>q.key==='B'),gB_=bi_>=0?geom(j,bi_):null,cfA=(gA_.rows.find(r=>r.zone==='lower')?.corners||[]).find(c=>c.blind&&c.side==='L')?.cf??b.cf,cfB=(gB_?.rows.find(r=>r.zone==='lower')?.corners||[]).find(c=>c.cfill)?.w??b.cf;
     s+=fl(b.D,0,cfA,b.D)+fl(0,b.D,b.D,cfB)+(b.U?fl(b.L-b.D-b.cf,0,b.cf,b.D)+fl(b.L-b.D,b.D,b.D,b.cf):'');
-    s+=`<text class="t" x="${f(b.D+cfA+6*k)}" y="${f(b.D+cfB+70*k)}" font-size="${f(10*k)}" fill="#C2410C">주황 = 코너 휠라${cfA===cfB?` ${cfA}`:` A ${cfA} · B ${cfB}`} · B장은 벽에서 ${b.D}+${cfB}=${b.D+cfB} 지점부터${gA_.shelfCF?` (뒷선반)`:''}</text>`}
+    s+=`<text class="t" x="${f(b.D+cfA+6*k)}" y="${f(b.D+cfB+70*k)}" font-size="${f(10*k)}" fill="#C2410C">주황 = 코너 휠라${cfA===cfB?` ${cfA}`:` A ${cfA} · B ${cfB}`} · B장은 벽에서 ${b.D}+${cfB}=${b.D+cfB} 지점부터${gA_.shelfCF&&gA_.bg&&gA_.bgUse==='shelf'?` (뒷선반)`:''}</text>`}
   if(j.faces.some(f=>f.key==='I')){const r=pg.rects.find(x=>x.key==='I'),sp=supportById(j.island.support),cab=+j.island.cab||600,sd=+j.island.side||0;if(r){
     s+=`<line class="dash" x1="${f(r.x)}" y1="${f(r.y+cab)}" x2="${f(r.x+r.w)}" y2="${f(r.y+cab)}"/>`;if(sd)s+=`<rect class="dash" x="${f(r.x-sd)}" y="${f(r.y)}" width="${f(r.w+2*sd)}" height="${f(r.h)}"/>`;
     if(sp?.type==='leg'){const n=2+Math.max(0,Math.ceil((r.w+2*sd)/1500)-1);for(let i=0;i<n;i++){const x=r.x-sd+30+(r.w+2*sd-120)*i/(n-1);s+=`<rect x="${f(x)}" y="${f(r.y+r.h-90)}" width="60" height="60" fill="#2F3133"/>`}}

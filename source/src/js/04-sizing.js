@@ -9,7 +9,11 @@ function snapOpts(m,src,w0,relax=0){const unit=!!m.unit&&!!unitById(m.unit),uw=+
   if(m.t==='cook'&&relax<3){const base=Math.max(need,uw||(src?.fix?w0:0)),L=COOK_W.filter(w=>w>=base);return L.length?(uw||src?.fix?[L[0]]:L):[c50(base)]}
   if(uw)return[Math.max(c50(need),r50(uw))];if(src?.fix)return[Math.max(c50(need),r50(w0))];
   const lo=Math.max(150,c50(need)),hi=Math.min(SNAP_MAX,Math.max(RULES.prefW,c50(need))),o=[];for(let w=lo;w<=hi;w+=SNAP)o.push(w);return o}
-function snapRow(ms,srcs,b0,bn,o={}){const n=ms.length;if(!n)return null;const g0=o.grid0??b0,lines=o.lines,near=v=>!lines||lines.some(q=>Math.abs(q-v)<=1),onG=v=>{const r=(((v-g0)%SNAP)+SNAP)%SNAP;return r<.5||SNAP-r<.5};
+/* 같은 입력이면 같은 결과: 계산 결과를 기억해 두었다가 다시 씀 (화면 한 번에 칸 계산이 수십 번 일어남) */
+const SNAP_CACHE=new Map();let snapHits=0,snapMiss=0;
+function snapKey(ms,srcs,b0,bn,o){return JSON.stringify([ms.map(m=>[m.t,Math.round(m.w*10),m.unit||'',(m.apps||[]).map(a=>a.id).join('+'),m.hk||'',m.hcab||'',m.z0,m.z1,m.n,m.flap?1:0,m.filler?1:0,m.hw||'',m.glass?1:0]),srcs.map(q=>[q?.userW||0,q?.fix?1:0,q?.auto?1:0]),Math.round(b0*10),Math.round(bn*10),o.grid0,o.lines,o.cookC,o.pref,o.relax||0,o.extra?1:0,o.edgeL?1:0,o.edgeR?1:0])}
+function snapRow(ms,srcs,b0,bn,o={}){const key=snapKey(ms,srcs,b0,bn,o);if(SNAP_CACHE.has(key)){snapHits++;const r=SNAP_CACHE.get(key);return r&&{...r,ws:[...r.ws]}}snapMiss++;const r=snapRow0(ms,srcs,b0,bn,o);if(SNAP_CACHE.size>4000)SNAP_CACHE.clear();SNAP_CACHE.set(key,r);return r&&{...r,ws:[...r.ws]}}
+function snapRow0(ms,srcs,b0,bn,o={}){const n=ms.length;if(!n)return null;const g0=o.grid0??b0,lines=o.lines,near=v=>!lines||lines.some(q=>Math.abs(q-v)<=1),onG=v=>{const r=(((v-g0)%SNAP)+SNAP)%SNAP;return r<.5||SNAP-r<.5};
   const opt=ms.map((m,i)=>snapOpts(m,srcs[i],m.w,o.relax||0)),door=ms.map(hasDoorM),EX=o.extra?[150,200,250,300,350,400,700,800]:[];let best=null;
   const edgeC=(pos,e,last)=>(!last&&lines&&!near(e)?3:0)+(!last&&!onG(e)?.5:0);
   for(const Lt of SNAP_LT){let dp=new Map([[b0+'|0',{pos:b0,c:o.pref&&o.pref!==Lt?1:0,ws:[],ex:null}]]);
@@ -32,15 +36,16 @@ function snapRow(ms,srcs,b0,bn,o={}){const n=ms.length;if(!n)return null;const g
       if(!best||c<best.c)best={c,ws:st.ws,R:Math.max(0,Math.round(R*10)/10),Lt,relax:o.relax||0,ex:st.ex?.w,exAt:st.ex?.at}})}
   return best}
 const snapEdge=(j,f,sL,sR,lc,rc,ep)=>{const nd=hProj(j)+5;return{edgeL:!lc&&!ep?.L&&sL<nd,edgeR:!rc&&!ep?.R&&sR<nd}};
+const snapMinSum=(ms,srcs)=>ms.reduce((a,m,i)=>a+Math.min(...snapOpts(m,srcs[i],m.w,3)),0);
 const snapAny=(ms,srcs,b0,bn,o={})=>snapRow(ms,srcs,b0,bn,o)||snapRow(ms,srcs,b0,bn,{...o,relax:1})||snapRow(ms,srcs,b0,bn,{...o,relax:2})||snapRow(ms,srcs,b0,bn,{...o,relax:3});
 /* 남는 자리를 작은 장(150~300)으로 채울지, 넣어 둔 작은 장을 뺄지 판단 */
 function snapAuto(ms,srcs,b0,bn,o,sr){const ai=srcs.map((m,k)=>m?.auto?k:-1).filter(k=>k>=0);
   if(ai.length){const k=ai[ai.length-1],s2=snapAny(ms.filter((_,q)=>q!==k),srcs.filter((_,q)=>q!==k),b0,bn,o);if(s2&&s2.c<=sr.c+.3&&s2.R<150)return{dropAuto:true}}
   if(ai.length>=3)return{};const sx=snapRow(ms,srcs,b0,bn,{...o,extra:true})||snapRow(ms,srcs,b0,bn,{...o,extra:true,relax:sr.relax});return sx&&sx.ex&&sx.c<sr.c-1?{wantEx:sx.ex,wantAt:sx.exAt}:{}}
-function snapPost(row,ref,f,o={}){const ms=row.mods,n=ms.length;if(!n||row.over>0||row.segs)return;const src=f.rows[row.rix];if(!src)return;
+function snapPost(row,ref,f,o={}){const ms=row.mods,n=ms.length;if(n&&row.over>0)row.tooMany=true;if(!n||row.over>0||row.segs)return;const src=f.rows[row.rix];if(!src)return;
   for(let k=0;k<n-1;k++)if(Math.abs(ms[k].x+ms[k].w-ms[k+1].x)>1)return;
   const b0=ms[0].x,bn=ms[n-1].x+ms[n-1].w+(row.gap||0),useL=o.align&&ref&&!src.manualW,cook=ref?.mods.find(m=>m.t==='cook');
-  const so={edgeL:o.edgeL,edgeR:o.edgeR,grid0:ref?.mods[0]?.x??b0,lines:useL?rowLines(ref):null,cookC:cook?cook.x+cook.w/2:null,pref:ref?.snapLt},r=snapAny(ms,src.mods,b0,bn,so);if(!r){if(bn-b0<n*150+1)row.tooMany=true;if(!src.noAuto&&bn-b0>n*SNAP_MAX){const sx=snapRow(ms,src.mods,b0,bn,{...so,extra:true})||snapRow(ms,src.mods,b0,bn,{...so,extra:true,relax:2});if(sx?.ex){row.wantEx=sx.ex;row.wantAt=sx.exAt}}return}if(!src.noAuto)Object.assign(row,snapAuto(ms.map(m=>({...m})),src.mods,b0,bn,so,r));
+  const so={edgeL:o.edgeL,edgeR:o.edgeR,grid0:ref?.mods[0]?.x??b0,lines:useL?rowLines(ref):null,cookC:cook?cook.x+cook.w/2:null,pref:ref?.snapLt},r=snapAny(ms,src.mods,b0,bn,so);if(!r){if(bn-b0<snapMinSum(ms,src.mods)-.5)row.tooMany=true;if(!src.noAuto&&bn-b0>n*SNAP_MAX){const sx=snapRow(ms,src.mods,b0,bn,{...so,extra:true})||snapRow(ms,src.mods,b0,bn,{...so,extra:true,relax:2});if(sx?.ex){row.wantEx=sx.ex;row.wantAt=sx.exAt}}return}if(!src.noAuto)Object.assign(row,snapAuto(ms.map(m=>({...m})),src.mods,b0,bn,so,r));
   let px=b0;ms.forEach((m,k)=>{if(Math.abs(m.x-px)>.1||Math.abs(m.w-r.ws[k])>.1)row.alignMoved=true;m.x=px;m.w=r.ws[k];px+=m.w});
   row.fill=(row.fill||[]).filter(q=>!(q.i==='F'&&q.x>=b0-1));row.gap=r.R;if(r.R>0)row.fill.push({t:'filler',x:px,w:r.R,z0:row.z0,z1:row.z1,n:0,r:0,i:'F',filler:true});
   row.snapLt=r.Lt;if(useL){const L=rowLines(ref);row.aligned=ms.slice(0,-1).filter(m=>L.some(q=>Math.abs(q-(m.x+m.w))<=1)).length;row.alignN=n-1}}
@@ -112,28 +117,6 @@ function layout(m){const t=m.t,z0=m.z0,z1=m.z1,h=z1-z0,n=Math.max(0,m.n??TYPES[t
   if(!o.zones)o.zones=TYPES[t]?.door?[{zb:z0,zt:z1,kind:'door'}]:[];
   if(+m.openH>0&&!m.tall&&o.zones.length===1&&o.zones[0].kind==='door'&&h>=400){const oh=clamp(Math.round(+m.openH),150,h-200);if(m.openPos==='T'){const zb=z1-oh;o.zones=[{zb:z0,zt:zb,kind:'door'},{zb,zt:z1,kind:'open'}];o.shelves=[...o.shelves.filter(z=>z<zb-60),zb]}else{const zt=z0+oh;o.zones=[{zb:z0,zt,kind:'open'},{zb:zt,zt:z1,kind:'door'}];o.shelves=[zt,...o.shelves.filter(z=>z>zt+60)]}o.openZ=o.zones.find(z=>z.kind==='open')}
   return o}
-let m3Tab='door';
-const BODY_COL=[['#ECE9E3','화이트'],['#D9D4CB','웜그레이'],['#9C9A96','그레이'],['#C9A77C','오크'],['#2E2F31','블랙']],PL_COL=[['#3d3f42','블랙'],['door','도어색'],['#B9BEC2','스텐'],['#ECE9E3','화이트']];
-function matUI3(){if(isMD(job.cat))return'';const K=job.cat==='kitchen',tabs=[...(K?[['ct','상판']]:[]),['door',K?'하부 도어':'도어'],...(K?[['up','상부 도어'],['tall','키큰장 도어']]:[]),['body','바디'],['handle','손잡이'],...(K?[['pl','걸레받이']]:[])];if(!tabs.some(t=>t[0]===m3Tab))m3Tab='door';
-  const hd=catalog.doors.filter(x=>x.cats.includes(job.cat)),sw=(act,v,col,lab,on,extra='')=>`<button type="button" class="chip" data-act="${act}" data-v="${v}" aria-pressed="${on}" style="display:inline-flex;align-items:center;gap:6px"><span style="display:inline-block;width:22px;height:22px;border-radius:6px;background:${col};border:1px solid #0003"></span>${esc(lab)}${extra}</button>`;let body='';
-  if(m3Tab==='ct')body=catalog.counters.map(c=>sw('m3-ct',c.id,c.color||'#eee',c.name,job.counterId===c.id)).join('');
-  if(m3Tab==='door')body=hd.map(d=>sw('m3-door',d.id,d.color,d.name,job.doorId===d.id)).join('');
-  if(m3Tab==='up')body=sw('m3-dk','',doorById(job.doorId)?.color||'#eee','하부와 같게',!job.doorUpperId,'')+hd.filter(d=>d.kind==='hinged'&&d.id!==job.doorId).map(d=>sw('m3-dk',d.id,d.color,d.name,job.doorUpperId===d.id)).join('');
-  if(m3Tab==='tall'){const td=job.doorTallId?'pick':(job.tallDoor||'lower'),uc=doorById(job.doorUpperId||job.doorId)?.color||'#eee',lc_=doorById(job.doorId)?.color||'#eee';
-    body=sw('m3-td','lower',lc_,'하부 도어와 같게',td==='lower')+sw('m3-td','upper',uc,'상부 도어와 같게',td==='upper')+`<button type="button" class="chip" data-act="m3-td" data-v="split" aria-pressed="${td==='split'}" style="display:inline-flex;align-items:center;gap:6px"><span style="display:inline-grid;width:22px;height:22px;border-radius:6px;overflow:hidden;border:1px solid #0003;grid-template-rows:1fr 1fr"><span style="background:${uc}"></span><span style="background:${lc_}"></span></span>위 상부 · 아래 하부</button>`+hd.filter(d=>d.kind==='hinged').map(d=>sw('m3-dk',d.id,d.color,d.name,job.doorTallId===d.id)).join('')+
-      `<div style="flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px"><span class="hint">문 나눔 선</span><div class="seg">${[['auto','기본'],['upper','상부장 선에 맞춤'],['lower','하부장 선에 맞춤']].map(([v,l])=>`<button type="button" data-act="m3-tl" data-v="${v}" aria-pressed="${(job.tallLine||'auto')===v}">${l}</button>`).join('')}</div></div>`}
-  if(K&&['door','up','tall'].includes(m3Tab))body+=`<div style="flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><span class="hint">한 번에</span><button type="button" class="btn sm" data-act="m3-all" data-v="lower">전부 하부 도어로</button><button type="button" class="btn sm" data-act="m3-all" data-v="upper" ${job.doorUpperId?'':'disabled'}>전부 상부 도어로</button></div>`;
-  if(m3Tab==='body')body=BODY_COL.map(([c,l])=>sw('m3-body',c,c,l,(job.bodyCol||'#ECE9E3')===c)).join('');
-  if(m3Tab==='handle')body=(catalog.handles||[]).map(h=>sw('m3-h',h.id,h.color||'#ddd',h.name,K?job.hs.lower===h.id:job.hs.full===h.id)).join('');
-  if(m3Tab==='pl')body=PL_COL.map(([c,l])=>sw('m3-pl',c,c==='door'?(doorById(job.doorId)?.color||'#eee'):c,l,(job.plCol||'#3d3f42')===c)).join('');
-  return`<div class="panel" style="padding:10px 12px;margin-top:10px;display:grid;gap:8px"><div class="toolbar" style="margin:0;gap:6px;flex-wrap:wrap"><b style="font-size:14px">부위별 자재</b><div class="seg">${tabs.map(([k,l])=>`<button type="button" data-act="m3-tab" data-v="${k}" aria-pressed="${m3Tab===k}">${l}</button>`).join('')}</div></div><div class="chips" style="max-height:170px;overflow:auto">${body||'<span class="hint">등록된 자재가 없습니다 · 제품·단가 관리에서 추가하세요</span>'}</div></div>`}
-function twoToneUI(doors){const d=doorById(job.doorId);if(!d||d.kind!=='hinged'||isMD(job.cat))return'';const hd=doors.filter(x=>x.kind==='hinged'),opt=v=>`<option value="">같게 (${esc(d.name)})</option>`+hd.filter(x=>x.id!==d.id).map(x=>`<option value="${x.id}" ${v===x.id?'selected':''}>${esc(x.name)}</option>`).join('');
-  const K=job.cat==='kitchen',hasUp=job.faces.some(f=>(f.rows||[]).some(r=>r.zone==='upper'||r.zone==='top')),hasTall=job.faces.some((f,fi)=>geom(job,fi).rows.some(r=>(r.corners||[]).some(c=>c.tall)));
-  const n=job.faces.reduce((a,f)=>a+(f.rows||[]).reduce((b,r)=>b+r.mods.filter(m=>m.doorId).length,0),0);
-  return`<div class="field" style="margin-top:12px;padding:10px 12px;border:1px dashed var(--line,#ccc);border-radius:10px"><div class="label" style="margin-bottom:6px">투톤 도어 · 부분만 다른 색</div>
-  ${hasUp?`<label class="toolbar" style="margin:0 0 6px;gap:8px"><span style="min-width:92px">${K?'상부장':'위 칸'} 도어</span><select class="input" data-change="door-up">${opt(job.doorUpperId)}</select></label>`:''}
-  ${hasTall?`<label class="toolbar" style="margin:0 0 6px;gap:8px"><span style="min-width:92px">키큰장 도어</span><select class="input" data-change="door-tall">${opt(job.doorTallId)}</select></label>`:''}
-  <p class="hint" style="margin:4px 0 0">위에서 고른 도어가 <b>기본(하부장)</b>입니다. 장 하나만 바꾸려면 ② 디자인 플랜에서 그 칸을 누르고 ‘이 칸 도어 색상’을 고르세요.${n?` · 지금 따로 지정한 칸 ${n}개 <button type="button" class="btn sm" data-act="door-mod-clear">모두 기본으로</button>`:''}</p></div>`}
 function leafDoor(j,l,def){const base=def||doorById(j.doorId);if(!base||base.kind!=='hinged'||!l)return base;const ok=id=>{const d=id&&doorById(id);return d&&d.kind==='hinged'?d:null};
   if(ok(l.did))return ok(l.did);if(l.tall||l.zone==='tall'){const d=ok(j.doorTallId);if(d)return d;if(j.tallDoor==='upper')return ok(j.doorUpperId)||base;if(j.tallDoor==='split'&&l.zb>=CTH-60)return ok(j.doorUpperId)||base;return base}
   return((l.zone==='upper'||l.zone==='top')?ok(j.doorUpperId):null)||base}
@@ -148,7 +131,7 @@ function leaves(g,door){const gap=3,out=[];if(isMD(g.cat))return out;const none=
     if(m.w>650&&!m.corner){const hw=m.w/2;out.push({x:m.x+gap/2,zb:z.zb+gap/2,w:hw-gap,h:zh-gap,kind:'door',hinge:'L',zone:row.zone});
       out.push({x:m.x+hw+gap/2,zb:z.zb+gap/2,w:hw-gap,h:zh-gap,kind:'door',hinge:'R',zone:row.zone})}
     else out.push({x:m.x+gap/2,zb:z.zb+gap/2,w:m.w-gap,h:zh-gap,kind:'door',hinge:m.corner?(m.side==='L'?'R':'L'):(row.hinge?.[m.i]==='L'||row.hinge?.[m.i]==='R'?row.hinge[m.i]:defH(m)),zone:row.zone,corner:m.corner?m.t:''})});for(let q=st0;q<out.length;q++){out[q].mh=m.handleId||'';out[q].mi=m.i;if(m.t==='hood'&&out[q].kind==='door')out[q].nh=true;if(m.tall)out[q].tall=true;if(m.doorId)out[q].did=m.doorId;if(m.glass&&out[q].kind==='door')out[q].glass=true}})});
-  if(typeof job!=='undefined'&&job?.hs?.chan&&g.cat==='kitchen')out.forEach(l=>{if(l.tall||!['door','drawer','panel'].includes(l.kind))return;if(l.zone==='lower'){l.h-=35;l.chan=true;l.nh=true}else if(l.zone==='upper'){l.zb-=20;l.h+=20;l.nh=true;l.chanU=true}});
+  if((g.jref||(typeof job!=='undefined'?job:{}))?.hs?.chan&&g.cat==='kitchen')out.forEach(l=>{if(l.tall||!['door','drawer','panel'].includes(l.kind))return;if(l.zone==='lower'){l.h-=35;l.chan=true;l.nh=true}else if(l.zone==='upper'){l.zb-=20;l.h+=20;l.nh=true;l.chanU=true}});
   return out}
 const hingesPer=h=>h>1800?4:h>1000?3:2;
 function countDrawers(g){return g.rows.reduce((a,r)=>a+r.mods.reduce((b,m)=>b+layout(m).drawers.length,0),0)}

@@ -61,11 +61,6 @@ function leafCust(P,d,l,j){let s='';const glassy=['glass','satin','fluted'].incl
   return s+handleCust(l,j,d)}
 
 /* ---------- 정면에서 본 방향 (B면 좌우 반전 보정) ---------- */
-const isMir=(j,fi)=>{const f=j.faces[fi];return!!f&&f.key==='B'&&!isMD(j.cat)&&['L','U','Lisland','II'].includes(j.layout)};
-const swLR=v=>v==='L'?'R':v==='R'?'L':v;
-function gview(j=job,fi=j.fi){const g=geom(j,fi);if(!isMir(j,fi))return g;const W=g.Wm,mx=m=>({...m,x:W-m.x-m.w,side:swLR(m.side),spacer:swLR(m.spacer)});
-  const rows=g.rows.map(r=>({...r,corners:(r.corners||[]).map(mx),mods:r.mods.map(m=>({...mx(m),hinge:swLR(m.hinge)})),fill:(r.fill||[]).map(mx),hinge:(r.hinge||[]).map(swLR),clash:(r.clash||[]).map(c=>({...c,x:W-c.x})),offR:r.off||0,off:0}));
-  return{...g,rows,sL:g.sR,sR:g.sL,ep:{L:!!g.ep?.R,R:!!g.ep?.L},mirrored:true,talls:(g.talls||[]).map(t=>({...t,x:W-t.x-t.w})),tx0:g.tw?W-g.tx0-g.tw:0,lidW:0,tbl:g.tbl?{...g.tbl,x0:W-g.tbl.x0-g.tbl.w}:null}}
 function sceneSVG(j,{open=false,caption=true,px=1600,fi=j.fi,bare=false}={}){const g=gview(j,fi),fc_=j.faces[fi]||j.faces[0],d=doorById(j.doorId)||DEFAULT_DOORS[7],P='s'+uid(),W=g.Wm;
   const WH=g.island?1500:g.H,mx=Math.max(320,W*.16),topZ=WH+90,floor=230,cap=caption&&!bare?Math.round((W+g.ext+2*mx)*.13):0,vbX=-mx-g.side,vbW=W+g.ext+g.side+2*mx,vbY=-topZ,vbH=topZ+floor+cap;
   const body=d.kind==='none'?d.color:(j.bodyCol||'#ECE9E3'),bodyP={...d,kind:'hinged'};
