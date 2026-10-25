@@ -54,7 +54,7 @@ function sidePage(j=job,fi=j.fi){const g=geom(j,fi);let s=pageHead(j,`측면도�
   s+=`<line x1="16" y1="694" x2="1384" y2="694" class="fr"/>`;
   const K=g.cat==='kitchen';
   s+=noteBox(36,724,640,'측면 기준',[`좌측: ${END_TXT[endKind(j,g,'L')]} · 우측: ${END_TXT[endKind(j,g,'R')]}`,K?`하부장 몸통 ${g.D-20} + 도어 20 = ${g.D} · 상판 ${g.D+20} (앞 20 돌출)`:`몸통 ${g.Dm-20} + 도어 20 = ${g.Dm}`,K?`걸레받이 ${g.pl} · 앞에서 50 들임 (발 들어가는 자리)`:`걸레받이 ${g.pl||0}`,
-    K&&g.rows.some(r=>r.zone==='upper')?`상부장 몸통 ${UPD()-20} + 도어 20 · 바닥에서 ${g.rows.find(r=>r.zone==='upper').z0}부터`:'',g.fin==='filler'?`상몰딩 ${g.top} · 좌우 휠라 ${g.sL}/${g.sR}`:(g.mold?`상몰딩 ${g.mold} · 장 높이 ${g.Hm} · 몰딩 위 천장까지 ${Math.max(0,g.H-g.Hm-g.mold)}`:`몰딩 없음 · 위 ${g.top} 띄움`),g.ct?.back?`상판 뒷턱 ${g.ct.back}`:'']);
+    K&&g.rows.some(r=>r.zone==='upper')?`상부장 몸통 ${UPD()-20} + 도어 20 · 바닥에서 ${g.rows.find(r=>r.zone==='upper').z0}부터`:'',g.fin==='filler'?`상몰딩 ${g.top} · 좌우 휠라 ${g.sL}/${g.sR}`:(g.mold?`상몰딩 ${g.moldShow}${g.moldShow>g.mold?' (천장까지 막음)':''} · 장 높이 ${g.Hm}${g.H-g.Hm-g.moldShow>0?` · 몰딩 위 천장까지 ${g.H-g.Hm-g.moldShow}`:''}`:`몰딩 없음 · 위 ${g.top} 띄움`),g.ct?.back?`상판 뒷턱 ${g.ct.back}`:'']);
   s+=noteBox(724,724,640,'배면 기준',['뒤에서 본 모습이라 좌우가 반대입니다',`설비 걸림 ${obstacleIssues(j).filter(x=>x.o.face===g.face&&!x.ok).length}곳 · 걸린 곳은 뒷판 타공`,K?'싱크·식세기·세탁기 칸 뒷판에 배관 구멍 Ø80':'',!g.island?'벽 고정 레일 위치 = 장 윗면에서 90 아래':'']);
   return s+'</svg>'}
 function planModDims(j,k){const pg=planGeo(j);let s='';
