@@ -28,6 +28,11 @@ const ACT={
   'te-k':b=>{job.tallEnd={...(job.tallEnd||{}),k:b.dataset.v};render()},'te-face':b=>{job.tallEnd={...(job.tallEnd||{}),face:b.dataset.v};render()},'face-flip':()=>{flipFace(cf());render()},'te-wset':b=>{job.tallEnd={...(job.tallEnd||{}),w:+b.dataset.v};render()},
   'te-side':b=>{const v=b.dataset.v,t={...(job.tallEnd||{}),side:v};if(v==='M'&&!(+t.x>0)){const f=job.faces.find(q=>q.key===(t.face||'A'));t.x=Math.round(((+f?.len||2400)-(+t.w||600))/2/10)*10}job.tallEnd=t;flowFix();render()},
   'end-set':b=>{const f=job.faces.find(x=>x.key===b.dataset.fk);if(!f)return;f.ends={...(f.ends||{}),[b.dataset.sd]:b.dataset.v==='panel'?'panel':'none'};render()},
+  'mold-pick':b=>{const n=moldAskNeed()||{H:+job.dims.H,m:+RULES.moldH};const v=b.dataset.v;let mode_=v;
+    if(v==='raise'){job.cabH=n.H-n.m;delete job.moldFull}else if(v==='full'){delete job.moldFull}else if(v==='gap'){job.moldFull=false}
+    else if(v==='custom'){const c=Math.round(+$('#maCab')?.value||0);if(!(c>=1500&&c<=n.H))return toast('장 높이를 확인하세요');job.cabH=c;mode_=$('#maMode')?.value||'full';if(mode_==='gap')job.moldFull=false;else delete job.moldFull}
+    job.moldPick=v;job.moldPickH=+job.dims.H;job.moldPickW=+job.cabH||+RULES.cabH;$('#layer').innerHTML='';sheetCb=null;render()},
+  'mold-ask':()=>openMoldAsk({H:+job.dims.H,want:+job.cabH||+RULES.cabH,diff:+job.dims.H-(+job.cabH||+RULES.cabH),m:+RULES.moldH}),
   'mold-full':b=>{if(b.dataset.v==='0')job.moldFull=false;else delete job.moldFull;render()},
   'cab-h':b=>{const v=+b.dataset.v;if(v>0){if(v===+RULES.cabH)delete job.cabH;else job.cabH=v}render()},
   'ct-back':b=>{if(b.dataset.v==='none')job.ctBack='none';else{delete job.ctBack;job.ctBackH=+b.dataset.v}render()},'ct-front':b=>{job.ctFront=b.dataset.v;render()},
