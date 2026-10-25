@@ -3,6 +3,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(
 document.addEventListener('input',e=>{const t=e.target;if(t.dataset.bind){job.customer[t.dataset.bind]=t.value;renderSide();persist()}});
 Object.assign(ACT,HACT,BACT);
 document.addEventListener('change',async e=>{const t=e.target,c=t.dataset.change;if(!c)return;if(mode==='house'&&houseChange(c,t))return;if(mode==='bath'&&bathChange(c,t))return;
+  if(c==='cab-h'){const v=Math.round(+t.value||0);if(v>=1500&&v<=3000){if(v===+RULES.cabH)delete job.cabH;else job.cabH=v}render();return}
   if(c==='dim'){const v=Math.round(+t.value);if(v>0){job.dims[t.dataset.k]=v}render()}
   if(c==='face-len'){const v=Math.round(+t.value),fc=job.faces.find(x=>x.key===t.dataset.k);if(v>0&&fc){fc.len=v;job.photos.forEach(p=>p.marks=p.marks.filter(m=>!(m.type==='W'&&(m.face||'A')===fc.key)));if(fc.tp?.w){delete fc.tp.w;if(!fc.tp.h&&!fc.tp.d)delete fc.tp}}render()}
   if(c==='isl'){const v=Math.round(+t.value);if(v>=0&&(v>0||['over','side'].includes(t.dataset.k)))job.island[t.dataset.k]=v;render()}

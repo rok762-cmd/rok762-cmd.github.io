@@ -28,6 +28,7 @@ const ACT={
   'te-k':b=>{job.tallEnd={...(job.tallEnd||{}),k:b.dataset.v};render()},'te-face':b=>{job.tallEnd={...(job.tallEnd||{}),face:b.dataset.v};render()},'face-flip':()=>{flipFace(cf());render()},'te-wset':b=>{job.tallEnd={...(job.tallEnd||{}),w:+b.dataset.v};render()},
   'te-side':b=>{const v=b.dataset.v,t={...(job.tallEnd||{}),side:v};if(v==='M'&&!(+t.x>0)){const f=job.faces.find(q=>q.key===(t.face||'A'));t.x=Math.round(((+f?.len||2400)-(+t.w||600))/2/10)*10}job.tallEnd=t;flowFix();render()},
   'end-set':b=>{const f=job.faces.find(x=>x.key===b.dataset.fk);if(!f)return;f.ends={...(f.ends||{}),[b.dataset.sd]:b.dataset.v==='panel'?'panel':'none'};render()},
+  'cab-h':b=>{const v=+b.dataset.v;if(v>0){if(v===+RULES.cabH)delete job.cabH;else job.cabH=v}render()},
   'ct-back':b=>{if(b.dataset.v==='none')job.ctBack='none';else{delete job.ctBack;job.ctBackH=+b.dataset.v}render()},'ct-front':b=>{job.ctFront=b.dataset.v;render()},
   't2-k':b=>{job.tall2={...(job.tall2||{}),on:true,k:b.dataset.v};render()},'t2-w':b=>{job.tall2={...(job.tall2||{}),on:true,w:+b.dataset.v};render()},
   'te-nudge':b=>{const t=job.tallEnd;if(!t)return;t.x=Math.max(0,(+t.x||0)+ +b.dataset.v);render()},

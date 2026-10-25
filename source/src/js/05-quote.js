@@ -96,7 +96,7 @@ function cutList(j=job){const door=doorById(j.doorId)||{kind:'none',name:'-'},ro
     if(g.pl)add(`${pf}걸레받이`,`${g.Wm} × ${g.pl}`,`PB ${T}T 마감`,g.island?2:1,`높이 조절 ${pa}~${pb}${g.island?' · 앞뒤':''}`);
     if(!g.island&&g.fin==='filler'){fillerZones(g).forEach(([a,b])=>{if(g.sL&&!g.ep?.L)add(`${pf}좌측 휠라`,`${b-a} × ${g.sL}`,'마감재 동일',1,'벽 기울기 맞춰 현장 재단');if(g.sR&&!g.ep?.R)add(`${pf}우측 휠라`,`${b-a} × ${g.sR}`,'마감재 동일',1,'벽 기울기 맞춰 현장 재단')});
       add(`${pf}상몰딩`,`${g.Wm+g.sL+g.sR} × ${g.top}`,'마감재 동일',1,'천장 맞춰 현장 재단')}
-    else if(g.mold)add(`${pf}상몰딩`,`${g.Wm} × ${g.top}`,'마감재 동일',1,'천장 맞춰 현장 재단');
+    else if(g.mold)add(`${pf}상몰딩`,`${g.Wm} × ${Math.min(g.mold,g.top)}`,'마감재 동일',1,'천장 맞춰 현장 재단');
     if(g.island)add('I-뒷면·측면 마감판',`${g.Wm} × ${g.ct0-g.pl}`,door.kind==='none'?'바디 동일':door.name,1,'측면 2장 별도');
     if(g.cat==='kitchen'){const c=g.island?islandCounter(j):counterById(j.counterId);if(!g.island&&g.bg&&g.bgUse==='shelf')add(`${pf}뒷선반`,`${g.Wm+(g.sL||0)+(g.sR||0)} × ${g.bg}`,c?.name||'상판 동일',1,`상판 위 ${j.bgap?.sh??100} · 받침 포함`);add(`${pf}상판`,`${g.Wm+2*g.side} × ${g.island?g.D:g.D+20+(g.bg&&g.bgUse==='deep'?g.bg:0)} × ${g.ct.thick}T`,c?.name||'-',ctPieces(g),`${ctPieces(g)>1?`${ctPieces(g)}장 이음 ${ctPieces(g)-1}곳 · `:''}${g.ct.label} · 타공 ${g.ct.cut}${g.ct.back&&!g.island?` · 뒷턱 ${g.ct.back}`:''} · `+hasType(g,'sink')?'싱크볼 타공':g.island?`뒤 오버행 ${j.island.over}${g.side?` · 좌우 ${g.side}`:''}`:'')}
     if(g.tbl){const t=g.tbl,c=g.island?islandCounter(j):counterById(j.counterId);add(`${pf}식탁 상판`,`${t.len} × ${t.depth}`,c?.name||'-',1,`${t.dir==='perp'?'ㄱ자로 꺾어 연결':'일자로 연장'} · 높이 ${t.top}`);

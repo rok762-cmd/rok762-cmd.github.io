@@ -115,3 +115,8 @@ function cookUI(m,gm){const L=(catalog.apps||[]).filter(a=>a.kind==='cooktop'&&a
   ${cur?`<p class="hint" style="margin:0">${esc(cur.name)} · 외경 ${cur.w}×${cur.d}×${cur.h}${cur.cw?` · 타공 ${cur.cw}×${cur.cd}`:''} · ${won(cur.price)}원<br>필요한 쿡탑장 폭 <b>${need}mm 이상</b> · 지금 ${gm.w}mm ${gm.w<need?'<b class="st-bad">좁음</b>':'<span class="st-ok">OK</span>'}</p>`:''}
   ${cur?.fuel==='gas'?`<p class="hint" style="margin:0">가스 쿡탑 · 가스 배관 ${job.util?.gas==='yes'?'있음 → 연결만':'없음 → 가스공사 필요'} · 후드 필수</p>`:elecCard(nd)}
   <p class="hint" style="margin:0">계약전력·콘센트·전용선 유무는 ① 현장 실측 → 현장 조건에서 고르면 판단이 더 정확해집니다.</p></div>`}
+
+/* 주방 장 높이(몰딩 아래) · 상몰딩은 그 위에 올림 */
+function cabHUI(){if(job.cat!=='kitchen')return'';let g;try{g=geom(job,job.fi)}catch(e){return''}if(g.island)return'';const cur=+job.cabH||0,def=+RULES.cabH||0,mold=+RULES.moldH||0;
+  return`<div class="toolbar" style="margin:6px 0;flex-wrap:wrap;align-items:center"><span class="label" style="margin:0;min-width:84px">장 높이</span><div class="chips">${[2100,2150,2200,2250,2300].map(v=>`<button type="button" class="chip" data-act="cab-h" data-v="${v}" aria-pressed="${(cur||def)===v}">${v}</button>`).join('')}</div><input class="input mono" style="width:84px;min-height:36px;text-align:center" inputmode="numeric" data-change="cab-h" value="${cur||def}" aria-label="장 높이 mm">
+  <span class="hint">${g.mold?`키큰장·상부장 윗선 ${g.Hm} + 상몰딩 ${g.mold}${g.Hm<(cur||def)?` · 천장(${g.H})이 낮아 ${g.Hm}로 맞춤`:` · 몰딩 위 천장까지 ${Math.max(0,g.H-g.Hm-g.mold)}`}`:mold?'':`몰딩 없음 · 천장 ${g.H}에 맞춰 ${g.Hm}`}</span></div>`}
