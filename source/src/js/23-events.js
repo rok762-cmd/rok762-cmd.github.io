@@ -20,7 +20,7 @@ document.addEventListener('change',async e=>{const t=e.target,c=t.dataset.change
   if(c==='cleg'){const v=Math.round(+t.value);if(v>=400&&v<=1500)job.corner[t.dataset.k]=v;render()}
   if(c==='obs-in'){const o=(job.obstacles||[]).find(x=>x.id===t.dataset.id);if(!o)return;const v=Math.round(+t.value),k=t.dataset.k,L=+job.faces.find(f=>f.key===o.face)?.len||3000;if(!(v>=0)){render();return}
     if(k==='cx')o.x=clamp(v-Math.round(o.w/2),0,Math.max(0,L-o.w));else if(k==='z')o.z=clamp(v,0,3000);else if(k==='w'&&v>=20){const c0=o.x+o.w/2;o.w=v;o.x=clamp(Math.round(c0-v/2),0,Math.max(0,L-v))}else if(k==='h'&&v>=20)o.h=v;
-    if(['dist','water','gas','duct'].includes(o.type)){const p=fitPlan(job,o);if(p&&!p.ok)toast(applyFit(job,o))}render();return}
+    {const m_=autoPlace(job,o);if(m_)toast(m_)}render();return}
   if(c==='obs-quick'||c==='obs-quick-w'){const face=cf().key,tt=t.dataset.t,ex=job.obstacles.find(x=>x.face===face&&x.type===tt);let o;
     if(c==='obs-quick')o=quickObs(tt,face,+t.value,ex?.w);else{if(!ex){render();return}o=quickObs(tt,face,ex.x+ex.w/2,+t.value)}
     if(o){const p=fitPlan(job,o);toast(p&&!p.ok?applyFit(job,o):p?.ok?(tt==='water'?'배관이 이미 싱크장 안에 있습니다':'분배기가 이미 한 칸 안에 있습니다'):'위치를 저장했습니다')}render();return}

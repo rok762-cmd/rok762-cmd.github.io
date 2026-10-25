@@ -71,7 +71,7 @@ function build3D(j,open,o3={}){let EPS_=null;const T3=THREE,grp=new T3.Group(),d
     else if(isMD(g.cat)){const fr=door.color||'#2a2b2c',gc=door.glass||'#cfdde0';midPanels(g).forEach(pn=>{const v0=cab/2-25,v1=cab/2+25;box(P,pn.x,pn.x+pn.w,v0,v1,0,pn.h,gc,{transparent:true,opacity:.35});box(P,pn.x,pn.x+40,v0-5,v1+5,0,pn.h,fr);box(P,pn.x+pn.w-40,pn.x+pn.w,v0-5,v1+5,0,pn.h,fr);box(P,pn.x,pn.x+pn.w,v0-5,v1+5,pn.h-40,pn.h,fr);box(P,pn.x,pn.x+pn.w,v0-5,v1+5,0,40,fr)});box(P,-(g.sL||0),g.Wm+(g.sR||0),v0_mf(cab),v1_mf(cab),g.Hm,g.Hm+60,fr)}
     if(!isl&&g.cat!=='kitchen'&&!isMD(g.cat)&&g.fin==='filler'){const fc=none?body:dCol,dep=cab;if(g.sL)box(P,-g.sL,0,dep-DOOR_T,dep,0,g.Hm,fc);if(g.sR)box(P,g.Wm,g.Wm+g.sR,dep-DOOR_T,dep,0,g.Hm,fc);if(g.H>g.Hm)box(P,-g.sL,g.Wm+g.sR,dep-DOOR_T,dep,g.Hm,g.H,fc)}
     if(door.kind==='sliding'){const lv=leaves(g,door);lv.forEach(l=>box(P,l.x,l.x+l.w,cab+(l.layer?0:25),cab+(l.layer?20:45),l.zb,l.zb+l.h,dCol))}
-    if(g.cat==='kitchen'){const c=(isl?islandCounter(j):counterById(j.counterId))||DEFAULT_COUNTERS[0],ct=c.color||'#eee';let u0=isl?-g.side:-(g.sL||0),u1=g.Wm+(isl?g.side:(g.sR||0));const vd=isl?g.D:g.D+20+(g.bg||0);
+    if(g.cat==='kitchen'&&(isl||g.rows.some(r=>r.zone==='lower'))){const c=(isl?islandCounter(j):counterById(j.counterId))||DEFAULT_COUNTERS[0],ct=c.color||'#eee';let u0=isl?-g.side:-(g.sL||0),u1=g.Wm+(isl?g.side:(g.sR||0));const vd=isl?g.D:g.D+20+(g.bg||0);
       if(!isl&&g.cut>0&&A){const clip=Math.max(0,A.D+20-g.cut);u0=Math.max(u0,clip-(g.sL||0))}
       const pv0=g.pen!=null?-g.pen:(g.bg&&g.bgUse==='shelf'?g.bg:0);
       const sinkGeo=m=>{const sa=modApps(m).find(q=>q.a.kind==='sink'&&q.a.w)?.a,cx=m.x+m.w/2,hw=sa?Math.min((+sa.cw||sa.w-40)/2,m.w/2-T-5):Math.min(330,m.w/2-50),dd=Math.min(+sa?.cd||(sa?.d||420)-40,520),sv=isl&&!room?[vd-470,vd-470+dd]:isl?[g.D-470,g.D-470+dd]:[Math.max(30,470-dd)+(g.bg||0),470+(g.bg||0)];return{sa,cx,hw,dd,sv,bd:Math.min(260,Math.max(160,+sa?.h||220))}};
@@ -151,8 +151,8 @@ function calibGuide(){const has=job.photos.some(p=>p.src!=='sample');return`<div
   <svg viewBox="0 0 200 120" width="200" height="120" aria-hidden="true"><rect x="1" y="1" width="198" height="118" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M40 100 L160 100 L160 22 L40 22 Z" fill="none" stroke="#E0A400" stroke-width="2" stroke-dasharray="5 4"/>${[[40,100,1],[160,100,2],[160,22,3],[40,22,4]].map(([x,y,n])=>`<circle cx="${x}" cy="${y}" r="10" fill="#FFC53D" stroke="#000" stroke-width="1.5"/><text x="${x}" y="${y+4}" font-size="12" font-weight="700" text-anchor="middle">${n}</text>`).join('')}</svg>
   <button type="button" class="btn primary" data-act="go-calib">${has?'벽 맞추기 하러 가기':'사진 찍으러 가기'}</button></div>`}
 function openObsSheet(o){const lay=$('#layer'),isNew=!o.id;
-  lay.innerHTML=`<div class="overlay" data-act="sheet-back"><form class="sheet" id="sheetForm" style="width:min(560px,100%)"><h3>${isNew?'설비·장애물 표시':'설비·장애물 수정'}</h3>
-    <div class="chips" role="radiogroup" aria-label="종류">${Object.entries(OBS).map(([k,v])=>`<label class="chip"><input type="radio" name="obs-type" value="${k}" ${o.type===k?'checked':''}><span class="dot" style="background:${v.color}"></span>${v.label}</label>`).join('')}</div>
+  lay.innerHTML=`<div class="overlay" data-act="sheet-back"><form class="sheet" id="sheetForm" style="width:min(560px,100%)"><h3>${isSpot(o)?(isNew?'위치 표시 · 여기에 무엇이 오나요?':'위치 표시 수정'):(isNew?'설비·장애물 표시':'설비·장애물 수정')}</h3>
+    ${isSpot(o)?'<p class="hint">고르면 그 자리에 맞춰 장이 배치됩니다.</p>':''}<div class="chips" role="radiogroup" aria-label="종류">${Object.entries(OBS).filter(([k])=>isSpot({type:k})===isSpot(o)).map(([k,v])=>`<label class="chip"><input type="radio" name="obs-type" value="${k}" ${o.type===k?'checked':''}><span class="dot" style="background:${v.color}"></span>${v.label}</label>`).join('')}</div>
     ${job.faces.length>1?`<div class="field"><label for="obs-face">위치한 면</label><select class="input" id="obs-face">${job.faces.filter(f=>f.key!=='I').map(f=>`<option value="${f.key}" ${o.face===f.key?'selected':''}>${FACE_NAME(f.key)}</option>`).join('')}</select></div>`:''}
     <div class="dims">${[['x','왼쪽 모서리에서'],['z','바닥에서'],['w','가로 크기'],['h','세로 크기']].map(([k,l])=>`<div class="dim-box"><span class="k">${l}</span><input id="obs-${k}" inputmode="numeric" value="${o[k]??''}" aria-label="${l} mm"><span class="src">mm</span></div>`).join('')}</div>
     ${o.auto?'<p class="hint">벽 맞추기 기준으로 자동 계산한 값입니다. 줄자로 확인해 고치세요.</p>':''}
@@ -161,8 +161,8 @@ function openObsSheet(o){const lay=$('#layer'),isNew=!o.id;
     <div class="sheet-actions"><button type="button" class="btn" data-act="sheet-cancel">취소</button><button type="submit" class="btn primary">${isNew?'표시':'저장'}</button></div></form></div>`;
   sheetCb={ok:()=>{},cancel:()=>{lay.innerHTML='';drawOverlay()}};
   $('#sheetForm').addEventListener('submit',e=>{e.preventDefault();const v=k=>Math.round(+$('#obs-'+k).value);const type=document.querySelector('input[name="obs-type"]:checked')?.value;
-    const n={x:v('x'),z:v('z'),w:v('w'),h:v('h')};if(!type){$('#obs-err').textContent='종류를 고르세요.';return}
+    const n={x:v('x'),z:v('z'),w:v('w'),h:v('h')};if(isSpot({type})){const d_=SPOT_DEF[type];if(!(n.w>0))n.w=d_.w;if(!(n.h>0))n.h=d_.h;if(!(n.z>=0))n.z=d_.z}if(!type){$('#obs-err').textContent='종류를 고르세요.';return}
     if(![n.x,n.z].every(x=>x>=0)||!(n.w>0&&n.h>0)){$('#obs-err').textContent='위치와 크기를 mm로 입력하세요. 크기는 0보다 커야 합니다.';return}
-    const face=$('#obs-face')?.value||o.face||'A',rec={...o,...n,type,face,note:$('#obs-note').value.trim()};delete rec.auto;
-    if(isNew){rec.id=uid();job.obstacles.push(rec)}else job.obstacles=job.obstacles.map(x=>x.id===o.id?rec:x);lay.innerHTML='';sheetCb=null;if(job.cat==='kitchen'&&['water','gas'].includes(type)){try{const r_=applyFit(job,rec);if(r_)toast(r_)}catch(e){}}render()})}
+    const face=$('#obs-face')?.value||o.face||'A',rec={...o,...n,type,face,note:$('#obs-note').value.trim()};delete rec.auto;delete rec.spotMode;
+    if(isNew){rec.id=uid();job.obstacles.push(rec)}else job.obstacles=job.obstacles.map(x=>x.id===o.id?rec:x);lay.innerHTML='';sheetCb=null;try{const r_=autoPlace(job,rec);if(r_)toast(r_)}catch(e){}render()})}
 

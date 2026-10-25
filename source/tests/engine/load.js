@@ -14,7 +14,7 @@ function load(files){
   const all=fs.readdirSync(SRC).filter(f=>f.endsWith('.js')).sort();
   const pick=files?all.filter(f=>files.some(p=>f.startsWith(p))):all;
   const code=pick.map(f=>fs.readFileSync(path.join(SRC,f),'utf8')).join('');
-  vm.runInContext(code+'\n;globalThis.__E={get job(){return job},set job(v){job=v},get catalog(){return catalog},set catalog(v){catalog=v},get RULES(){return RULES},get RULES_DEF(){return RULES_DEF},get TYPES(){return TYPES}};',ctx,{filename:'engine.js'});
+  vm.runInContext(code+'\n;globalThis.__E={get job(){return job},set job(v){job=v},get catalog(){return catalog},set catalog(v){catalog=v},get RULES(){return RULES},get RULES_DEF(){return RULES_DEF},get TYPES(){return TYPES},get SPOT_DEF(){return SPOT_DEF}};',ctx,{filename:'engine.js'});
   return ctx;
 }
 module.exports={load};

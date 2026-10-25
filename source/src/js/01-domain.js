@@ -1,14 +1,14 @@
 /* ---------- domain ---------- */
 let T=20; const MFRAME=40; let CTH=850;
-const PL_RANGE={closet:[50,120],shoe:[50,120],dress:[50,120],kitchen:[120,150],middoor:[0,0],storage:[0,0],laundry:[50,120],single:[0,120]};
-const LAYOUTS={I:'일자형',L:'ㄱ자형',U:'ㄷ자형',island:'아일랜드형',Lisland:'ㄱ자+아일랜드',II:'11자형',niche:'매립형'};
-const OBS={dist:{label:'보일러 분배기',color:'#E5484D',tip:'바닥판·걸레받이 따내기, 해당 칸에 점검문 필요'},water:{label:'수도 (급·배수)',color:'#2F6BFF',tip:'뒷판·바닥판 타공 필요'},
+const PL_RANGE={closet:[50,120,'gap'],shoe:[50,120,'gap'],dress:[50,120,'gap'],kitchen:[120,150],middoor:[0,0],storage:[0,0],laundry:[50,120,'gap'],single:[0,120]};
+const LAYOUTS={I:'일자형',L:'ㄱ자형',L1:'ㄱ자 + 옆벽 키큰장',U:'ㄷ자형',island:'아일랜드형',Lisland:'ㄱ자+아일랜드',II:'11자형',niche:'매립형'};
+const OBS={sp_fridge:{label:'냉장고 자리',color:'#0E7490',tip:'냉장고장이 이 위치로 옵니다',spot:1},sp_cook:{label:'쿡탑 자리',color:'#C2410C',tip:'쿡탑장이 이 위치로 옵니다',spot:1},sp_sink:{label:'싱크 자리',color:'#1D4ED8',tip:'싱크장이 이 위치로 옵니다',spot:1},sp_door:{label:'출입문',color:'#475569',tip:'이 자리는 장 없이 비웁니다',spot:1},sp_tall:{label:'키큰장 자리',color:'#7C3AED',tip:'키큰장이 이 위치로 옵니다',spot:1},dist:{label:'보일러 분배기',color:'#E5484D',tip:'바닥판·걸레받이 따내기, 해당 칸에 점검문 필요'},water:{label:'수도 (급·배수)',color:'#2F6BFF',tip:'뒷판·바닥판 타공 필요'},
   boiler:{label:'보일러',color:'#B4520F',tip:'장으로 덮지 말고 보일러 가림장(통풍 루버)이나 비움 검토'},access:{label:'점검구',color:'#8E4EC6',tip:'해당 칸 뒷판에 점검문 가공 필요'},
   gas:{label:'가스 배관·계량기',color:'#D6409F',tip:'가스 배관 이격 확인, 뒷판 따내기 필요'},duct:{label:'후드 배관 구멍 (덕트)',color:'#8A5A00',tip:'쿡탑·후드를 이 구멍 아래로 맞춥니다'},elec:{label:'콘센트·스위치',color:'#12A594',tip:'뒷판 타공 또는 전기 위치 이동'},
   supply:{label:'급수 밸브',color:'#3E63DD',tip:'뒷판 타공 · 식세기·정수기 분기 가능'},drain:{label:'배수구',color:'#0D74CE',tip:'바닥판·뒷판 타공 · 식세기·음식물처리기 배수 연결'},
   window:{label:'창문',color:'#0090FF',tip:'상부장·키큰장 설치 불가 구간, 높이 조정 필요'},etc:{label:'기타',color:'#6F6E77',tip:'현장 확인 필요'}};
-const CAT_LAYOUTS={kitchen:['I','L','U','island','Lisland'],shoe:['I','II','L','U','niche'],closet:['I','L','niche'],dress:['I','L','U','II'],middoor:['I'],storage:['I'],storage:['I'],laundry:['I','niche','L'],single:['I']};
-const LAYOUT_FACES={I:['A'],L:['A','B'],U:['A','B','C'],island:['A','I'],Lisland:['A','B','I'],II:['A','B'],niche:['A']};
+const CAT_LAYOUTS={kitchen:['I','L','L1','U','island','Lisland'],shoe:['I','II','L','U','niche'],closet:['I','L','niche'],dress:['I','L','U','II'],middoor:['I'],storage:['I'],storage:['I'],laundry:['I','niche','L'],single:['I']};
+const LAYOUT_FACES={I:['A'],L:['A','B'],L1:['A','B','C'],U:['A','B','C'],island:['A','I'],Lisland:['A','B','I'],II:['A','B'],niche:['A']};
 const CORNER_T={blind:'일자장 붙임 (데드코너)',magic:'일자장 + 매직코너',pullout:'일자장 + 코너 풀아웃',diag:'오각 코너장',lshape:'ㄱ자(직각) 코너장',cdrawer:'코너 서랍 (V자)',tall:'키큰장 코너'};
 const HWS={tandem:{l:'텐덤 서랍 (소프트)',p:'hwTandem'},cutlery:{l:'커트러리 트레이',p:'hwCutlery'},basket:{l:'그릇 바스켓',p:'hwBasket'},pullout:{l:'양념 풀아웃',p:'hwPullout'},trash:{l:'분리수거함',p:'hwTrash'},pants:{l:'바지걸이',p:'hwPants'},tray:{l:'액세서리 트레이',p:'hwTray'}};
 const HW_FOR={baseDrawer:['tandem','cutlery'],base:['basket','pullout','trash'],sink:['trash','basket'],cook:['pullout','basket'],oven:['tandem'],drawerOnly:['tandem','tray','cutlery'],drawer:['tray','pants'],hang:['pants'],hang2:['pants'],shelf:['tray','basket'],shoe:['pullout'],washpair:['basket'],washone:['basket','pullout'],washstack:['basket']};
@@ -16,15 +16,16 @@ const GLASS_OK=t=>['upper','shelf','base','drawerOnly','hang','hang2','shoe','dr
 const TALL_K={fspace:'냉장고 자리 (빈 공간+위 수납)',combo:'기기장 (전자레인지+오븐 빌트인)',oven:'오븐장',appl:'가전수납장 (밥솥·전자레인지 오픈 칸)',fridge:'냉장고장',pantry:'일반 키큰장 (수납)',oven2:'오븐 2대장 (오븐+콤팩트)',larder:'키큰 빼기장 (식품)',broom:'청소기장'};
 const frOf=j=>{const r=j.fridge;if(!r?.id)return null;if(r.id==='custom'){const c=r.custom||{},free=c.type!=='built';return{...r,a:{id:'custom',kind:'fridge',type:free?'free':'built',name:`직접 입력 냉장고 (${free?'일반':'빌트인'})`,tag:'직접 입력',w:+c.w||912,h:+c.h||1850,d:+c.d||(free?920:700),gs:free?50:4,gt:free?20:15,gr:free?50:0,nd:700,price:+c.price||0}}}const a=appById(r.id);return a?{...r,a}:null};
 function frNiche(j){const r=frOf(j);if(!r)return null;const a=r.a,c5=v=>Math.ceil(v/5)*5,free=a.type==='free',iw=c5(a.w+2*(+a.gs||4)),ih=c5(a.h+(+a.gt||15)),id=free?c5(a.d+(+a.gr||50)):Math.max(+a.nd||700,a.d);return{a,free,iw,ih,id,ow:iw+(r.housing!==false?2*T:0),housing:r.housing!==false,inRun:r.inRun!==false,stick:Math.max(0,id-kD(j))}}
-const tallEndOf=(j,f)=>{const t=j.tallEnd;if(!t?.on||j.cat!=='kitchen'||!f||f.key==='I'||t.face!==f.key)return null;const corner=isCornerLay(j);if(corner&&j.layout==='U'&&f.key==='A')return null;const side=t.side==='M'?'M':corner?'R':(t.side==='L'?'L':'R');const nn=(t.k==='fspace')?frNiche(j):null;if(nn&&!nn.inRun)return null;return{w:nn?nn.ow:Math.max(300,Math.min(TALL_MAX,Math.round((+t.w||600)/50)*50)),k:t.k||'combo',side,x:+t.x||0,fh:nn?nn.ih:(+t.fh||0)}};
+const tallEndOf=(j,f)=>{const t=j.tallEnd;if(!t?.on||j.cat!=='kitchen'||!f||f.key==='I'||t.face!==f.key||isTallWall(j,f))return null;const corner=isCornerLay(j);if(corner&&j.layout==='U'&&f.key==='A')return null;const side=t.side==='M'?'M':corner?'R':(t.side==='L'?'L':'R');const nn=(t.k==='fspace')?frNiche(j):null;if(nn&&!nn.inRun)return null;return{w:nn?nn.ow:Math.max(300,Math.min(TALL_MAX,Math.round((+t.w||600)/50)*50)),k:t.k||'combo',side,x:+t.x||0,fh:nn?nn.ih:(+t.fh||0)}};
 let TALL_MAX=Math.max(...RULES_DEF.tallWs),TALL_WS=RULES_DEF.tallWs;
 const tall2Of=(j,f)=>{const t=j.tall2,te=tallEndOf(j,f);if(!t?.on||!te||te.side==='M')return null;return{w:Math.max(300,Math.min(TALL_MAX,Math.round((+t.w||600)/50)*50)),k:t.k&&t.k!=='fspace'?t.k:'pantry',side:te.side,fh:+t.fh||0}};
-const isCornerLay=j=>['L','U','Lisland'].includes(j.layout);
+const isCornerLay=j=>['L','L1','U','Lisland'].includes(j.layout);
+const isTallWall=(j,f)=>j.layout==='L1'&&f?.key==='C';
 const cKind=(j,z)=>{const c=j.corner||{},k=j.cat==='kitchen';let lo=c.lower||'blind';if(!k&&['pullout','cdrawer','tall'].includes(lo))lo='blind';if(lo==='tall'&&j.layout==='U')lo='blind';
   if(z==='upper'){const t=c.upper||'blind';return lo==='tall'||['magic','pullout','cdrawer','tall'].includes(t)?'blind':t}return lo};
 const cType=(j,z)=>{const t=cKind(j,z);return t==='pullout'?'magic':t==='cdrawer'?'lshape':t==='tall'?'blind':t};
 const penOn=j=>j.cat==='kitchen'&&(j.layout==='L'||j.layout==='Lisland')&&!!j.pen?.on;
-const ctSegs=(g,a,b)=>{let segs=[[a,b]];(g.talls||[]).forEach(t=>{segs=segs.flatMap(([s,e])=>t.x>=e||t.x+t.w<=s?[[s,e]]:[[s,t.x],[t.x+t.w,e]])});return segs.filter(([s,e])=>e-s>30&&Math.min(e,g.Wm)-Math.max(s,0)>30)};
+const ctSegs=(g,a,b)=>{if(!g.island&&g.cat==='kitchen'&&g.rows&&!g.rows.some(r=>r.zone==='lower'))return[];let segs=[[a,b]];[...(g.talls||[]),...(g.gaps||[])].forEach(t=>{segs=segs.flatMap(([s,e])=>t.x>=e||t.x+t.w<=s?[[s,e]]:[[s,t.x],[t.x+t.w,e]])});return segs.filter(([s,e])=>e-s>30&&Math.min(e,g.Wm)-Math.max(s,0)>30)};
 const tallOn=j=>j.cat==='kitchen'&&cKind(j,'lower')==='tall';
 const lidOn=j=>j.cat==='kitchen'&&isCornerLay(j)&&cType(j,'lower')==='blind'&&!!(j.corner?.lid??tallOn(j));
 const cLeg=(j,z)=>{const c=j.corner||{};return z==='upper'?(+c.legU||600):(+c.legL||900)};
@@ -50,14 +51,18 @@ const TYPES={
   base:{label:'하부장',door:1,n:1,nl:'선반'}, baseDrawer:{label:'하부 서랍',door:1,n:3,nl:'서랍'},drawer2p:{label:'서랍 1+2 (얕은1·깊은2)',door:1},drawerDoor:{label:'서랍 1 + 문',door:1,n:1,nl:'선반'},innerDr:{label:'문 안 내부서랍',door:1,n:3,nl:'서랍'},spice:{label:'양념 빼기장 (150~300)',door:1},waste:{label:'분리수거장',door:1},
   sink:{label:'개수대',door:1}, cook:{label:'쿡탑 하부',door:1},
   upper:{label:'상부장',door:1,n:1,nl:'선반'},fridgeTop:{label:'냉장고 위 벽장 (플랩)',door:1,n:0,nl:'선반'},bigFlap:{label:'대형 플랩벽장',door:1,n:1,nl:'선반'}, upperOpen:{label:'상부 오픈',door:0,n:1,nl:'선반'}, hood:{label:'후드장',door:1}, topbox:{label:'위 칸 (깊은 장)',door:1,n:0,nl:'선반'},
-  corner_diag:{label:'오각 코너장',door:1,n:1,nl:'선반'},corner_l:{label:'ㄱ자 코너장',door:1,n:1,nl:'선반'},corner_dr:{label:'코너 서랍 (V자)',door:1,n:3,nl:'서랍'},tallc:{label:'코너 키큰장',door:1,n:4,nl:'선반'},
+  corner_diag:{label:'오각 코너장',door:1,n:1,nl:'선반'},corner_l:{label:'ㄱ자 코너장',door:1,n:1,nl:'선반'},corner_dr:{label:'코너 서랍 (V자)',door:1,n:3,nl:'서랍'},tallc:{label:'키큰장',door:1,n:4,nl:'선반'},
   dw:{label:'식기세척기 칸',door:1},wash:{label:'빌트인 세탁기 칸',door:0},oven:{label:'빌트인 오븐장',door:1},dryer:{label:'식기건조대장',door:1},
-  washpair:{label:'세탁기+건조기 (나란히)',door:1},washstack:{label:'세탁기 위 건조기 (직렬)',door:1},washone:{label:'세탁기 1대 칸',door:1},filler:{label:'휠라(마감)',door:0},blindc:{label:'데드코너',door:0},mslide:{label:'슬라이딩 문짝',door:1}, mlouver:{label:'루버 문짝 (통풍)',door:1}, mcab:{label:'장문 (붙박이장식)',door:1}, mfixed:{label:'고정창',door:1}, mswing:{label:'여닫이 문짝',door:1}
+  washpair:{label:'세탁기+건조기 (나란히)',door:1},washstack:{label:'세탁기 위 건조기 (직렬)',door:1},washone:{label:'세탁기 1대 칸',door:1},filler:{label:'휠라(마감)',door:0},gap:{label:'빈 칸 (문·통로·창)',door:0,n:0},blindc:{label:'데드코너',door:0},mslide:{label:'슬라이딩 문짝',door:1}, mlouver:{label:'루버 문짝 (통풍)',door:1}, mcab:{label:'장문 (붙박이장식)',door:1}, mfixed:{label:'고정창',door:1}, mswing:{label:'여닫이 문짝',door:1}
 };
 const CAT_TYPES={closet:['hang','hang2','shelf','drawer','drawerOnly','basket','pants','acc','quilt','open'],shoe:['shoe','bench','shelf','open'],
-  dress:['hang','hang2','shelf','drawer','drawerOnly','basket','pants','acc','quilt','vanity','open'],kitchen_lower:['base','baseDrawer','drawer2p','drawerDoor','innerDr','spice','waste','sink','cook','dw','wash','oven','open'],
-  kitchen_upper:['upper','upperOpen','bigFlap','fridgeTop','hood','dryer'],top:['topbox','upperOpen'],kitchen_top:['topbox','upperOpen'],middoor:['mslide','mfixed','mswing'],storage:['mswing','mlouver','mcab','mslide'],laundry:['washpair','washstack','washone','shelf','open','drawerOnly','hang'],single:['drawerOnly','shelf','open','hang','hang2','shoe','drawer']};
+  dress:['hang','hang2','shelf','drawer','drawerOnly','basket','pants','acc','quilt','vanity','open'],kitchen_lower:['gap','base','baseDrawer','drawer2p','drawerDoor','innerDr','spice','waste','sink','cook','dw','wash','oven','open'],
+  kitchen_full:['tallc','gap'],kitchen_upper:['gap','upper','upperOpen','bigFlap','fridgeTop','hood','dryer'],top:['topbox','upperOpen'],kitchen_top:['topbox','upperOpen'],middoor:['mslide','mfixed','mswing'],storage:['mswing','mlouver','mcab','mslide'],laundry:['washpair','washstack','washone','shelf','open','drawerOnly','hang'],single:['drawerOnly','shelf','open','hang','hang2','shoe','drawer']};
 const md=(t,r,n)=>({t,r,n:n??TYPES[t].n});
+const GAP_K={door:'문',pass:'통로',window:'창',pillar:'기둥·벽',free:'빈 벽'};
+const isGap=m=>m?.t==='gap';
+const isSpot=o=>!!OBS[o?.type]?.spot;
+const SPOT_DEF={sp_fridge:{w:920,h:1850,z:0},sp_cook:{w:600,h:80,z:860},sp_sink:{w:800,h:80,z:860},sp_door:{w:900,h:2100,z:0},sp_tall:{w:600,h:2100,z:0}};
 const F=mods=>[{zone:'full',mods}];
 const BUILTIN_PLANS=[
   {id:'cl-3',cat:'closet',name:'기본 3칸',rows:F([md('hang',900),md('drawer',900),md('hang2',900)])},
@@ -184,7 +189,7 @@ const MOD_APPS={sink:['sink','faucet','purifier','disposer','etc'],cook:['cookto
 const MOD_DEFAULT_APPS={sink:['b11','a3'],cook:['a5'],hood:['a7'],dw:['a9'],wash:['a11'],oven:['a12'],dryer:['a13']};
 const SUP_TYPE={leg:'다리',panel:'측판',bracket:'숨은 브라켓',cabinet:'장 (수납장)'},SUP_UNIT={leg:'개',panel:'장',bracket:'개',cabinet:'m'};
 const DEFAULT_COMPANY={name:'○○ 인테리어',tel:'010-0000-0000',origin:'경기 파주시'};
-const MC={ref:'#00A2C7',W:'#2F6BFF',H:'#FF7A1A',D:'#14B88E',note:'#C04CF0',obs:'#E5484D',calib:'#FFC53D'};
-const ML={ref:'기준물',W:'가로',H:'높이',D:'깊이',note:'메모',obs:'설비 표시',calib:'벽 맞추기'};
+const MC={spot:'#E8590C',ref:'#00A2C7',W:'#2F6BFF',H:'#FF7A1A',D:'#14B88E',note:'#C04CF0',obs:'#E5484D',calib:'#FFC53D'};
+const ML={spot:'위치 표시',ref:'기준물',W:'가로',H:'높이',D:'깊이',note:'메모',obs:'설비 표시',calib:'벽 맞추기'};
 const HANDLES={push:'푸시 (손잡이 없음)',bar:'일자 손잡이',groove:'J홈'};
 

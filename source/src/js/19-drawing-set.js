@@ -7,7 +7,7 @@ function noteBox(x,y,w,title,lines){let s=`<text x="${x}" y="${y}" font-size="15
 function endKind(j,g,side){if(g.island||g.ep?.[side])return'open';if(isMD(g.cat))return'wall';const c=isCornerLay(j);if(c&&side==='L')return'corner';if(c&&side==='R'&&g.face==='A'&&j.layout==='U')return'corner';return'wall'}
 const END_TXT={wall:'벽 붙음',corner:'코너 (옆 면 장과 맞닿음)',open:'노출 측판 (마감재)'};
 function sideExt(g){const K=g.cat==='kitchen';return{w:(g.island?(+job.island.over||0)+g.Dm+40:(K?g.D+20:g.Dm))+160,h:g.H}}
-function sideView(j,g,side,k){const dir=side==='L'?1:-1,X=x=>x*dir,K=g.cat==='kitchen',DT=20,pl=g.pl||0,ek=endKind(j,g,side);
+function sideView(j,g,side,k){const dir=side==='L'?1:-1,X=x=>x*dir,K=g.cat==='kitchen'&&g.rows.some(r=>r.zone==='lower'),DT=20,pl=g.pl||0,ek=endKind(j,g,side);
   const box=(x0,x1,z0,z1,c)=>Rc(Math.min(X(x0),X(x1)),z0,Math.abs(x1-x0),z1-z0,c);let s='';
   const lo=g.rows.find(r=>r.zone!=='upper'),up=g.rows.find(r=>r.zone==='upper');
   if(g.island){const cab=g.Dm,ov=+j.island.over||0;s+=Lc(X(-ov-80),0,X(cab+120),0,'gnd');
@@ -77,7 +77,7 @@ function counterSVG(j=job){let s=pageHead(j,`상판 도면 · ${LAYOUTS[j.layout
   if(j.cat!=='kitchen')return s+'<text x="36" y="120" font-size="15" class="lb">상판 도면은 주방 싱크대에서만 나옵니다.</text></svg>';
   const pg=planGeo(j),gs=j.faces.map((fc,i)=>geom(j,i)),pieces=[],cuts=[],seams=[],dims=[];
   const A=gs.find(g=>g.face==='A'),cdA=A?A.D+20:0;
-  gs.forEach(g=>{const r=pg.rects.find(x=>x.key===g.face);if(!r)return;const P=ctFaceMap(j,g,r),c=g.island?islandCounter(j):counterById(j.counterId),cs=ctSpec(c);
+  gs.forEach(g=>{const r=pg.rects.find(x=>x.key===g.face);if(!r||(!g.island&&!g.rows.some(q=>q.zone==='lower')))return;const P=ctFaceMap(j,g,r),c=g.island?islandCounter(j):counterById(j.counterId),cs=ctSpec(c);
     let u0=g.island?-g.side:-(g.sL||0),u1=g.Wm+(g.island?g.side:(g.sR||0)),vd=g.island?g.D:g.D+20;
     if(!g.island&&g.cut>0){const clip=Math.max(0,cdA-(g.cut));u0=Math.max(u0,clip-(g.sL||0))}
     const v0_=g.pen!=null?-g.pen:0;

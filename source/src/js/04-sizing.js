@@ -5,13 +5,14 @@ const hasDoorM=m=>!m.filler&&!m.flap&&m.t!=='hood'&&!!(layout(m).zones||[]).some
 const leafPen=L=>RULES.doorLeaf.includes(L)?0:L===400||L===350?.8:L===450||L===300?1.5:L===500||L===250?2.5:L===150||L===200?3:L===550||L===600?3:6;
 function snapOpts(m,src,w0,relax=0){const unit=!!m.unit&&!!unitById(m.unit),uw=+src?.userW||0,need=relax>2?150:m.t==='cook'?minWOf(m):relax>1||(relax&&m.t!=='sink')?150:minWOf(m);
 
+  if(m.t==='gap')return[Math.max(50,Math.round(+src?.userW||w0))];
   if(m.t==='hood')return[appNeed(m)||r50(w0)];if(unit)return[w0];
   if(m.t==='cook'&&relax<3){const base=Math.max(need,uw||(src?.fix?w0:0)),L=COOK_W.filter(w=>w>=base);return L.length?(uw||src?.fix?[L[0]]:L):[c50(base)]}
   if(uw)return[Math.max(c50(need),r50(uw))];if(src?.fix)return[Math.max(c50(need),r50(w0))];
   const lo=Math.max(150,c50(need)),hi=Math.min(SNAP_MAX,Math.max(RULES.prefW,c50(need))),o=[];for(let w=lo;w<=hi;w+=SNAP)o.push(w);return o}
 /* 같은 입력이면 같은 결과: 계산 결과를 기억해 두었다가 다시 씀 (화면 한 번에 칸 계산이 수십 번 일어남) */
 const SNAP_CACHE=new Map();let snapHits=0,snapMiss=0;
-function snapKey(ms,srcs,b0,bn,o){return JSON.stringify([ms.map(m=>[m.t,Math.round(m.w*10),m.unit||'',(m.apps||[]).map(a=>a.id).join('+'),m.hk||'',m.hcab||'',m.z0,m.z1,m.n,m.flap?1:0,m.filler?1:0,m.hw||'',m.glass?1:0]),srcs.map(q=>[q?.userW||0,q?.fix?1:0,q?.auto?1:0]),Math.round(b0*10),Math.round(bn*10),o.grid0,o.lines,o.cookC,o.pref,o.relax||0,o.extra?1:0,o.edgeL?1:0,o.edgeR?1:0])}
+function snapKey(ms,srcs,b0,bn,o){return JSON.stringify([ms.map(m=>[m.t,Math.round(m.w*10),m.unit||'',(m.apps||[]).map(a=>a.id).join('+'),m.hk||'',m.hcab||'',m.z0,m.z1,m.n,m.flap?1:0,m.filler?1:0,m.hw||'',m.glass?1:0,m.ax??null]),srcs.map(q=>[q?.userW||0,q?.fix?1:0,q?.auto?1:0]),Math.round(b0*10),Math.round(bn*10),o.grid0,o.lines,o.cookC,o.pref,o.relax||0,o.extra?1:0,o.edgeL?1:0,o.edgeR?1:0,o.pins||null])}
 function snapRow(ms,srcs,b0,bn,o={}){const key=snapKey(ms,srcs,b0,bn,o);if(SNAP_CACHE.has(key)){snapHits++;const r=SNAP_CACHE.get(key);return r&&{...r,ws:[...r.ws]}}snapMiss++;const r=snapRow0(ms,srcs,b0,bn,o);if(SNAP_CACHE.size>4000)SNAP_CACHE.clear();SNAP_CACHE.set(key,r);return r&&{...r,ws:[...r.ws]}}
 function snapRow0(ms,srcs,b0,bn,o={}){const n=ms.length;if(!n)return null;const g0=o.grid0??b0,lines=o.lines,near=v=>!lines||lines.some(q=>Math.abs(q-v)<=1),onG=v=>{const r=(((v-g0)%SNAP)+SNAP)%SNAP;return r<.5||SNAP-r<.5};
   const opt=ms.map((m,i)=>snapOpts(m,srcs[i],m.w,o.relax||0)),door=ms.map(hasDoorM),EX=o.extra?[150,200,250,300,350,400,700,800]:[];let best=null;
@@ -22,12 +23,13 @@ function snapRow0(ms,srcs,b0,bn,o={}){const n=ms.length;if(!n)return null;const 
     for(let k=0;k<n;k++){const m=ms[k],lockd=opt[k].length===1;
       if(EX.length){const pre=new Map();dp.forEach(st=>{push(pre,st);if(!st.ex)addEx(pre,st,k)});dp=pre}
       const nx=new Map();
-      dp.forEach(st=>opt[k].forEach(w=>{const pos=st.pos,e=pos+w;if(e>bn+.5)return;const leaf=door[k]&&w>650?w/2:w;
+      const pin=o.pins?.[k];dp.forEach(st=>opt[k].forEach(w=>{const pos=st.pos,e=pos+w;if(e>bn+.5)return;if(pin!=null&&Math.abs(pos-pin)>1)return;const leaf=door[k]&&w>650?w/2:w;
         let c=st.c+Math.abs(w-m.w)/SNAP*.15+(w>RULES.prefW&&!lockd?3+(w-RULES.prefW)/SNAP:0);
         if(m.t==='sink'&&o.relax){const nd=minWOf(m);if(w<nd)c+=(nd-w)/SNAP*2}
         if(m.t==='cook')c+=(w===600?0:w===900?1.2:.8)*(o.relax?3:1);else if(!lockd){if(door[k])c+=leafPen(leaf)+Math.abs(leaf-Lt)/SNAP*.8;else c+=(w>=400&&w<=600?0:w>=300&&w<=800?1.5:4)}
         c+=edgeC(pos,e,k===n-1&&!EX.length);
         if(door[k]&&w>650&&((k===0&&o.edgeL)||(k===n-1&&o.edgeR)))c+=4;
+        if(m.ax!=null)c+=Math.abs(pos+w/2-m.ax)/SNAP*(isGap(m)?16:4);
         if(m.t==='hood'&&o.cookC!=null)c+=Math.abs(pos+w/2-o.cookC)/SNAP*4;
         push(nx,{pos:e,c,ws:[...st.ws,w],ex:st.ex})}));
       dp=nx;if(!dp.size)break}
@@ -37,15 +39,20 @@ function snapRow0(ms,srcs,b0,bn,o={}){const n=ms.length;if(!n)return null;const 
   return best}
 const snapEdge=(j,f,sL,sR,lc,rc,ep)=>{const nd=hProj(j)+5;return{edgeL:!lc&&!ep?.L&&sL<nd,edgeR:!rc&&!ep?.R&&sR<nd}};
 const snapMinSum=(ms,srcs)=>ms.reduce((a,m,i)=>a+Math.min(...snapOpts(m,srcs[i],m.w,3)),0);
-const snapAny=(ms,srcs,b0,bn,o={})=>snapRow(ms,srcs,b0,bn,o)||snapRow(ms,srcs,b0,bn,{...o,relax:1})||snapRow(ms,srcs,b0,bn,{...o,relax:2})||snapRow(ms,srcs,b0,bn,{...o,relax:3});
+const snapAny=(ms,srcs,b0,bn,o={})=>snapRow(ms,srcs,b0,bn,o)||(o.pins?snapAny(ms,srcs,b0,bn,{...o,pins:null,pinFail:1}):null)||snapRow(ms,srcs,b0,bn,{...o,relax:1})||snapRow(ms,srcs,b0,bn,{...o,relax:2})||snapRow(ms,srcs,b0,bn,{...o,relax:3});
 /* 남는 자리를 작은 장(150~300)으로 채울지, 넣어 둔 작은 장을 뺄지 판단 */
 function snapAuto(ms,srcs,b0,bn,o,sr){const ai=srcs.map((m,k)=>m?.auto?k:-1).filter(k=>k>=0);
-  if(ai.length){const k=ai[ai.length-1],s2=snapAny(ms.filter((_,q)=>q!==k),srcs.filter((_,q)=>q!==k),b0,bn,o);if(s2&&s2.c<=sr.c+.3&&s2.R<150)return{dropAuto:true}}
+  if(ai.length){const k=ai[ai.length-1],pins2=o.pins?Object.fromEntries(Object.entries(o.pins).filter(([q])=>+q!==k).map(([q,v])=>[+q>k?+q-1:+q,v])):null,s2=snapAny(ms.filter((_,q)=>q!==k),srcs.filter((_,q)=>q!==k),b0,bn,{...o,pins:pins2});if(s2&&s2.c<=sr.c+.3&&s2.R<150)return{dropAuto:true}}
   if(ai.length>=3)return{};const sx=snapRow(ms,srcs,b0,bn,{...o,extra:true})||snapRow(ms,srcs,b0,bn,{...o,extra:true,relax:sr.relax});return sx&&sx.ex&&sx.c<sr.c-1?{wantEx:sx.ex,wantAt:sx.exAt}:{}}
 function snapPost(row,ref,f,o={}){const ms=row.mods,n=ms.length;if(n&&row.over>0)row.tooMany=true;if(!n||row.over>0||row.segs)return;const src=f.rows[row.rix];if(!src)return;
   for(let k=0;k<n-1;k++)if(Math.abs(ms[k].x+ms[k].w-ms[k+1].x)>1)return;
   const b0=ms[0].x,bn=ms[n-1].x+ms[n-1].w+(row.gap||0),useL=o.align&&ref&&!src.manualW,cook=ref?.mods.find(m=>m.t==='cook');
-  const so={edgeL:o.edgeL,edgeR:o.edgeR,grid0:ref?.mods[0]?.x??b0,lines:useL?rowLines(ref):null,cookC:cook?cook.x+cook.w/2:null,pref:ref?.snapLt},r=snapAny(ms,src.mods,b0,bn,so);if(!r){if(bn-b0<snapMinSum(ms,src.mods)-.5)row.tooMany=true;if(!src.noAuto&&bn-b0>n*SNAP_MAX){const sx=snapRow(ms,src.mods,b0,bn,{...so,extra:true})||snapRow(ms,src.mods,b0,bn,{...so,extra:true,relax:2});if(sx?.ex){row.wantEx=sx.ex;row.wantAt=sx.exAt}}return}if(!src.noAuto)Object.assign(row,snapAuto(ms.map(m=>({...m})),src.mods,b0,bn,so,r));
+  let pins=null;if(ref){src.mods.forEach((sm,k)=>{if(sm?.link){const lg=ref.mods.find(x=>x.gid===sm.link);if(lg){pins=pins||{};pins[k]=lg.x}}})}
+  const so={pins,edgeL:o.edgeL,edgeR:o.edgeR,grid0:ref?.mods[0]?.x??b0,lines:useL?rowLines(ref):null,cookC:cook?cook.x+cook.w/2:null,pref:ref?.snapLt},r0_=pins?snapRow(ms,src.mods,b0,bn,so):null;
+  if(pins&&Object.keys(pins).length===1){const gk=+Object.keys(pins)[0],px=pins[gk];let best=r0_?{c:r0_.c,at:gk}:null;
+    for(let at=0;at<n;at++){if(at===gk)continue;const ord=ms.map((_,q)=>q).filter(q=>q!==gk);ord.splice(at,0,gk);const r2=snapRow(ord.map(q=>ms[q]),ord.map(q=>src.mods[q]),b0,bn,{...so,pins:{[at]:px}});if(r2&&(!best||r2.c<best.c-.01))best={c:r2.c,at}}
+    if(best&&best.at!==gk)row.moveGap={from:gk,to:best.at}}
+  const r=r0_||snapAny(ms,src.mods,b0,bn,so);if(!r){if(bn-b0<snapMinSum(ms,src.mods)-.5)row.tooMany=true;if(!src.noAuto&&bn-b0>n*SNAP_MAX){const sx=snapRow(ms,src.mods,b0,bn,{...so,extra:true})||snapRow(ms,src.mods,b0,bn,{...so,extra:true,relax:2});if(sx?.ex){row.wantEx=sx.ex;row.wantAt=sx.exAt}}return}if(!src.noAuto&&!pins)Object.assign(row,snapAuto(ms.map(m=>({...m})),src.mods,b0,bn,so,r));else if(pins&&src.mods.some(m=>m.auto))row.dropAuto=true;
   let px=b0;ms.forEach((m,k)=>{if(Math.abs(m.x-px)>.1||Math.abs(m.w-r.ws[k])>.1)row.alignMoved=true;m.x=px;m.w=r.ws[k];px+=m.w});
   row.fill=(row.fill||[]).filter(q=>!(q.i==='F'&&q.x>=b0-1));row.gap=r.R;if(r.R>0)row.fill.push({t:'filler',x:px,w:r.R,z0:row.z0,z1:row.z1,n:0,r:0,i:'F',filler:true});
   row.snapLt=r.Lt;if(useL){const L=rowLines(ref);row.aligned=ms.slice(0,-1).filter(m=>L.some(q=>Math.abs(q-(m.x+m.w))<=1)).length;row.alignN=n-1}}
@@ -65,6 +72,7 @@ const islandCounter=j=>counterById(j.island?.counterId)||counterById(j.counterId
 function layout(m){const t=m.t,z0=m.z0,z1=m.z1,h=z1-z0,n=Math.max(0,m.n??TYPES[t]?.n??0);
   const o={shelves:[],rods:[],hangs:[],drawers:[],stacks:[],shoes:[],zones:null,mirror:null,sink:false,cook:false,hood:false};
   const even=(a,b,k)=>{const r=[];for(let i=1;i<=k;i++)r.push(Math.round(a+(b-a)*i/(k+1)));return r};
+  if(t==='gap'){o.zones=[];o.noBox=true;o.gap=true;return o}
   switch(t){
     case 'hang':o.shelves.push(z1-380);o.rods.push(z1-450);o.hangs.push({z:z1-450,len:Math.max(300,Math.min(1250,h-560))});o.stacks.push(z1-380);break;
     case 'hang2':{const zm=z0+Math.round(h*.47);o.shelves.push(z1-380,zm);o.rods.push(z1-450,zm-70);

@@ -37,6 +37,14 @@ const mod=(t,w,extra={})=>({t,w,x:0,z0:120,z1:820,n:S.TYPES?.[t]?.n??1,...extra}
 { // 자리가 남으면 작은 장 하나 제안
   const r=E.snapRow([mod('base',800),mod('base',800)],[{},{}],0,1750,{extra:true});check(r&&(r.ex>0||r.R<50),'작은 장 제안 '+J(r));}
 
+/* ---------- 1b. 위치 표시 → 장 배치 ---------- */
+{ const j=fresh('I');j.faces[0].len=3600;settle(j);const add=(type,x,w)=>{const o={id:'u'+type,type,face:'A',x,z:0,w,h:100};(j.obstacles=j.obstacles||[]).push(o);E.autoPlace(j,o);settle(j);return o};
+  add('sp_sink',2200,800);add('sp_cook',800,600);let g=E.geom(j,0),lo=g.rows.find(r=>r.zone==='lower'),off=g.cut+g.sL;
+  const c=t=>{const m=lo.mods.find(m=>m.t===t);return m?m.x+m.w/2+off:null};
+  check(Math.abs(c('sink')-2600)<=250,'싱크 위치 표시 '+c('sink'));check(Math.abs(c('cook')-1100)<=250,'쿡탑 위치 표시 '+c('cook'));check([600,750,800,900].includes(lo.mods.find(m=>m.t==='cook').w),'쿡탑 위치 표시 후 규격');
+  add('sp_door',0,900);g=E.geom(j,0);lo=g.rows.find(r=>r.zone==='lower');const gd=lo.mods.find(m=>m.t==='gap');check(gd&&gd.w===900&&gd.x+off<=100,'출입문 위치 표시 '+(gd&&gd.x));
+  add('sp_fridge',2680,920);check(j.tallEnd?.on&&j.tallEnd.k==='fspace'&&j.tallEnd.side==='R','냉장고 자리 오른쪽 '+J(j.tallEnd));}
+
 /* ---------- 2. 견적 단위 점검 ---------- */
 { const j=fresh('I');settle(j);const q=E.quote(j);const sum=q.lines.reduce((a,l)=>a+l.amt,0);
   check(sum===q.sub,'견적 합계=공급가 '+sum+'/'+q.sub);check(q.total===q.sub+q.vat,'합계=공급가+부가세');
@@ -47,13 +55,15 @@ const mod=(t,w,extra={})=>({t,w,x:0,z0:120,z1:820,n:S.TYPES?.[t]?.n??1,...extra}
   j.qAdd=[{id:'a1',item:'운반',qty:2,unit:'식',price:30000}];const q6=E.quote(j);check(q6.lines.some(l=>l.custom==='a1'&&l.amt===60000),'항목 추가');delete j.qAdd;}
 
 /* ---------- 3. 무작위 대량 점검 ---------- */
-const LAYS=['I','L','U','Lisland','II'];let strictRows=0,relaxRows=0;
+const LAYS=['I','L','L1','U','Lisland','II'];let strictRows=0,relaxRows=0;
 for(let n=0;n<N;n++){
   const lay=pick(LAYS),j=fresh(lay),tag=`#${n} ${lay}`;
   j.faces.forEach(f=>{if(f.key==='I')return;f.len=ri(lay==='U'&&f.key==='A'?2600:1800,5200);if(rnd()<.35)f.ends={R:'panel'};if(rnd()<.15)f.ends={...(f.ends||{}),L:'panel'}});
   j.finish=pick(['filler','full']);if(rnd()<.3)j.bgap={mm:pick([50,100]),use:pick(['shelf','deep']),sh:100};
   if(rnd()<.35){const fs=j.faces.filter(f=>f.key!=='I'&&!(lay==='U'&&f.key==='A'));j.tallEnd={on:true,face:pick(fs).key,side:pick(['L','R']),k:pick(['pantry','combo','oven','larder','broom']),w:pick([450,600])};if(rnd()<.4)j.tall2={on:true,k:'pantry',w:pick([300,450,600])}}
   if(rnd()<.2)j.upAlign=false;if(rnd()<.2)j.ctBack='none';
+  if(rnd()<.3){const f=pick(j.faces.filter(f=>f.key!=='I')),r=f.rows.find(r=>r.zone==='lower'||r.zone==='full');if(r){const k=ri(0,r.mods.length);r.mods.splice(k,0,{t:'gap',n:0,r:900,userW:pick([700,800,900]),fix:true,gk:pick(['door','pass','window','pillar'])})}}
+  if(rnd()<.35){j.obstacles=j.obstacles||[];const ns=ri(1,3);for(let q=0;q<ns;q++){const f=pick(j.faces.filter(f=>f.key!=='I'||lay==='I')),type=pick(['sp_sink','sp_cook','sp_door','sp_tall','sp_fridge']),w=S.SPOT_DEF[type].w,o={id:'s'+n+'_'+q,type,face:f.key,x:ri(0,Math.max(0,f.len-w)),z:0,w,h:100};j.obstacles.push(o);try{E.stdNormalize.quiet=1;E.stdNormalize(j);E.autoPlace(j,o)}catch(e){check(false,tag+' 위치 표시 오류 '+type+' '+e.message)}}}
   try{settle(j)}catch(e){check(false,tag+' 정리 중 오류 '+e.message);continue}
   // 정리 안정성: 한 번 더 해도 바뀌지 않아야 함
   const before=J(j.faces);E.stdNormalize(j);check(J(j.faces)===before,tag+' 정리가 반복해도 같음');
@@ -67,7 +77,7 @@ for(let n=0;n<N;n++){
       if(!r.tooMany)for(let k=1;k<items.length;k++)check(items[k].x>=items[k-1].x+items[k-1].w-1,`${tag}${f.key} ${r.zone} 겹침 ${items[k-1].t}${items[k-1].x}+${items[k-1].w} / ${items[k].t}${items[k].x}`);
       if(items.length){check(items[0].x>=-1-(f.key!=='A'?1e9:0)||r.zone!=='lower',`${tag}${f.key} 왼쪽 밖`);check(items[items.length-1].x+items[items.length-1].w<=g.Wm+1,`${tag}${f.key} ${r.zone} 오른쪽 밖 ${items[items.length-1].x+items[items.length-1].w}>${g.Wm}`)}
       const lo_=g.rows.find(x=>x.zone==='lower'),strict=r.zone==='lower'?(!r.snapRelax&&!r.tooMany):(!r.tooMany&&!(lo_&&(lo_.snapRelax||lo_.tooMany)));if(strict&&r.zone==='lower')strictRows++;else if(r.zone==='lower')relaxRows++;
-      r.mods.forEach(m=>{if(m.t==='hood'||m.unit||m.filler)return;
+      r.mods.forEach(m=>{if(m.t==='hood'||m.unit||m.filler||m.t==='gap'||m.t==='tallc')return;
         if(strict){check(m.w%50===0,`${tag}${f.key} ${r.zone} 50단위 아님 ${m.t}${m.w}`);check(m.w<=1200,`${tag}${f.key} ${r.zone} 1200 초과 ${m.w}`)}
         if(strict&&r.zone==='lower'&&m.t==='cook')check([600,750,800,900].includes(m.w),`${tag}${f.key} 쿡탑장 ${m.w}`)})})});
   if(j.faces.some((f,fi)=>{const g=E.geom(j,fi);return!g.island&&g.rows.some(r=>r.tooMany)})){const pc=E.prodCheck(j);check(pc.bad>0,`${tag} 자리가 안 되는 현장인데 검증기 경고 없음`)}

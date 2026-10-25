@@ -6,9 +6,9 @@ function quote(j=job){const P=catalog.prices,door=doorById(j.doorId)||{kind:'non
   const pw=(g,z)=>g.rows.filter(r=>!z||r.zone===z).reduce((a,r)=>a+r.mods.reduce((b,m)=>b+((unitById(m.unit)?.price>0)?m.w:0),0),0);
   {const t={};gs.forEach(g=>g.rows.forEach(r=>r.mods.forEach(m=>{const u=unitById(m.unit);if(u&&u.price>0)t[u.id]=(t[u.id]||0)+1})));Object.entries(t).forEach(([id,q])=>{const u=unitById(id);add(`내 장 · ${u.name}`,`${u.w} (완제품 단가)`,q,'개',u.price)})}
   if(['closet','shoe','dress','laundry','single'].includes(cat))add(`${CATS[cat].name} 본체`,spec(gs),r2(gs.reduce((a,g)=>a+ceil1(Math.max(0,g.Wm-pw(g))/P.jaMM),0)),'자',P.body[cat]);
-  if(cat==='kitchen'){const wall=gs.filter(g=>!g.island),lm=r2(wall.reduce((a,g)=>a+ceil1((g.Wm-(g.tallSum||0))/1000),0));const fD=g=>Math.max(1,(g.D||600)/(+P.lowD||600)),fU=Math.max(1,UPD()/(+P.upStd||300));add('하부장 본체',spec(wall)+(wall[0]?` · 깊이 ${wall[0].D}${fD(wall[0])>1?` (기준 ${+P.lowD||600} 대비 ×${r2(fD(wall[0]))})`:''}`:''),r2(wall.reduce((a,g)=>a+ceil1(Math.max(0,g.Wm-(g.tallSum||0)-pw(g,'lower'))/1000),0)),'m',Math.round(P.kLower*fD(wall[0]||{})));
+  if(cat==='kitchen'){const wall=gs.filter(g=>!g.island),lowF=wall.filter(g=>g.rows.some(r=>r.zone==='lower')),lm=r2(lowF.reduce((a,g)=>a+ceil1((g.Wm-(g.tallSum||0)-(g.gapSum||0))/1000),0));const fD=g=>Math.max(1,(g.D||600)/(+P.lowD||600)),fU=Math.max(1,UPD()/(+P.upStd||300));add('하부장 본체',spec(lowF)+(wall[0]?` · 깊이 ${wall[0].D}${fD(wall[0])>1?` (기준 ${+P.lowD||600} 대비 ×${r2(fD(wall[0]))})`:''}`:''),r2(lowF.reduce((a,g)=>a+ceil1(Math.max(0,g.Wm-(g.tallSum||0)-(g.gapSum||0)-pw(g,'lower'))/1000),0)),'m',Math.round(P.kLower*fD(wall[0]||{})));
     const ups=wall.filter(g=>g.rows.some(r=>r.zone==='upper'));add('상부장 본체',spec(ups)+` · 깊이 ${UPD()}${fU>1?` (기준 ${+P.upStd||300} 대비 ×${r2(fU)})`:''}`,r2(ups.reduce((a,g)=>a+ceil1(Math.max(0,g.Wm-(g.rows.find(r=>r.zone==='upper')?.corners||[]).filter(c=>c.ghost||c.tfill).reduce((a,c)=>a+c.w,0)-pw(g,'upper')-(g.rows.find(r=>r.zone==='upper')?.mods||[]).filter(m=>layout(m).noBox).reduce((a,m)=>a+m.w,0))/1000),0)),'m',Math.round(P.kUpper*fU));{const tps=wall.filter(g=>g.rows.some(r=>r.zone==='top'));if(tps.length)add('위 칸 (깊은 장) 본체',tps.map(g=>`${g.face} ${g.Wm} · 깊이 ${g.topD} · 높이 ${g.topH}`).join(' / '),r2(tps.reduce((a,g)=>a+ceil1(g.Wm/1000),0)),'m',Math.round((+P.kUpper||0)*Math.max(1,(tps[0].topD||450)/(+P.upStd||300))))}
-    const c=counterById(j.counterId);if(c)add(`상판 · ${c.name}`,spec(wall)+ctEdgeTxt(j),lm,'m',c.price);{const b=bgOf(j);if(b&&bgUse(j)==='shelf')add('뒷선반 (하부장 뒤 띄움 자리)',`폭 ${b} · 상판 위 ${j.bgap?.sh??100}`,lm,'m',+(P.backShelf??60000));else if(b)add('상판 깊이 추가 (뒤 띄움)',`+${b}mm`,lm,'m',Math.round(c.price*b/620))}
+    const c=counterById(j.counterId);if(c)add(`상판 · ${c.name}`,spec(lowF)+ctEdgeTxt(j),lm,'m',c.price);{const b=bgOf(j);if(b&&bgUse(j)==='shelf')add('뒷선반 (하부장 뒤 띄움 자리)',`폭 ${b} · 상판 위 ${j.bgap?.sh??100}`,lm,'m',+(P.backShelf??60000));else if(b)add('상판 깊이 추가 (뒤 띄움)',`+${b}mm`,lm,'m',Math.round(c.price*b/620))}
     const isl=gs.find(g=>g.island);if(isl){const im=ceil1(isl.Wm/1000);add('아일랜드 하부장',`${isl.Wm}×${isl.Dm}`,im,'m',P.kLower);
       const ic=islandCounter(j),tw=isl.Wm+2*isl.side;if(ic)add(`아일랜드 상판 · ${ic.name}`,`${tw}×${isl.D}`,ceil1(tw/1000),'m',Math.round(ic.price*isl.D/620));add('아일랜드 뒷면·측면 마감',`식탁 오버행 ${j.island.over}`,im,'m',P.islandFinish);
       const isp=isl.isup,iq=supQty(isp,isl,'island');if(iq)add(`아일랜드 받침 · ${isp.name}`,iq.spec,iq.qty,SUP_UNIT[isp.type],isp.price)}
@@ -84,7 +84,7 @@ function cutList(j=job){const door=doorById(j.doorId)||{kind:'none',name:'-'},ro
     return rows}
   const [pa,pb]=plRange(j.cat);
   gs.forEach(g=>{const pf=gs.length>1?(g.island?'I-':g.face+'-'):'';
-    g.rows.forEach(row=>row.mods.forEach((m,i)=>{if(m.filler)return;const lay=layout(m),h=m.z1-m.z0,d=row.zone==='top'?g.topD-20:row.zone==='upper'?UPD()-20:g.cat==='kitchen'?(g.island?g.Dm-20:g.D-20):g.Dm;
+    g.rows.forEach(row=>row.mods.forEach((m,i)=>{if(m.filler||isGap(m))return;const lay=layout(m),h=m.z1-m.z0,d=row.zone==='top'?g.topD-20:row.zone==='upper'?UPD()-20:g.cat==='kitchen'?(g.island?g.Dm-20:g.D-20):g.Dm;
       const tag=`${pf}${row.zone==='upper'?'U':row.zone==='top'?'T':row.zone==='lower'?'L':'M'}${i+1}`;
       modApps(m).forEach(({a,own})=>add(`${tag} ${APP_KIND[a.kind]}`,a.w?`${a.w} × ${a.h} × ${a.d}`:'',a.name,1,own==='cust'?'고객 구매 · 현장 설치':'회사 공급'));
       if(m.t==='dw'||m.t==='wash'){add(`${tag} 가전 칸 막음판`,`${h} × ${d}`,`PB ${T}T 마감`,0,'');return}
@@ -141,7 +141,8 @@ function endPanels(j=job){if(isMD(j.cat)||j.cat==='single')return[];const out=[]
     const cornerSide=sd=>cor&&(sd==='L'?true:(f.key==='A'&&U)),mir=isMir(j,fi),nm=sd=>`${FACE_NAME(f.key)} ${(mir?(sd==='L'?'R':'L'):sd)==='L'?'왼쪽':'오른쪽'}`;
     ['L','R'].forEach(sd=>{if(cornerSide(sd))return;if(!endOn(j,f,g,sd))return;g.rows.forEach(r=>{const h=r.zone==='lower'?g.ct0:r.z1-r.z0,d=r.zone==='upper'?UPD():r.zone==='top'?g.topD:(j.cat==='kitchen'?g.D:g.Dm);const tall=(r.corners||[]).find(c=>c.tall&&(sd==='R'?c.x+c.w>=g.Wm-5:c.x<=5));
       if(tall&&r.zone==='lower'){out.push({face:f.key,side:sd,zone:'tall',w:d,h:g.Hm,lab:`${nm(sd)} 키큰장 ${d}×${g.Hm}`});return}if(r.zone!=='lower'&&g.rows.find(x=>x.zone==='lower')?.corners?.some(c=>c.tall&&(sd==='R'?c.x+c.w>=g.Wm-5:c.x<=5)))return;
-      out.push({face:f.key,side:sd,zone:r.zone,w:d,h,lab:`${nm(sd)} ${r.zone==='upper'?'상부':r.zone==='top'?'위 칸':r.zone==='lower'?'하부':''} ${d}×${Math.round(h)}`.replace('  ',' ')})})})});return out}
+      out.push({face:f.key,side:sd,zone:r.zone,w:d,h,lab:`${nm(sd)} ${r.zone==='upper'?'상부':r.zone==='top'?'위 칸':r.zone==='lower'?'하부':''} ${d}×${Math.round(h)}`.replace('  ',' ')})})});
+    g.rows.forEach(r=>{const ms=r.mods,d=r.zone==='upper'?UPD():r.zone==='top'?g.topD:(j.cat==='kitchen'?g.D:g.Dm);ms.forEach((m,k)=>{if(!isGap(m)||m.gk==='window'||m.gk==='free')return;[[ms[k-1],'R'],[ms[k+1],'L']].forEach(([nb,sd])=>{if(!nb||isGap(nb)||nb.filler)return;const h=r.zone==='lower'?g.ct0:nb.z1-nb.z0;out.push({face:f.key,side:sd,zone:nb.t==='tallc'?'tall':r.zone,w:d,h,gap:true,lab:`${FACE_NAME(f.key)} ${GAP_K[m.gk||'door']} 옆 ${nb.t==='tallc'?'키큰장':r.zone==='upper'?'상부':'하부'} ${d}×${Math.round(h)}`})})})})});return out}
 const FIXT=m=>['dw','wash','oven'].includes(m.t)||!!m.unit;
 const cookNeed=a=>Math.ceil(((+a.cw||a.w-40)+2*T)/50)*50;
 const sinkNeed=a=>a.cab?+a.cab:Math.ceil(((+a.cw||a.w-40)+2*T+30)/50)*50;
@@ -179,6 +180,7 @@ function fitIssues(j=job,face){return(j.obstacles||[]).filter(o=>(!face||o.face=
 function fitMsg(o){return o.type==='duct'?'쿡탑·후드가 후드 배관 구멍 아래에 있지 않아요':o.type==='gas'?'쿡탑이 가스 위치와 맞지 않아요':o.type==='water'?'싱크장이 배관 위치와 맞지 않아요':'분배기가 칸 경계(측판)에 걸려 있어요'}
 const QOBS={water:{w:200,z:100,h:400,l:'배관 (급·배수)',hint:'싱크장이 이 위치로 옮겨집니다'},dist:{w:450,z:0,h:400,l:'보일러 분배기',hint:'분배기가 장 한 칸 안에 들어가게 칸 폭을 맞춥니다'}};
 const UTIL=[
+  {g:'배치 위치 (장을 여기에 맞춤)',items:Object.entries(SPOT_DEF).map(([t,d])=>({k:t,t,name:OBS[t].label,...d}))},
   {g:'보일러 분배기',items:[2,3,4,5,6,8,10].map(n=>({k:'dist'+n,t:'dist',name:`분배기 ${n}구`,w:150+50*n,h:350,z:0}))},
   {g:'물',items:[{k:'water',t:'water',name:'싱크 배관 (급·배수)',w:200,h:400,z:100},{k:'supply',t:'supply',name:'급수 밸브 (냉·온)',w:200,h:100,z:450},{k:'drainW',t:'drain',name:'벽 배수구 Ø50',w:100,h:100,z:350},{k:'drainF',t:'drain',name:'바닥 배수구 Ø50',w:120,h:60,z:0}]},
   {g:'전기',items:[{k:'outLo',t:'elec',name:'콘센트 2구 (장 안)',w:120,h:70,z:300},{k:'outHi',t:'elec',name:'콘센트 2구 (상판 위)',w:120,h:70,z:1100},{k:'outInd',t:'elec',name:'인덕션 전용 (32A)',w:100,h:100,z:300},{k:'outHood',t:'elec',name:'후드 콘센트',w:120,h:70,z:2050}]},
@@ -193,7 +195,7 @@ function dwCheck(j=job){const out=[];j.faces.forEach((f,fi)=>{const g=gview(j,fi
     out.push({face:f.key,x0,w:m.w,msgs})})});return out}
 function quickObs(t,face,center,w){const q=QOBS[t];let o=job.obstacles.find(x=>x.face===face&&x.type===t);if(!(center>0)){if(o)job.obstacles=job.obstacles.filter(x=>x!==o);return null}
   if(!o){o={id:uid(),face,type:t,z:q.z,w:q.w,h:q.h,note:q.l+' (직접 입력)',auto:true};job.obstacles.push(o)}if(w>0)o.w=Math.round(w);o.x=Math.max(0,Math.round(center-o.w/2));return o}
-function obstacleIssues(j=job){const out=[];(j.obstacles||[]).forEach(o=>{const fi=j.faces.findIndex(f=>f.key===o.face);if(fi<0)return;const g=gview(j,fi),off=obsOffset(g),hits=[];
+function obstacleIssues(j=job){const out=[];(j.obstacles||[]).forEach(o=>{if(isSpot(o)){if(j.faces.some(f=>f.key===o.face))out.push({o,hits:[],ok:true,spot:true});return}const fi=j.faces.findIndex(f=>f.key===o.face);if(fi<0)return;const g=gview(j,fi),off=obsOffset(g),hits=[];
     const ov=(ax,aw,az,ah)=>o.x<ax+aw&&o.x+o.w>ax&&o.z<az+ah&&o.z+o.h>az;
     g.rows.forEach(row=>rowAll(row).forEach((m,i)=>{const top=row.zone==='lower'?CTH:m.z1;if(ov(off+m.x,m.w,m.z0,top-m.z0)){
       const tag=`${g.island?'I':g.face}-${row.zone==='upper'?'U':row.zone==='top'?'T':row.zone==='lower'?'L':'M'}${i+1}`;hits.push({tag,label:`${FACE_NAME(g.face)} ${row.zone==='upper'?'상부 ':row.zone==='top'?'위 칸 ':row.zone==='lower'?'하부 ':''}${i+1}번째 칸 (${TYPES[m.t]?.label||''})`,part:'뒷판'})}}));
@@ -202,3 +204,36 @@ function obstacleIssues(j=job){const out=[];(j.obstacles||[]).forEach(o=>{const 
     out.push({o,hits,ok:!hits.length})});return out}
 const CT_FRONT={flat:'일반',nose:'물코 (앞턱)',groove:'물홈 (긴 홈)'};
 const ctEdgeTxt=j=>{const sp=ctSpecJ(j,counterById(j.counterId));return` · 뒷턱 ${sp.back?sp.back+(isCornerLay(j)?' (코너 꺾임)':''):'없음'}${sp.front&&sp.front!=='flat'?' · '+CT_FRONT[sp.front]:''}`};
+
+/* ---------- 위치 표시 → 자동 배치: 냉장고·쿡탑·싱크·출입문·키큰장 자리를 찍으면 그 위치에 장을 맞춤 ---------- */
+function spotCenter(j,o){const fi=j.faces.findIndex(f=>f.key===o.face);if(fi<0)return null;const vg=gview(j,fi),g=geom(j,fi),offv=obsOffset(vg);let a=o.x-offv,b=a+o.w;if(vg.mirrored){const t=vg.Wm-b;b=vg.Wm-a;a=t}return{fi,f:j.faces[fi],g,cx:(a+b)/2,a,b,off:g.cut+g.sL}}
+function reorderNear(row,gr,k,cx){if(!gr)return k;const others=gr.mods.map((m,q)=>({m,q})).filter(x=>x.q!==k&&x.q<row.mods.length);const at=others.filter(x=>x.m.x+x.m.w/2<cx).length;if(at===k)return k;const[mv]=row.mods.splice(k,1);row.mods.splice(at,0,mv);return at}
+function resortRow(j,f,row){const fi=j.faces.indexOf(f);let g;try{g=geom(j,fi)}catch(e){return}const gr=g.rows.find(r=>r.rix===f.rows.indexOf(row))||g.rows.find(r=>r.zone===row.zone);if(!gr)return;const off=g.cut+g.sL;
+  const key=row.mods.map((m,k)=>{const gm=gr.mods[k];return m.axF!=null?m.axF-off:gm?gm.x+gm.w/2:1e9});const ord=row.mods.map((m,k)=>k).sort((a,b)=>key[a]-key[b]||a-b);row.mods=ord.map(k=>row.mods[k])}
+function applySpot(j,o){if(j.cat!=='kitchen')return'';const S=spotCenter(j,o);if(!S)return'';const{f,g,cx,off}=S,lo=f.rows.find(r=>r.zone==='lower'),glo=g.rows.find(r=>r.zone==='lower');
+  const near=(row,gr,ok)=>{let bi=-1,bd=1e9;(gr?.mods||[]).forEach((m,k)=>{if(!row.mods[k]||(ok&&!ok(row.mods[k])))return;const d=Math.abs(m.x+m.w/2-cx);if(d<bd){bd=d;bi=k}});return bi};
+  if(o.type==='sp_sink'||o.type==='sp_cook'){if(!lo||!glo)return'이 면에는 하부장이 없습니다';const t=o.type==='sp_sink'?'sink':'cook';let k=lo.mods.findIndex(m=>m.t===t);
+    if(t==='cook'){if(k<0){const q=near(lo,glo,m=>!isGap(m)&&!FIXT(m)&&m.t!=='sink');if(q<0)return'';j.faces.forEach(ff=>ff.rows.forEach(r=>r.mods.forEach(m=>{if(m.t==='cook'&&ff!==f){m.t='base';m.n=TYPES.base.n;delete m.apps;delete m.axF}})));lo.mods.forEach(m=>{if(m.t==='cook'){m.t='base';m.n=TYPES.base.n;delete m.apps}});lo.mods[q].t='cook';lo.mods[q].n=TYPES.cook.n;delete lo.mods[q].apps;k=q}}
+    else if(k<0){k=near(lo,glo,m=>!isGap(m)&&!FIXT(m)&&m.t!=='cook');if(k<0)return'';lo.mods[k].t='sink';lo.mods[k].n=TYPES.sink.n;delete lo.mods[k].apps}
+    const m=lo.mods[k];reorderNear(lo,glo,k,cx);m.axF=Math.round(cx+off);m.spot=o.id;resortRow(j,f,lo);f.edited=true;return`${t==='sink'?'싱크장':'쿡탑장'}을 표시한 위치(가운데 ${Math.round(o.x+o.w/2)})에 맞췄습니다`}
+  if(o.type==='sp_door'){const row=lo||f.rows.find(r=>r.zone==='full');if(!row)return'';const gr=g.rows.find(r=>r.rix===f.rows.indexOf(row));let m=row.mods.find(q=>q.spot===o.id)||row.mods.find(q=>isGap(q)&&q.gk==='door'&&!q.spot);if(!m){m={t:'gap',n:0,gk:'door',fix:true};row.mods.push(m)}m.spot=o.id;
+    m.userW=m.r=Math.max(300,Math.round(o.w/10)*10);m.axF=Math.round(cx+off);reorderNear(row,gr,row.mods.indexOf(m),S.a+75);resortRow(j,f,row);f.edited=true;return`출입문 자리 ${m.userW}mm를 비웠습니다`}
+  if(o.type==='sp_fridge'||o.type==='sp_tall'){
+    if(isTallWall(j,f)){const row=f.rows.find(r=>r.zone==='full');const gr=g.rows.find(r=>r.zone==='full');let m=row.mods.find(q=>q.spot===o.id)||row.mods.find(q=>q.t==='tallc'&&!q.spot);if(!m){m={t:'tallc',n:4,fix:true};row.mods.push(m)}m.spot=o.id;const fr_=o.type==='sp_fridge';m.tk=fr_?'fspace':(m.tk==='fspace'?'pantry':m.tk||'pantry');m.userW=m.r=fr_?Math.max(600,Math.round(o.w/10)*10):Math.min(Math.max(...TALL_WS),Math.max(300,Math.round(o.w/50)*50));reorderNear(row,gr,row.mods.indexOf(m),cx);f.edited=true;return fr_?'냉장고 자리를 표시한 위치에 넣었습니다':'키큰장을 표시한 위치에 넣었습니다'}
+    const side=cx<g.Wm/2?'L':'R';
+    if(o.type==='sp_fridge'){if(!j.fridge?.id){const fr=(catalog.apps||[]).find(a=>a.kind==='fridge');if(!fr)return'냉장고 제품이 없습니다';j.fridge={own:'co',inRun:true,housing:true,id:fr.id}}j.fridge.inRun=true;const ow=frNiche(j)?.ow||920;
+      let lost='';if(j.tallEnd?.on&&j.tallEnd.k!=='fspace'){if(j.tallEnd.face===f.key&&!j.tall2?.on)j.tall2={on:true,k:j.tallEnd.k,w:Math.min(TALL_MAX,+j.tallEnd.w||600)};else if(j.tallEnd.face!==f.key)lost=' · 끝 키큰장은 한 면에만 둘 수 있어 다른 면 키큰장은 빠졌습니다'}
+      j.tallEnd={on:true,face:f.key,k:'fspace',w:600,side,x:Math.max(0,Math.round((cx-ow/2)/10)*10)};return`냉장고 자리를 ${side==='M'?'표시한 위치':side==='L'?'왼쪽 끝':'오른쪽 끝'}에 놓았습니다${j.tall2?.on?' · 키큰장은 냉장고 옆으로':''}${lost}`}
+    const w=Math.min(TALL_MAX,Math.max(300,Math.round(o.w/50)*50));if(j.tallEnd?.on&&j.tallEnd.face===f.key&&j.tallEnd.k==='fspace'&&j.tallEnd.side!=='M'&&side!=='M'){j.tall2={on:true,k:'pantry',w};return'키큰장을 냉장고 옆에 넣었습니다'}
+    const lost2=j.tallEnd?.on&&j.tallEnd.face!==f.key?' · 끝 키큰장은 한 면에만 둘 수 있어 다른 면 것은 빠졌습니다':'';j.tallEnd={on:true,face:f.key,k:'pantry',w,side,x:Math.max(0,Math.round((cx-w/2)/10)*10)};return`키큰장을 ${side==='M'?'표시한 위치':side==='L'?'왼쪽 끝':'오른쪽 끝'}에 놓았습니다${lost2}`}
+  return''}
+/* 위치 표시 뒤 상부장 따라가기: 후드는 쿡탑 위로, 문·통로 사이 빈 구간엔 상부장 하나 */
+function upperFollow(j,f){const fi=j.faces.indexOf(f);let g;try{g=geom(j,fi)}catch(e){return}const up=f.rows.find(r=>r.zone==='upper');if(!up)return;const gu=g.rows.find(r=>r.zone==='upper'),gl=g.rows.find(r=>r.zone==='lower');if(!gu||!gl)return;
+  const ck=gl.mods.find(m=>m.t==='cook'),hi=up.mods.findIndex(m=>m.t==='hood');
+  if(ck&&hi>=0){const cc=ck.x+ck.w/2,[h]=up.mods.splice(hi,1);let at=0;gu.mods.forEach((m,k)=>{if(k===hi)return;if(m.x+m.w/2<cc)at++});up.mods.splice(Math.min(at,up.mods.length),0,h)}
+  try{g=geom(j,fi)}catch(e){return}const gu2=g.rows.find(r=>r.zone==='upper');const segs=[];let px=0;gu2.mods.forEach((m,k)=>{if(isGap(m)){segs.push({a:px,b:m.x,k});px=m.x+m.w}});segs.push({a:px,b:g.Wm,k:up.mods.length});
+  for(let q=segs.length-1;q>=0;q--){const s=segs[q],inside=gu2.mods.some(m=>!isGap(m)&&m.x+m.w/2>s.a&&m.x+m.w/2<s.b);if(!inside&&s.b-s.a>=300){const k=s.k;up.mods.splice(k,0,{t:'upper',n:TYPES.upper?.n??2})}}}
+function unSpot(j,o){j.faces.forEach(f=>f.rows.forEach(r=>{r.mods=r.mods.filter(m=>!(m.spot===o.id&&o.type==='sp_door'&&isGap(m)));r.mods.forEach(m=>{if(m.spot===o.id){delete m.spot;delete m.axF}})}));try{syncGapsUp(j)}catch(e){}}
+function autoPlace(j,o){if(!o)return'';if(isSpot(o)){const r=applySpot(j,o);if(r&&['sp_cook','sp_door','sp_sink'].includes(o.type)){const f=j.faces.find(q=>q.key===o.face);if(f){if(o.type==='sp_door')try{syncGapsUp(j)}catch(e){}upperFollow(j,f)}}return r}if(!['dist','water','gas','duct'].includes(o.type))return'';let msg='';const p=fitPlan(j,o);if(p&&!p.ok)msg=applyFit(job,o);
+  if(j.cat==='kitchen'&&['water','gas','duct'].includes(o.type)){const S=spotCenter(j,o),lo=S?.f.rows.find(r=>r.zone==='lower');const m=lo?.mods.find(q=>q.t===(o.type==='water'?'sink':'cook'));if(m){m.axF=Math.round(S.cx+S.off);S.f.edited=true}}
+  return msg}
