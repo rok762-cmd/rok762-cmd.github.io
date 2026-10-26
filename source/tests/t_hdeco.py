@@ -13,7 +13,7 @@ with sync_playwright() as p:
     pg.evaluate("""()=>{job=newJob('kitchen');mode='house';hTab='plan';render();const H=HS();H.rooms=[{id:'r1',name:'주방',pts:[[0,0],[4000,0],[4000,3000],[0,3000]]}];
       H.opens=[{id:'o1',room:'r1',edge:0,type:'door',w:900,h:2100,sill:0,off:0,hinge:'L'}];hTab='deco';hView='plan';renderHouse()}""");pg.wait_for_timeout(400)
     check(pg.locator('#hfs').count()==1,'가구 탭 전체 화면')
-    check(pg.locator('.hfs-rail [data-act="h-bi-pick"]').count()==6,'붙박이·싱크대 버튼 6개')
+    check(pg.locator('.hfs-rail [data-act="h-bi-pick"]').count()==7,'붙박이·싱크대·키큰장 벽 버튼 7개')
     pg.click('.hfs-rail [data-act="h-bi-pick"][data-v="kitchen"]');pg.wait_for_timeout(200)
     # 벽0 (y=0, x 0..4000) 가운데를 화면 좌표로
     xy=pg.evaluate("""()=>{const svg=document.getElementById('houseSvg'),m=svg.getScreenCTM();const p=svg.createSVGPoint();p.x=2500;p.y=0;const q=p.matrixTransform(m);return[q.x,q.y]}""")

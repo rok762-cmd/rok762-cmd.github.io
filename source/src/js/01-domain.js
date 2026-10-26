@@ -1,14 +1,14 @@
 /* ---------- domain ---------- */
 let T=20; const MFRAME=40; let CTH=850;
 const PL_RANGE={closet:[50,120,'gap'],shoe:[50,120,'gap'],dress:[50,120,'gap'],kitchen:[120,150],middoor:[0,0],storage:[0,0],laundry:[50,120,'gap'],single:[0,120]};
-const LAYOUTS={I:'일자형',L:'ㄱ자형',L1:'ㄱ자 + 옆벽 키큰장',U:'ㄷ자형',island:'아일랜드형',Lisland:'ㄱ자+아일랜드',II:'11자형',niche:'매립형'};
+const LAYOUTS={I:'일자형',L:'ㄱ자형',I1:'일자 + 옆벽 키큰장',L1:'ㄱ자 + 옆벽 키큰장',U:'ㄷ자형',island:'아일랜드형',Lisland:'ㄱ자+아일랜드',II:'11자형',niche:'매립형'};
 const OBS={sp_fridge:{label:'냉장고 자리',color:'#0E7490',tip:'냉장고장이 이 위치로 옵니다',spot:1},sp_cook:{label:'쿡탑 자리',color:'#C2410C',tip:'쿡탑장이 이 위치로 옵니다',spot:1},sp_sink:{label:'싱크 자리',color:'#1D4ED8',tip:'싱크장이 이 위치로 옵니다',spot:1},sp_door:{label:'출입문',color:'#475569',tip:'이 자리는 장 없이 비웁니다',spot:1},sp_tall:{label:'키큰장 자리',color:'#7C3AED',tip:'키큰장이 이 위치로 옵니다',spot:1},dist:{label:'보일러 분배기',color:'#E5484D',tip:'바닥판·걸레받이 따내기, 해당 칸에 점검문 필요'},water:{label:'수도 (급·배수)',color:'#2F6BFF',tip:'뒷판·바닥판 타공 필요'},
   boiler:{label:'보일러',color:'#B4520F',tip:'장으로 덮지 말고 보일러 가림장(통풍 루버)이나 비움 검토'},access:{label:'점검구',color:'#8E4EC6',tip:'해당 칸 뒷판에 점검문 가공 필요'},
   gas:{label:'가스 배관·계량기',color:'#D6409F',tip:'가스 배관 이격 확인, 뒷판 따내기 필요'},duct:{label:'후드 배관 구멍 (덕트)',color:'#8A5A00',tip:'쿡탑·후드를 이 구멍 아래로 맞춥니다'},elec:{label:'콘센트·스위치',color:'#12A594',tip:'뒷판 타공 또는 전기 위치 이동'},
   supply:{label:'급수 밸브',color:'#3E63DD',tip:'뒷판 타공 · 식세기·정수기 분기 가능'},drain:{label:'배수구',color:'#0D74CE',tip:'바닥판·뒷판 타공 · 식세기·음식물처리기 배수 연결'},
   window:{label:'창문',color:'#0090FF',tip:'상부장·키큰장 설치 불가 구간, 높이 조정 필요'},etc:{label:'기타',color:'#6F6E77',tip:'현장 확인 필요'}};
-const CAT_LAYOUTS={kitchen:['I','L','L1','U','island','Lisland'],shoe:['I','II','L','U','niche'],closet:['I','L','niche'],dress:['I','L','U','II'],middoor:['I'],storage:['I'],storage:['I'],laundry:['I','niche','L'],single:['I']};
-const LAYOUT_FACES={I:['A'],L:['A','B'],L1:['A','B','C'],U:['A','B','C'],island:['A','I'],Lisland:['A','B','I'],II:['A','B'],niche:['A']};
+const CAT_LAYOUTS={kitchen:['I','I1','L','L1','U','island','Lisland'],shoe:['I','II','L','U','niche'],closet:['I','L','niche'],dress:['I','L','U','II'],middoor:['I'],storage:['I'],storage:['I'],laundry:['I','niche','L'],single:['I']};
+const LAYOUT_FACES={I:['A'],I1:['A','C'],L:['A','B'],L1:['A','B','C'],U:['A','B','C'],island:['A','I'],Lisland:['A','B','I'],II:['A','B'],niche:['A']};
 const CORNER_T={blind:'일자장 붙임 (데드코너)',magic:'일자장 + 매직코너',pullout:'일자장 + 코너 풀아웃',diag:'오각 코너장',lshape:'ㄱ자(직각) 코너장',cdrawer:'코너 서랍 (V자)',tall:'키큰장 코너'};
 const HWS={tandem:{l:'텐덤 서랍 (소프트)',p:'hwTandem'},cutlery:{l:'커트러리 트레이',p:'hwCutlery'},basket:{l:'그릇 바스켓',p:'hwBasket'},pullout:{l:'양념 풀아웃',p:'hwPullout'},trash:{l:'분리수거함',p:'hwTrash'},pants:{l:'바지걸이',p:'hwPants'},tray:{l:'액세서리 트레이',p:'hwTray'}};
 const HW_FOR={baseDrawer:['tandem','cutlery'],base:['basket','pullout','trash'],sink:['trash','basket'],cook:['pullout','basket'],oven:['tandem'],drawerOnly:['tandem','tray','cutlery'],drawer:['tray','pants'],hang:['pants'],hang2:['pants'],shelf:['tray','basket'],shoe:['pullout'],washpair:['basket'],washone:['basket','pullout'],washstack:['basket']};
@@ -20,7 +20,7 @@ const tallEndOf=(j,f)=>{const t=j.tallEnd;if(!t?.on||j.cat!=='kitchen'||!f||f.ke
 let TALL_MAX=Math.max(...RULES_DEF.tallWs),TALL_WS=RULES_DEF.tallWs;
 const tall2Of=(j,f)=>{const t=j.tall2,te=tallEndOf(j,f);if(!t?.on||!te||te.side==='M')return null;return{w:Math.max(300,Math.min(TALL_MAX,Math.round((+t.w||600)/50)*50)),k:t.k&&t.k!=='fspace'?t.k:'pantry',side:te.side,fh:+t.fh||0}};
 const isCornerLay=j=>['L','L1','U','Lisland'].includes(j.layout);
-const isTallWall=(j,f)=>j.layout==='L1'&&f?.key==='C';
+const isTallWall=(j,f)=>(j.layout==='L1'||j.layout==='I1')&&f?.key==='C';
 const cKind=(j,z)=>{const c=j.corner||{},k=j.cat==='kitchen';let lo=c.lower||'blind';if(!k&&['pullout','cdrawer','tall'].includes(lo))lo='blind';if(lo==='tall'&&j.layout==='U')lo='blind';
   if(z==='upper'){const t=c.upper||'blind';return lo==='tall'||['magic','pullout','cdrawer','tall'].includes(t)?'blind':t}return lo};
 const cType=(j,z)=>{const t=cKind(j,z);return t==='pullout'?'magic':t==='cdrawer'?'lshape':t==='tall'?'blind':t};

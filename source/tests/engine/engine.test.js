@@ -55,7 +55,7 @@ const mod=(t,w,extra={})=>({t,w,x:0,z0:120,z1:820,n:S.TYPES?.[t]?.n??1,...extra}
   j.qAdd=[{id:'a1',item:'운반',qty:2,unit:'식',price:30000}];const q6=E.quote(j);check(q6.lines.some(l=>l.custom==='a1'&&l.amt===60000),'항목 추가');delete j.qAdd;}
 
 /* ---------- 3. 무작위 대량 점검 ---------- */
-const LAYS=['I','L','L1','U','Lisland','II'];let strictRows=0,relaxRows=0;
+const LAYS=['I','I1','L','L1','U','Lisland','II'];let strictRows=0,relaxRows=0;
 for(let n=0;n<N;n++){
   const lay=pick(LAYS),j=fresh(lay),tag=`#${n} ${lay}`;
   j.faces.forEach(f=>{if(f.key==='I')return;f.len=ri(lay==='U'&&f.key==='A'?2600:1800,5200);if(rnd()<.35)f.ends={R:'panel'};if(rnd()<.15)f.ends={...(f.ends||{}),L:'panel'}});

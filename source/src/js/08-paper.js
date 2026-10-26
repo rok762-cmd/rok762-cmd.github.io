@@ -44,6 +44,7 @@ function planGeo(j){const D=kD(j)+bgOf(j),fs=j.faces,get=k=>fs.find(f=>f.key===k
     if(lay==='U'){const C=+get('C').len;rects.push({key:'C',x:L-D,y:cs,w:D,h:C-cs});dims.push({v:1,a:0,b:C,pos:L,side:1,label:`C ${C}`});hh=Math.max(hh,C);walls.push([[0,B+250],[0,0],[L,0],[L,C+250]])}
     else if(lay==='L1'){const C=+get('C').len,cd=Math.max(300,+(j.dims.D)||600);rects.push({key:'C',x:L-cd,y:D,w:cd,h:Math.max(0,C-D),tw:1});dims.push({v:1,a:0,b:C,pos:L,side:1,label:`C ${C}`});hh=Math.max(hh,C);walls.push([[0,B+250],[0,0],[L,0],[L,C+250]])}
     else walls.push(j.pen?.on&&j.cat==='kitchen'?[[-300,0],[L+250,0]]:[[0,B+250],[0,0],[L+250,0]])}
+  if(lay==='I1'){const C=+get('C').len,cd=Math.max(300,+(j.dims.D)||600),cx=j.twL?0:L-cd;rects.push({key:'C',x:cx,y:D,w:cd,h:Math.max(0,C-D),tw:1});dims.push({v:1,a:0,b:C,pos:j.twL?0:L,side:j.twL?-1:1,label:`C ${C}`});hh=Math.max(hh,C);walls.splice(0,walls.length,j.twL?[[0,C+250],[0,0],[L+250,0]]:[[-250,0],[L,0],[L,C+250]])}
   if(lay==='II'){const B=+get('B').len,S=+j.span;w=Math.max(L,B);hh=S;rects.push({key:'B',x:0,y:S-D,w:B,h:D,flip:1});walls.push([[-250,0],[w+250,0]],[[-250,S],[w+250,S]]);
     dims.push({v:0,a:0,b:B,pos:S,side:1,label:`B ${B}`},{v:1,a:0,b:S,pos:w,side:1,label:`벽 사이 ${S}`},{v:1,a:D,b:S-D,pos:w/2,side:0,label:`통로 ${S-2*D}`})}
   if(lay==='island'||lay==='Lisland'){const I=get('I'),iw=+I.len,id=(+j.island.cab||600)+(+j.island.over||0),gap=+j.island.gap,x=lay==='Lisland'?D+Math.max(gap,(L-D-iw)/2):(L-iw)/2,y=D+gap;if(lay==='island')walls.push([[-250,0],[L+250,0]]);
