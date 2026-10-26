@@ -69,6 +69,12 @@ function alignRow(row,ref,f){const ms=row.mods,n=ms.length;row.aligned=0;if(n<2|
   row.aligned=fin.p.filter(near).length;row.alignN=n-1;if(ch)row.alignMoved=true}
 const rowAll=row=>[...(row.corners||[]).filter(c=>!c.ghost),...row.mods,...(row.fill||[])];
 const islandCounter=j=>counterById(j.island?.counterId)||counterById(j.counterId);
+/* 서랍 모양: even 같은 높이 n단 · s1d2 얕은1+깊은2 · d1s2 깊은1(절반)+작은2 · d1s1 깊은1+얕은1 · d1in 깊은2단+속서랍 */
+const DRW_K={d1s2:'깊은 1 + 작은 2',even:'같은 높이',s1d2:'얕은 1 + 깊은 2',d1s1:'깊은 1 + 얕은 1',d2in:'2단 + 속서랍'};
+const drwK=m=>m.dk||(m.t==='drawer2p'?'s1d2':m.t==='baseDrawer'&&(m.n??3)!==3?'even':'d1s2');
+function drwSplit(o,m,z0,z1,n){const h=z1-z0,k=drwK(m),P=(fr)=>{let zb=z0;fr.forEach((f,i)=>{const dh=i===fr.length-1?z1-zb:Math.round(h*f);o.drawers.push({zb,h:dh,ext:true});zb+=dh})};
+  if(k==='even'){const c=Math.max(1,n||3);P(Array(c).fill(1/c))}else if(k==='s1d2')P([.4,.4,.2]);else if(k==='d1s1')P([.62,.38]);else if(k==='d2in'){P([.5,.5]);o.drawers.push({zb:z0+h*.5+40,h:Math.min(150,h*.5-90),ext:false})}else P([.5,.25,.25]);
+  o.zones=o.drawers.filter(d=>d.ext).map(d=>({zb:d.zb,zt:d.zb+d.h,kind:'drawer'}))}
 function layout(m){const t=m.t,z0=m.z0,z1=m.z1,h=z1-z0,n=Math.max(0,m.n??TYPES[t]?.n??0);
   const o={shelves:[],rods:[],hangs:[],drawers:[],stacks:[],shoes:[],zones:null,mirror:null,sink:false,cook:false,hood:false};
   const even=(a,b,k)=>{const r=[];for(let i=1;i<=k;i++)r.push(Math.round(a+(b-a)*i/(k+1)));return r};
@@ -94,9 +100,8 @@ function layout(m){const t=m.t,z0=m.z0,z1=m.z1,h=z1-z0,n=Math.max(0,m.n??TYPES[t
       o.zones=[{zb:ub,zt:z1,kind:'door'},{zb:z0,zt:lt-T,kind:'door'}];break}
     case 'vanity':{const ub=z1-500;o.shelves.push(ub+T,Math.round((ub+z1)/2),750);o.drawers.push({zb:600,h:132,ext:true});o.mirror={zb:900,zt:ub-60};
       o.zones=[{zb:ub,zt:z1,kind:'door'},{zb:600,zt:732,kind:'drawer'}];break}
-    case 'baseDrawer':{const k=Math.max(1,n),dh=Math.floor(h/k);for(let i=0;i<k;i++)o.drawers.push({zb:z0+i*dh,h:i===k-1?h-i*dh:dh,ext:true});
-      o.zones=o.drawers.map(d=>({zb:d.zb,zt:d.zb+d.h,kind:'drawer'}));break}
-    case 'drawer2p':{const d=Math.round(h*2/5);o.drawers.push({zb:z0,h:d,ext:true},{zb:z0+d,h:d,ext:true},{zb:z0+2*d,h:h-2*d,ext:true});o.zones=o.drawers.map(d_=>({zb:d_.zb,zt:d_.zb+d_.h,kind:'drawer'}));break}
+    case 'baseDrawer':drwSplit(o,m,z0,z1,n);break;
+    case 'drawer2p':drwSplit(o,m,z0,z1,3);break;
     case 'drawerDoor':{const dh=Math.max(130,Math.min(180,Math.round(h*.2)));o.drawers.push({zb:z1-dh,h:dh,ext:true});o.shelves=even(z0,z1-dh,n);o.zones=[{zb:z1-dh,zt:z1,kind:'drawer'},{zb:z0,zt:z1-dh,kind:'door'}];break}
     case 'innerDr':{const k=Math.max(1,Math.min(5,n||3)),dh=Math.max(110,Math.min(180,Math.floor((h-2*T-40)/k)));for(let i=0;i<k;i++)o.drawers.push({zb:z0+T+i*dh,h:dh-10,ext:false});o.zones=[{zb:z0,zt:z1,kind:'door'}];break}
     case 'spice':case 'waste':{o.drawers.push({zb:z0,h,ext:true});o.zones=[{zb:z0,zt:z1,kind:'drawer'}];o.pull=t;if(t==='spice')o.shelves=even(z0,z1,3);break}
@@ -119,7 +124,7 @@ function layout(m){const t=m.t,z0=m.z0,z1=m.z1,h=z1-z0,n=Math.max(0,m.n??TYPES[t
     case 'wash':o.wash=true;break;
     case 'oven':{o.oven={zb:z1-600,zt:z1-5};o.drawers.push({zb:z0,h:z1-600-z0,ext:true});o.zones=[{zb:z0,zt:z1-600,kind:'drawer'}];break}
     case 'dryer':o.shelves=[];o.rack=[z0+Math.round((z1-z0)*.35),z0+Math.round((z1-z0)*.7)];break;
-    case 'cook':o.cook=true;o.shelves=even(z0,z1,1);if(m.ck!=='door'){const d=Math.round(h*2/5);o.shelves=[];o.drawers.push({zb:z0,h:d,ext:true},{zb:z0+d,h:d,ext:true},{zb:z0+2*d,h:h-2*d,ext:true});o.zones=o.drawers.map(d_=>({zb:d_.zb,zt:d_.zb+d_.h,kind:'drawer'}))}break;
+    case 'cook':o.cook=true;o.shelves=even(z0,z1,1);if(m.ck!=='door'){o.shelves=[];drwSplit(o,m,z0,z1,3)}break;
     case 'hood':{o.hood=true;const k=hoodK(m);o.hoodK=k;if(k==='chimney'){o.zones=[];o.noBox=true}else if(k==='wide'||k==='can'){const a=modApps(m).find(x=>x.a.kind==='hood')?.a,hh=Math.min(h,Math.max(100,+a?.h||120));o.wideH=hh;if(hh>h-150){o.zones=[];o.noBox=true}else o.zones=[{zb:z0+hh,zt:z1,kind:'door'}]}break}
   }
   if(!o.zones)o.zones=TYPES[t]?.door?[{zb:z0,zt:z1,kind:'door'}]:[];

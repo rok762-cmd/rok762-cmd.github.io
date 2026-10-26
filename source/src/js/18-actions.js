@@ -22,6 +22,7 @@ const ACT={
   'fr-col':b=>{job.fridge={...(job.fridge||{}),col:b.dataset.v};render()},
   'flow-fix':b=>{const x=lastFlow[+b.dataset.n];const fx=b.dataset.k==='2'?x?.fix2:x?.fix;if(fx){applyFlowFix(fx);render();toast('적용했습니다 · 동선을 다시 확인하세요')}},
   'mod-wset':b=>{const rr=cf().rows[job.sel.row];if(job.cat==='kitchen'&&rr&&(rr.zone==='upper'||rr.zone==='top')&&job.upAlign!==false&&!rr.manualW){rr.manualW=true;toast('이 줄은 직접 고른 폭을 따릅니다 · ‘하부장 문 선에 맞춤’을 다시 누르면 맞춰집니다')}setModWidth(job.sel.row,job.sel.i,+b.dataset.v);render()},
+  'mod-dk':b=>{const m=cf().rows[job.sel.row].mods[job.sel.i];if(!m)return;m.dk=b.dataset.v;cf().edited=true;render()},
   'mod-front':b=>{const m=cf().rows[job.sel.row].mods[job.sel.i],k=m.t==='sink'?'sk':'ck';if(b.dataset.v)m[k]=b.dataset.v;else delete m[k];cf().edited=true;render()},
   'te-fh':b=>{job.tallEnd={...(job.tallEnd||{}),fh:+b.dataset.v};render()},
   'door-mod-clear':()=>{job.faces.forEach(f=>(f.rows||[]).forEach(r=>r.mods.forEach(m=>delete m.doorId)));render()},
