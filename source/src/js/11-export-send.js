@@ -132,3 +132,20 @@ function openSyncSettings(){const t=syConn();$('#layer').innerHTML=`<div class="
    <li>오른쪽 위 <b>배포 → 새 배포</b> → 유형 <b>웹 앱</b> → 실행 계정 <b>나</b>, 액세스 <b>모든 사용자</b> → 배포 → 권한 허용</li><li>나온 <b>웹 앱 URL</b>을 위 주소 칸에, 비밀번호를 아래 칸에 넣고 <b>연결 테스트</b></li>
    <li>사무실 PC에 <b>Google Drive 데스크톱</b>을 설치하면 ‘실측스튜디오’ 폴더가 PC에 자동으로 생깁니다</li></ol></div></details></div></div></div>`}
 
+
+/* ---------- 앱 아이콘 설치 · 열 때마다 새 버전 자동 업데이트 ---------- */
+const APP_URL='https://rok762-cmd.github.io/';
+const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true||!!window.__installed;
+function appInstallBtn(){const b=document.getElementById('appInstallBtn');if(!b)return;const show=!isStandalone()&&(!APP||!!window.__bip||true);b.hidden=!show;b.textContent=APP?'📲 앱 설치':'📲 앱으로 쓰기'}
+addEventListener('bip-ready',appInstallBtn);addEventListener('appinstalled',()=>{appInstallBtn();toast('앱 아이콘이 홈 화면에 생겼습니다')});setTimeout(appInstallBtn,800);
+async function appInstall(){if(APP&&window.__bip){const e=window.__bip;window.__bip=null;e.prompt();try{const r=await e.userChoice;if(r.outcome==='accepted')toast('설치합니다 · 홈 화면의 ‘실측’ 아이콘으로 여세요')}catch(_){}appInstallBtn();return}
+  $('#layer').innerHTML=`<div class="overlay center" data-act="sheet-back"><div class="modal" style="width:min(560px,100%)" role="dialog" aria-label="앱 설치"><div class="modal-head"><h2 style="font-size:18px">📲 앱 아이콘으로 설치</h2><button type="button" class="btn sm" data-act="sheet-cancel">닫기</button></div><div class="modal-body" style="gap:10px">
+    ${APP?'':`<p style="margin:0">아래 주소를 <b>크롬</b>에서 열고 설치하세요. 설치하면 홈 화면의 아이콘으로 바로 열리고, 열 때마다 <b>새 버전으로 자동 업데이트</b>됩니다.</p><a class="btn primary" href="${APP_URL}" target="_blank" rel="noopener">${APP_URL} 열기</a>`}
+    <ol style="margin:0;padding-left:20px;display:grid;gap:6px"><li><b>갤럭시탭·안드로이드 크롬:</b> 오른쪽 위 <b>⋮</b> → <b>앱 설치</b> (또는 <b>홈 화면에 추가 → 설치</b>)</li><li><b>아이패드:</b> 사파리로 열고 <b>공유(□↑)</b> → <b>홈 화면에 추가</b></li><li>카톡·네이버 앱 안에서 열렸다면 오른쪽 위 메뉴의 <b>다른 브라우저로 열기 → 크롬</b>을 먼저 누르세요</li></ol>
+    <p class="hint" style="margin:0">이미 설치했다면 홈 화면의 <b>‘실측’</b> 아이콘으로 여세요. 현장 자료는 앱 안에 저장됩니다 (다른 곳에서 쓰던 자료는 ‘전체 백업 · 복원’으로 옮기세요).</p></div></div></div>`;sheetCb={ok:()=>{},cancel:()=>{$('#layer').innerHTML='';sheetCb=null}}}
+let updChecking=false;
+async function appUpdCheck(){if(!APP||!navigator.onLine||updChecking||!window.SILCHEUK_VER)return;updChecking=true;try{const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});const o=await r.json();
+    if(o&&o.v&&o.v!==window.SILCHEUK_VER){let tried='';try{tried=sessionStorage.getItem('silcheuk-upd')||''}catch(_){}if(tried===o.v)return;try{sessionStorage.setItem('silcheuk-upd',o.v)}catch(_){}
+      try{if(autoOK()&&isDirty())await saveJobToServer(undefined,{silent:true});persist()}catch(_){}toast('새 버전으로 업데이트합니다…');try{const reg=await navigator.serviceWorker?.getRegistration();await reg?.update()}catch(_){}setTimeout(()=>location.reload(),900)}}
+  catch(_){}finally{updChecking=false}}
+if(APP){setTimeout(appUpdCheck,2000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')appUpdCheck()});addEventListener('online',()=>setTimeout(appUpdCheck,2000))}
