@@ -2,7 +2,7 @@
 /* 하부 줄 문·통로·기둥 빈 칸 위 → 상부·위 칸 줄에도 같은 폭 빈 칸 (짝 연결) */
 function syncGapsUp(j=job){let ch=false;j.faces.forEach((f,fi)=>{const lo=f.rows.find(r=>r.zone==='lower');if(!lo)return;
   lo.mods.forEach(m=>{if(isGap(m)&&!m.gid)m.gid='g'+uid()});
-  const want=lo.mods.filter(m=>isGap(m)&&m.gk!=='window');
+  const want=lo.mods.filter(m=>isGap(m)&&m.gk!=='window'&&!m.noUp);
   f.rows.filter(r=>r.zone==='upper'||r.zone==='top').forEach(r=>{
     r.mods=r.mods.filter(m=>{if(m.link&&!want.some(w=>w.gid===m.link)){ch=true;return false}return true});
     want.forEach(w=>{let u=r.mods.find(m=>m.link===w.gid);const uw=+w.userW||+w.r||900;
