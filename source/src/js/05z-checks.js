@@ -50,4 +50,5 @@ function supQty(sp,g,ctx){if(!sp)return null;const tw=ctx==='table'?g.tbl.len:g.
   if(sp.type==='panel')return{qty:ctx==='table'?1:2,spec:ctx==='table'?'식탁 끝':'양 끝'};
   if(sp.type==='bracket')return{qty:Math.ceil(tw/600)+1,spec:'600 간격'};
   if(sp.type==='cabinet')return{qty:ctx==='table'?.6:ceil1(g.Wm/1000),spec:ctx==='table'?'식탁 끝 600 장':`깊이 ${Math.max(0,(+job.island.over||0)-20)}`};return null}
-function ctPieces(g){const len=g.Wm+2*(g.side||0);return Math.max(1,Math.ceil(len/(g.ct.maxLen||3600)))}
+function ctLenOf(g){return Math.round(g.Wm+(g.ep?.L?g.sL:0)+(g.ep?.R?g.sR:0))}
+function ctPieces(g){const len=g.island?g.Wm+2*(g.side||0):ctLenOf(g);return Math.max(1,Math.ceil(len/(g.ct.maxLen||3600)))}
