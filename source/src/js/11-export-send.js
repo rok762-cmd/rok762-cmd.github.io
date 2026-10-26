@@ -103,7 +103,7 @@ async function syncNow(manual){if(!syReady()){if(manual)openSyncSettings();retur
     const all=await DB.dump();
     for(const[k,v]of Object.entries(all)){if(!k.startsWith('jobs/'))continue;const id=k.slice(5);if((SY.done[id]||0)>=(v.updatedAt||0))continue;
       const folder=syFolder(v,id),send=(name,mime,b64)=>syPost({action:'file',group:'현장',folder,id,name,mime,b64});
-      const j=v.job||{};let i=0;for(const ph of j.photos||[]){if(!String(ph.src).startsWith('data:'))continue;i++;await send(`사진_${String(i).padStart(2,'0')}.jpg`,'image/jpeg',String(ph.src).split(',')[1])}
+      const j=v.job||{};let i=0;for(const ph of j.photos||[]){i++;if(!String(ph.src).startsWith('data:'))continue;await send(`사진_${String(i).padStart(2,'0')}.jpg`,'image/jpeg',String(ph.src).split(',')[1])}
       const lite={...v,job:{...j,photos:(j.photos||[]).map((ph,n)=>({...ph,src:String(ph.src).startsWith('data:')?`사진_${String(n+1).padStart(2,'0')}.jpg`:ph.src}))}};
       await send('현장정보.json','application/json',btoa(unescape(encodeURIComponent(JSON.stringify(lite)))));
       if(SY.pdf){const keep=job;let qp,dp;try{job=migrate(JSON.parse(JSON.stringify(j)));qp=[{...quotePage(),mm:210/794}];dp=drawPages()}finally{job=keep}
@@ -128,7 +128,7 @@ function openSyncSettings(){const t=syConn();$('#layer').innerHTML=`<div class="
   <p class="hint" style="margin:0">모바일 데이터에서도 올리려면 ‘와이파이에서만’을 끄세요. 꺼 두면 사진이 많은 현장은 데이터를 많이 씁니다. 켜 두어도 ‘지금 올리기’는 바로 올립니다.</p>
   <div class="panel" style="padding:10px 14px;background:var(--surface-2)"><div class="hint" style="margin:0">올릴 것 <b>${syPending}건</b>${SY.last?` · 마지막 업로드 ${fmtTime(SY.last)}`:''}${syErr?` · <span style="color:#C0362C">오류: ${esc(syErr)}</span>`:''}</div>${(SY.log||[]).slice(0,4).map(l=>`<div class="hint" style="margin:0">${fmtTime(l.at)} · ${l.n}건</div>`).join('')}</div>
   <details class="sec"><summary><span>처음 설정하는 방법 (5분)</span><span class="sum"></span></summary><div class="sec-body"><ol style="margin:0;padding-left:20px;display:grid;gap:6px;font-size:14px">
-   <li>PC에서 <b>script.google.com</b> 접속 → <b>새 프로젝트</b></li><li><a href="https://rok762-cmd.github.io/apps-script.gs" target="_blank" rel="noopener"><b>apps-script.gs</b></a>(새 버전 · 사무실→태블릿 받기 지원) 내용을 전부 붙여넣고, 맨 위 <b>KEY</b>를 원하는 비밀번호로 바꾼 뒤 저장</li>
+   <li>PC에서 <b>script.google.com</b> 접속 → <b>새 프로젝트</b></li><li><a href="https://rok762-cmd.github.io/apps-script.gs" target="_blank" rel="noopener"><b>apps-script.gs</b></a>(v3 · 사무실→태블릿 받기 · 드라이브 현장 열기 지원) 내용을 전부 붙여넣고, 맨 위 <b>KEY</b>를 원하는 비밀번호로 바꾼 뒤 저장</li>
    <li>오른쪽 위 <b>배포 → 새 배포</b> → 유형 <b>웹 앱</b> → 실행 계정 <b>나</b>, 액세스 <b>모든 사용자</b> → 배포 → 권한 허용</li><li>나온 <b>웹 앱 URL</b>을 위 주소 칸에, 비밀번호를 아래 칸에 넣고 <b>연결 테스트</b></li>
    <li>사무실 PC에 <b>Google Drive 데스크톱</b>을 설치하면 ‘실측스튜디오’ 폴더가 PC에 자동으로 생깁니다</li></ol></div></details></div></div></div>`}
 

@@ -187,8 +187,8 @@ const ACT={
   'job-export':()=>saveFile(fname('현장.json'),JSON.stringify(job)),
   'cat-reset':b=>{if(b.dataset.armed){catalog=defaultCatalog();saveCatalog();if(!doorById(job.doorId))job.doorId=defaultDoor(job.cat);if(!counterById(job.counterId))job.counterId=catalog.counters[0].id;job.faces.forEach(fc=>{if(!planById(fc.planId))fc.planId=defaultPlanFor(job.cat,fc.key).id});toast('기본값으로 되돌렸습니다');openManager();render();return}
     b.dataset.armed='1';b.textContent='한 번 더 누르면 되돌립니다';setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent='기본 제품·단가로 되돌리기'}},3000)},
-  'new-job':b=>{if(b.dataset.armed){delete b.dataset.armed;b.textContent='새 현장';const c=job.cat;job=newJob(c);delete job.serverStatus;step=1;tool=null;pending=null;$('#layer').innerHTML='';render();toast('새 현장을 시작합니다');return}
-    b.dataset.armed='1';b.textContent='한 번 더 누르면 초기화';setTimeout(()=>{if(b.dataset.armed){delete b.dataset.armed;b.textContent='새 현장'}},3000)}
+  'new-job':async b=>{if(b.dataset.armed){delete b.dataset.armed;b.textContent='새 현장';try{if(autoOK()&&isDirty())await saveJobToServer(undefined,{silent:true})}catch(e){}const c=job.cat;job=newJob(c);delete job.serverStatus;step=1;tool=null;pending=null;$('#layer').innerHTML='';render();toast('새 현장을 시작합니다');return}
+    b.dataset.armed='1';b.textContent=LOCAL?'한 번 더 누르면 새 현장 (지금 현장은 저장됨)':'한 번 더 누르면 초기화';setTimeout(()=>{if(b.dataset.armed){delete b.dataset.armed;b.textContent='새 현장'}},3000)}
 };
 Object.assign(ACT,{
   'q-ov-off':b=>{const k=b.dataset.key;job.qOv={...(job.qOv||{}),[k]:{...((job.qOv||{})[k]||{}),off:true}};qEditOpen=true;render();toast('견적에서 뺐습니다 · 아래 ‘뺀 항목’에서 되돌릴 수 있습니다')},

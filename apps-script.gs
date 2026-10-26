@@ -1,7 +1,8 @@
 /**
- * 실측 스튜디오 · 구글 드라이브 수신기 (v2)
+ * 실측 스튜디오 · 구글 드라이브 수신기 (v3)
  * - 태블릿 → 드라이브: 현장·사진·PDF 자동 업로드 (action: file)
  * - 사무실 → 태블릿: '보낼현장' 폴더에 올린 현장을 태블릿이 받아감 (action: inbox / take)
+ * - 드라이브 현장 목록: 어느 기기에서든 드라이브의 현장을 열어 이어서 작업 (action: list / get)
  * 설치: script.google.com → 새 프로젝트 → 이 내용 전부 붙여넣기 → KEY 바꾸기 → 배포 → 새 배포 → 웹 앱
  *       (실행 계정: 나 / 액세스: 모든 사용자). 예전 버전을 쓰고 있었다면 '배포 관리 → 수정 → 새 버전'으로 같은 주소를 유지하세요.
  */
@@ -12,14 +13,31 @@ function root_() { const it = DriveApp.getFoldersByName(ROOT); return it.hasNext
 function sub_(parent, name) { const it = parent.getFoldersByName(name); return it.hasNext() ? it.next() : parent.createFolder(name); }
 function out_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 
-function doGet() { return out_({ ok: true, app: 'silcheuk', v: 2 }); }
+function doGet() { return out_({ ok: true, app: 'silcheuk', v: 3 }); }
 
 function doPost(e) {
   try {
     const p = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     if (p.key !== KEY) return out_({ ok: false, error: 'key' });
     const r = root_();
-    if (p.action === 'ping') return out_({ ok: true, v: 2 });
+    if (p.action === 'ping') return out_({ ok: true, v: 3 });
+    if (p.action === 'list') {
+      const g = sub_(r, '현장'), it = g.getFolders(), items = [];
+      while (it.hasNext()) {
+        const f = it.next(), fs = f.getFilesByName('현장정보.json');
+        if (!fs.hasNext()) continue;
+        items.push({ folder: f.getName(), at: fs.next().getLastUpdated().getTime() });
+      }
+      items.sort(function (a, b) { return b.at - a.at; });
+      return out_({ ok: true, v: 3, items: items.slice(0, 300) });
+    }
+    if (p.action === 'get') {
+      const f = sub_(sub_(r, '현장'), String(p.folder)), fs = f.getFilesByName('현장정보.json');
+      if (!fs.hasNext()) return out_({ ok: false, error: 'none' });
+      const json = fs.next().getBlob().getDataAsString('UTF-8'), photos = {}, it = f.getFiles();
+      while (it.hasNext()) { const x = it.next(); if (/^사진_\d+\.jpg$/.test(x.getName())) photos[x.getName()] = Utilities.base64Encode(x.getBlob().getBytes()); }
+      return out_({ ok: true, json: json, photos: photos });
+    }
     if (p.action === 'file') {
       let f = sub_(r, String(p.group || '현장'));
       if (p.folder) f = sub_(f, String(p.folder));

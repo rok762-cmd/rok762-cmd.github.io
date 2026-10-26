@@ -38,3 +38,20 @@ async function syInbox(manual){if(!syReady()||syInboxBusy)return 0;if(!navigator
   catch(e){if(manual)toast(/action/.test(e.message)?'드라이브 수신기가 예전 버전입니다 · 새 apps-script.gs로 바꿔 주세요':'받기 실패: '+e.message)}
   syInboxBusy=false;return n}
 
+
+/* ---------- 드라이브 현장 목록: 어느 기기에서든 드라이브에 올라간 현장을 열어 이어서 작업 ---------- */
+let syList=null,syListOn=false;
+async function syListLoad(){if(!syReady()){openSyncSettings();return}if(!navigator.onLine){toast('인터넷이 연결되지 않았습니다');return}syListOn=true;syList='loading';if($('#jobsModal'))renderJobs();
+  try{const r=await syPost({action:'list'});syList=(r.items||[]).map(x=>{const seg=String(x.folder).split('_');return{folder:x.folder,id:seg[seg.length-1],date:seg[0]||'',title:seg[1]||'이름없음',addr:seg.length>3?seg.slice(2,-1).join(' '):'',at:x.at}})}
+  catch(e){syList={err:/action/.test(e.message)?'드라이브 수신기가 예전 버전입니다 · 메뉴 → 드라이브 설정에서 새 apps-script.gs로 바꿔 주세요 (배포 관리 → 수정 → 새 버전)':e.message}}if($('#jobsModal'))renderJobs()}
+async function syOpenDrive(folder){if(!syReady())return;toast('드라이브에서 불러오는 중…');try{const r=await syPost({action:'get',folder});const v=JSON.parse(r.json),seg=String(folder).split('_'),id=seg[seg.length-1];
+    const fix=ps=>(ps||[]).map(ph=>r.photos&&r.photos[ph.src]?{...ph,src:'data:image/jpeg;base64,'+r.photos[ph.src]}:ph);if(v.job){v.job.photos=fix(v.job.photos);(v.job.items||[]).forEach(it=>{it.photos=fix(it.photos)})}
+    if(autoOK()&&isDirty())await saveJobToServer(undefined,{silent:true});const x=await importDocs({['jobs/'+id]:v});SY.done[id]=Math.max(SY.done[id]||0,v.updatedAt||0);sySave();
+    const doc=await DB.doc('jobs/'+id).get(),d=doc.exists?doc.data():v,mj=migrate(JSON.parse(JSON.stringify(d.job)));if(!mj){toast('현장을 열지 못했습니다');return}mj.id=id;mj.serverStatus=d.status;mj.savedAt=d.updatedAt;job=mj;markClean();step=1;tool=null;pending=null;$('#layer').innerHTML='';render();
+    toast(x.n?`드라이브의 최신 현장을 열었습니다 · ${d.title||''}`:(x.skip?`이 기기 것이 같거나 더 최신이라 이 기기 것을 열었습니다 · ${d.title||''}`:'현장을 열었습니다'))}
+  catch(e){toast('불러오지 못했습니다: '+(e.message||e))}}
+function syListHTML(){if(!syListOn)return'';const loc=Object.fromEntries((serverJobs||[]).map(x=>[x.id,x.updatedAt||0]));
+  const body=syList==='loading'?'<p class="hint">드라이브 목록을 불러오는 중…</p>':syList?.err?`<p class="hint" style="color:#C0362C">${esc(syList.err)}</p>`:!(syList||[]).length?'<p class="hint">드라이브에 올라간 현장이 아직 없습니다.</p>':
+    `<div class="table-wrap" style="margin:0"><table><thead><tr><th>드라이브 현장</th><th>올린 날</th><th>이 기기</th><th></th></tr></thead><tbody>${syList.map(x=>{const l=loc[x.id];const st=l==null?'<span class="hint">없음</span>':l+60000<x.at?'<b style="color:#2F6BFF">드라이브가 최신</b>':'<span class="hint">있음</span>';return`<tr><td style="white-space:normal"><b>${esc(x.title)}</b><br><span class="hint">${esc(x.addr)}</span></td><td class="mono">${fmtTime(x.at)}</td><td>${st}</td><td><button type="button" class="btn sm primary" data-act="sy-open" data-f="${esc(x.folder)}">열기</button></td></tr>`}).join('')}</tbody></table></div>`;
+  return`<div class="side-card" style="display:grid;gap:8px;padding:10px 12px;margin-bottom:10px"><div class="toolbar" style="margin:0;justify-content:space-between"><b>☁ 구글 드라이브 현장</b><span style="display:flex;gap:6px"><button type="button" class="btn sm" data-act="sy-list">새로고침</button><button type="button" class="btn sm quiet" data-act="sy-list-off">닫기</button></span></div>${body}<span class="hint">다른 태블릿·PC에서 고친 현장도 여기서 열면 이어서 작업할 수 있어요. 고친 내용은 자동으로 다시 드라이브에 올라갑니다.</span></div>`}
+Object.assign(ACT,{'sy-list':()=>syListLoad(),'sy-list-off':()=>{syListOn=false;renderJobs()},'sy-open':b=>syOpenDrive(b.dataset.f)});
