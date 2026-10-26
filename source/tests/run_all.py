@@ -24,7 +24,7 @@ def node(args,label):
 ok &= node(['tests/engine/engine.test.js','400','7'], '계산 엔진 (화면 없이) · 단위 + 무작위 400개')
 ok &= node(['tests/engine/engine.test.js','200','2024'], '계산 엔진 · 다른 무작위 200개')
 for t, lab in [('t_rules.py', '현장 규칙 표'), ('t_ep.py', '끝 마감 EP · 뒷선반 코너 휠라'), ('t_qedit.py', '견적 직접 수정'),
-               ('t_tall2.py', '냉장고+키큰장 · 최대 폭'), ('t_tdoor.py', '키큰장 도어'), ('t_gap.py', '빈 칸 (문·통로)'), ('t_l1.py', 'ㄱ자 + 옆벽 키큰장'), ('t_drag.py', '칸 끌어서 옮기기'), ('t_snap.py', '칸 폭 정규격 (길이별)'), ('t_fs.py', '전체 화면 실측'), ('t_spot.py', '위치 표시 → 장 배치'), ('t_zoom.py', '실측 사진 확대'), ('t_ep2.py', '보이는 옆면 EP·상몰딩 80'), ('t_hfs.py', '평면도 전체 화면'), ('t_moldask.py', '천장 차이 물어보기'), ('t_hdeco.py', '벽에 붙박이·싱크대 자동 배치·가구 돌리기')]:
+               ('t_tall2.py', '냉장고+키큰장 · 최대 폭'), ('t_tdoor.py', '키큰장 도어'), ('t_gap.py', '빈 칸 (문·통로)'), ('t_l1.py', 'ㄱ자 + 옆벽 키큰장'), ('t_drag.py', '칸 끌어서 옮기기'), ('t_snap.py', '칸 폭 정규격 (길이별)'), ('t_fs.py', '전체 화면 실측'), ('t_spot.py', '위치 표시 → 장 배치'), ('t_zoom.py', '실측 사진 확대'), ('t_ep2.py', '보이는 옆면 EP·상몰딩 80'), ('t_hfs.py', '평면도 전체 화면'), ('t_moldask.py', '천장 차이 물어보기'), ('t_hdeco.py', '벽에 붙박이·싱크대 자동 배치·가구 돌리기'), ('t_hdeco2.py', '벽 이어 눌러 ㄱ자·ㄷ자')]:
     ok &= run(['tests/' + t], lab)
 ok &= run(['tests/regress.py', OFF], '전체 회귀 · 오프라인 파일')
 ok &= run(['tests/regress.py', APP], '전체 회귀 · 앱')

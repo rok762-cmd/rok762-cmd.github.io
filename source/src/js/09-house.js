@@ -272,7 +272,7 @@ function houseDecoUI(){const H=HS(),F=(H.furn||[]).find(x=>x.id===hFSel),r=H.roo
     return`<div class="hfs" id="hfs"><div class="hfs-top"><div class="hfs-tabs">${[['plan','① 평면'],['elev','② 벽'],['deco','③ 가구·3D'],['est','④ 견적']].map(([k,l])=>`<button type="button" data-act="h-tab" data-v="${k}" aria-pressed="${hTab===k}">${l}</button>`).join('')}</div>
       <div class="hfs-acts"><button type="button" class="hfs-b" data-act="h-view" data-v="3d">3D 보기</button><button type="button" class="hfs-b" data-act="h-view" data-v="walk">🚶 걷기</button><button type="button" class="hfs-b ${hDTool==='route'?'':''}" data-act="h-route-tool" aria-pressed="${hDTool==='route'}">경로${(H.route||[]).length?` ${H.route.length}`:''}</button><button type="button" class="hfs-b" data-act="h-side" aria-pressed="${sideOn}">☰ 가구·설치</button><button type="button" class="hfs-b" data-act="h-fs-off" title="전체 화면 끄기">✕</button></div></div>
       <div class="hfs-body"><div class="hfs-rail">${BI_CATS.map(c=>`<button type="button" class="fsm-btn" data-act="h-bi-pick" data-v="${c}" aria-pressed="${hPickCat===c}"><span class="ic">${{kitchen:'🍳',closet:'🚪',shoe:'👟',storage:'🗄',dress:'👔',laundry:'🧺'}[c]}</span><span class="lb">${CATS[c].name}</span></button>`).join('')}</div>
-        <div class="canvas" id="houseBox">${houseSVG().svg}</div>${hPickCat?`<span class="hfs-est" style="background:#2F6BFF;color:#fff;font-size:15px;padding:8px 12px">${CATS[hPickCat].name}: 놓을 벽(선)을 누르세요 <button type="button" class="hfs-b" style="min-height:32px;margin-left:8px" data-act="h-bi-pick" data-v="${hPickCat}">취소</button></span>`:''}
+        <div class="canvas" id="houseBox">${houseSVG().svg}</div>${hPickCat?`<span class="hfs-est" style="background:#2F6BFF;color:#fff;font-size:15px;padding:8px 12px">${hPickExt?`${CATS[hPickCat].name} 놓음 · 옆 벽을 누르면 ${CATS[hPickCat].name==='주방 싱크대'?'ㄱ자·ㄷ자로':'ㄱ자로'} 이어집니다`:`${CATS[hPickCat].name}: 놓을 벽(선)을 누르세요`} <button type="button" class="hfs-b" style="min-height:32px;margin-left:8px" data-act="h-bi-pick" data-v="${hPickCat}">${hPickExt?'완료':'취소'}</button></span>`:''}
         <aside class="hfs-side ${sideOn?'on':''}"><button type="button" class="hfs-close" data-act="h-side-close" aria-label="닫기">✕</button>${panel}${biCard}${oc}${cat}</aside></div></div>`}
   return`<div class="panel" style="padding:14px"><div class="toolbar" style="margin:0 0 10px;flex-wrap:wrap">${view}${hView==='plan'?'<button type="button" class="btn sm primary" data-act="h-fs-on">⛶ 전체 화면</button>':''}</div><div style="display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);gap:14px" class="house-grid"><div>${H.rooms.length?main:'<p class="hint">먼저 ① 평면도에서 방을 만드세요.</p>'}</div><div style="display:grid;gap:10px;align-content:start">${panel}${biCard}${oc}${cat}</div></div></div>`}
 function furnDims(F,k){const rt=((+F.rot||0)%360+360)%360;if(rt%90)return'';const sw=rt%180===90,hx=(sw?+F.d:+F.w)/2,hy=(sw?+F.w:+F.d)/2,x0=F.x-hx,x1=F.x+hx,y0=F.y-hy,y1=F.y+hy;let L=null,Rr=null,T=null,B=null;
@@ -282,7 +282,8 @@ function furnSnap(F){const rt=((+F.rot||0)%360+360)%360;if(rt%90)return;const sw
   HS().rooms.forEach(r=>{for(let i=0;i<nEdges(r);i++){const e=edgeOf(r,i);if(Math.abs(e.ux)<.01){const X=e.a[0],y0=Math.min(e.a[1],e.b[1]),y1=Math.max(e.a[1],e.b[1]);if(F.y<y0||F.y>y1)continue;[F.x>=X?X+hx:X-hx].forEach(c=>{const d=Math.abs(F.x-c);if(d<T&&(!bx||d<bx.d))bx={d,c}})}else if(Math.abs(e.uy)<.01){const Y=e.a[1],x0=Math.min(e.a[0],e.b[0]),x1=Math.max(e.a[0],e.b[0]);if(F.x<x0||F.x>x1)continue;[F.y>=Y?Y+hy:Y-hy].forEach(c=>{const d=Math.abs(F.y-c);if(d<T&&(!by||d<by.d))by={d,c}})}}});
   if(bx)F.x=Math.round(bx.c);if(by)F.y=Math.round(by.c)}
 function bindDeco(svg,k){svg.addEventListener('pointerdown',ev=>{const pt=hPt(ev),H=HS(),fid=ev.target.dataset?.furn,rotId=ev.target.dataset?.frot;
-    if(hPickCat){const he=hHitEdge(pt,k*2.2);if(he){const c=hPickCat;hPickCat=null;placeOnWall(c,he.room,he.edge,true)}else toast('벽(선) 가까이를 누르세요');return}
+    if(hPickCat&&hPickExt&&(fid||rotId)){hPickCat=null;hPickExt=null}
+    if(hPickCat){const he=hHitEdge(pt,k*2.2);if(!he){if(hPickExt){hPickCat=null;hPickExt=null;renderHouse()}else toast('벽(선) 가까이를 누르세요');return}const c=hPickCat;if(hPickExt&&hPickExt.cat===c&&hPickExt.room===he.room&&hPickExt.edge!==he.edge){extendWall(he.room,he.edge);return}const ok=placeOnWall(c,he.room,he.edge,true);if(ok&&['kitchen','dress','closet','shoe','laundry'].includes(c)){hPickExt={cat:c,room:he.room,edge:he.edge};renderHouse()}else{hPickCat=null;hPickExt=null;renderHouse()}return}
     if(rotId){const F=H.furn.find(x=>x.id===rotId);if(!F)return;hFRot={F,svg};try{svg.setPointerCapture(ev.pointerId)}catch(e){}ev.preventDefault();return}if(hDTool==='route'){(H.route=H.route||[]).push([Math.round(pt[0]),Math.round(pt[1])]);persist();renderHouse();return}
     if(fid){const F=H.furn.find(x=>x.id===fid);if(!F)return;hFSel=fid;hFDrag={F,start:pt,ox:F.x,oy:F.y,moved:false};try{svg.setPointerCapture(ev.pointerId)}catch(e){}ev.preventDefault();return}
     const rid=ev.target.dataset?.room;hFSel=null;hSel={room:rid||null,edge:null,open:null};renderHouse()});
@@ -495,15 +496,42 @@ function applyPlanAI(res,bg,area){const H=HS();H.est=true;const raw=(res.rooms||
   toast(`AI가 방 ${made.length}개 · 문·창 ${no}개를 만들었어요 (${how}) · 현장에서 벽 하나를 재서 '실측으로 도면 전체 맞추기'를 하세요`);return true}
 
 /* ---------- 가구 돌리기 손잡이 · 벽 눌러 붙박이장·싱크대 자동 배치 ---------- */
-let hFRot=null,hPickCat=null;const BI_CATS=['kitchen','closet','shoe','storage','dress','laundry'];
+let hFRot=null,hPickCat=null,hPickExt=null;const BI_CATS=['kitchen','closet','shoe','storage','dress','laundry'];
 document.addEventListener('pointermove',ev=>{if(!hFRot)return;const{F}=hFRot,p=hPt(ev);let a=Math.atan2(p[1]-F.y,p[0]-F.x)*180/Math.PI+90;a=Math.round(a/15)*15;const m=((a%360)+360)%360,n90=Math.round(m/90)*90;F.rot=Math.abs(m-n90)<=8?n90%360:m;const g=document.querySelector(`g[data-fg="${F.id}"]`);if(g)g.setAttribute('transform',`translate(${F.x} ${F.y}) rotate(${F.rot})`)});
 document.addEventListener('pointerup',()=>{if(!hFRot)return;const{F}=hFRot;hFRot=null;furnSnap(F);persist();renderHouse()});
 function wallFree(r,ei,cat){const e=edgeOf(r,ei),L=e.len,top=cat==='kitchen'?880:1800,bl=(HS().opens||[]).filter(o=>o.room===r.id&&o.edge===ei&&(+o.sill||0)<top).map(o=>[+o.off||0,(+o.off||0)+(+o.w||0)]);
   const nE=nEdges(r),closed=!r.open;siteAll().forEach(it=>{const hw=it.houseWall;if(!hw||hw.room!==r.id||hw.edge===ei||it.cat===cat&&hw.edge===ei)return;const D2=+it.dims?.D||600,len2=+it.faces?.[0]?.len||0,off2=+hw.off||0,L2=edgeOf(r,hw.edge).len;
-    const prev=closed?(ei-1+nE)%nE:ei-1,next=closed?(ei+1)%nE:ei+1;if(hw.edge===prev&&off2+len2>=L2-5)bl.push([0,D2]);if(hw.edge===next&&off2<=5)bl.push([L-D2,L])});bl.sort((a,b)=>a[0]-b[0]);const segs=[];let x=0;bl.forEach(([a,b])=>{if(a>x+1)segs.push([x,a]);x=Math.max(x,b)});if(L>x+1)segs.push([x,L]);segs.sort((p,q)=>(q[1]-q[0])-(p[1]-p[0]));return segs[0]||[0,0]}
-function placeOnWall(cat,rid,ei,stay){const H=HS(),r=H.rooms.find(x=>x.id===rid);if(!r)return;const[a,b]=wallFree(r,ei,cat),L=Math.round(b-a);if(L<300){toast('이 벽은 문 때문에 놓을 자리가 없어요');renderHouse();return}
+    const prev=closed?(ei-1+nE)%nE:ei-1,next=closed?(ei+1)%nE:ei+1;if(hw.edge===prev&&off2+len2>=L2-5)bl.push([0,D2]);if(hw.edge===next&&off2<=5)bl.push([L-D2,L])});
+  siteAll().forEach(it=>{const hw=it.houseWall;if(!hw||hw.room!==r.id||it.cat===cat&&hw.edge===ei)return;[hw.bSeg,hw.cSeg].forEach(sg=>{if(sg&&sg.edge===ei)bl.push([sg.s,sg.e])})});bl.sort((a,b)=>a[0]-b[0]);const segs=[];let x=0;bl.forEach(([a,b])=>{if(a>x+1)segs.push([x,a]);x=Math.max(x,b)});if(L>x+1)segs.push([x,L]);segs.sort((p,q)=>(q[1]-q[0])-(p[1]-p[0]));return segs[0]||[0,0]}
+function placeOnWall(cat,rid,ei,stay){const H=HS(),r=H.rooms.find(x=>x.id===rid);if(!r)return;const[a,b]=wallFree(r,ei,cat),L=Math.round(b-a);if(L<300){toast('이 벽은 문 때문에 놓을 자리가 없어요');renderHouse();return false}
   const all=siteAll();let k=all.findIndex(it=>it.cat===cat&&it.houseWall&&it.houseWall.room===rid&&it.houseWall.edge===ei);if(k<0)k=all.findIndex(it=>it.cat===cat&&!it.houseWall);
   const keepMode=mode;if(k<0)addItem(cat);else if(k!==(job.ipos||0))switchItem(k);mode=keepMode;
   job.houseWall={room:rid,edge:ei,off:Math.round(a)};job.faces[0].len=L;job.fi=0;const rh=+r.H||+HS().H;if(rh>=1800)job.dims.H=rh;try{stdNormalize.quiet=1;stdNormalize(job)}catch(e){}persist();
   if(stay){hSel={room:rid,edge:ei,open:null};renderHouse();toast(`${CATS[cat].name}를 이 벽 ${L}mm에 놓았습니다${a>0||b<edgeOf(r,ei).len-1?' (문 자리는 비움)':''} · ‘설계 열기’로 칸·도어를 고칠 수 있어요`)}
-  else{mode='measure';render();toast(`${CATS[cat].name} 길이를 이 벽 ${L}mm로 맞췄습니다 · 설계하면 평면도·3D에 그려져요`)}}
+  else{mode='measure';render();toast(`${CATS[cat].name} 길이를 이 벽 ${L}mm로 맞췄습니다 · 설계하면 평면도·3D에 그려져요`)}return true}
+
+/* 옆 벽을 이어 누르면 ㄱ자 → ㄷ자 */
+const x0End=(r,ei)=>{const e=edgeOf(r,ei),[nx,ny]=inN(r,e);return e.ux*ny-e.uy*nx>0?'a':'b'};
+function freeFrom(r,ei,end,cat){const L=edgeOf(r,ei).len,top=cat==='kitchen'?880:1800,bl=(HS().opens||[]).filter(o=>o.room===r.id&&o.edge===ei&&(+o.sill||0)<top).map(o=>[+o.off||0,(+o.off||0)+(+o.w||0)]);
+  siteAll().forEach(it=>{const hw=it.houseWall;if(!hw||hw.room!==r.id||it===job)return;if(hw.edge===ei)bl.push([+hw.off||0,(+hw.off||0)+(+it.faces?.[0]?.len||0)]);[hw.bSeg,hw.cSeg].forEach(sg=>{if(sg&&sg.edge===ei)bl.push([sg.s,sg.e])})});
+  if(end==='a')return Math.max(0,Math.min(L,...bl.filter(b=>b[1]>0).map(b=>b[0])));return Math.max(0,L-Math.max(0,...bl.filter(b=>b[0]<L).map(b=>b[1])))}
+function extendWall(rid,ei){const r=HS().rooms.find(x=>x.id===rid),X=hPickExt;if(!r||!X)return;const all=siteAll(),it=all.find(q=>q.cat===X.cat&&q.houseWall&&q.houseWall.room===rid&&q.houseWall.edge===X.edge);if(!it)return;const k=all.indexOf(it);if(k!==(job.ipos||0)){const keep=mode;switchItem(k);mode=keep}
+  const nE=nEdges(r),closed=!r.open,hw=job.houseWall,cat=job.cat,lays=CAT_LAYOUTS[cat]||['I'];const adj=(i,j)=>closed?((i+1)%nE===j||(j+1)%nE===i):Math.abs(i-j)===1;
+  const D=+job.dims?.D||(cat==='kitchen'?600:600);
+  if(job.layout==='I'){if(!lays.includes('L')){toast(`${CATS[cat].name}는 ㄱ자를 지원하지 않아요`);return}if(!adj(hw.edge,ei)){toast('붙어 있는 옆 벽을 누르세요');return}
+    const pIdx=closed?((hw.edge+1)%nE===ei?(hw.edge+1)%nE:hw.edge):(ei>hw.edge?ei:hw.edge),P=r.pts[pIdx];
+    // A = 모서리 P가 x0인 벽, B = 나머지
+    const isX0=(e_)=>{const e=edgeOf(r,e_),end=x0End(r,e_),pt=end==='a'?e.a:e.b;return Math.hypot(pt[0]-P[0],pt[1]-P[1])<1};
+    const A=isX0(hw.edge)?hw.edge:ei,B=A===hw.edge?ei:hw.edge,eA=edgeOf(r,A),eB=edgeOf(r,B),endA=x0End(r,A),endB=Math.hypot(eB.a[0]-P[0],eB.a[1]-P[1])<1?'a':'b';
+    const LA=Math.round(freeFrom(r,A,endA,cat)),LB=Math.round(freeFrom(r,B,endB,cat));if(LA<D+300||LB<D+300){toast('모서리 쪽에 문이 있거나 자리가 좁아 ㄱ자로 이을 수 없어요');return}
+    setLayout('L');const fA=job.faces.find(f=>f.key==='A'),fB=job.faces.find(f=>f.key==='B');fA.len=LA;fB.len=LB;
+    job.houseWall={room:rid,edge:A,off:endA==='a'?0:Math.round(eA.len-LA),bSeg:{edge:B,s:endB==='a'?0:Math.round(eB.len-LB),e:endB==='a'?LB:Math.round(eB.len)}};
+    try{stdNormalize.quiet=1;stdNormalize(job)}catch(e){}persist();hPickExt={...X,edge:A};renderHouse();toast(`ㄱ자로 이었습니다 · A ${LA} · B ${LB}${lays.includes('U')?' · 반대쪽 옆 벽을 누르면 ㄷ자':''}`);return}
+  if(job.layout==='L'){if(!lays.includes('U')){toast(`${CATS[cat].name}는 ㄷ자를 지원하지 않아요`);return}const ws=[hw.edge,hw.bSeg?.edge,ei];if(ws[1]==null||ws.includes(undefined)||new Set(ws).size<3){toast('ㄱ자 양 끝 중 한쪽 옆 벽을 누르세요');return}
+    const mid=ws.find(w=>ws.filter(o=>o!==w).every(o=>adj(w,o)));if(mid==null){toast('ㄱ자 양 끝 중 한쪽 옆 벽을 누르세요');return}const sides=ws.filter(w=>w!==mid),eA=edgeOf(r,mid),endA=x0End(r,mid),P0=endA==='a'?eA.a:eA.b,P1=endA==='a'?eA.b:eA.a;
+    const touch=(w,P)=>{const e=edgeOf(r,w);return Math.hypot(e.a[0]-P[0],e.a[1]-P[1])<1?'a':Math.hypot(e.b[0]-P[0],e.b[1]-P[1])<1?'b':null};const Bw=sides.find(w=>touch(w,P0)),Cw=sides.find(w=>w!==Bw&&touch(w,P1));if(Bw==null||Cw==null){toast('ㄷ자로 이을 수 없는 벽이에요');return}
+    const endB=touch(Bw,P0),endC=touch(Cw,P1),eB=edgeOf(r,Bw),eC=edgeOf(r,Cw);const keep=job.houseWall;job.houseWall=null;const LB=Math.round(freeFrom(r,Bw,endB,cat)),LC=Math.round(freeFrom(r,Cw,endC,cat));job.houseWall=keep;if(LB<D+300||LC<D+300){toast('옆 벽에 문이 있거나 자리가 좁아 ㄷ자로 이을 수 없어요');return}
+    const fullA=Math.round(eA.len);setLayout('U');const fs=k=>job.faces.find(f=>f.key===k);fs('A').len=fullA;fs('B').len=LB;fs('C').len=LC;
+    const seg=(e,end,L_)=>({s:end==='a'?0:Math.round(e.len-L_),e:end==='a'?L_:Math.round(e.len)});job.houseWall={room:rid,edge:mid,off:0,bSeg:{edge:Bw,...seg(eB,endB,LB)},cSeg:{edge:Cw,...seg(eC,endC,LC)}};
+    try{stdNormalize.quiet=1;stdNormalize(job)}catch(e){}persist();hPickCat=null;hPickExt=null;hSel={room:null,edge:null,open:null};renderHouse();toast(`ㄷ자로 이었습니다 · A ${fullA} · B ${LB} · C ${LC}`);return}
+  toast('이미 ㄷ자입니다')}
