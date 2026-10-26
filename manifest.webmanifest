@@ -1,8 +1,9 @@
 {
+ "id": "./",
  "name": "실측 스튜디오",
  "short_name": "실측",
- "start_url": "./",
- "scope": "./",
+ "start_url": "./index.html",
+ "scope": "./index.html",
  "display": "standalone",
  "orientation": "any",
  "background_color": "#F4F3F0",
