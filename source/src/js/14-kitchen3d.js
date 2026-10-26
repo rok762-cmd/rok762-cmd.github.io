@@ -30,8 +30,9 @@ function build3D(j,open,o3={}){let EPS_=null;const T3=THREE,grp=new T3.Group(),d
     const room=isl&&j.island?.front==='room',iov=g.D-cab,bgL=zone=>(zone==='upper'||zone==='top')?0:(g.bg||0),fv=zone=>{const dep=zone==='upper'?UPD():zone==='top'?g.topD:cab,o=bgL(zone);return isl?(room?[g.D-DOOR_T,g.D]:[0,DOOR_T]):[dep-DOOR_T+o,dep+o]},bv=zone=>{const dep=zone==='upper'?UPD():zone==='top'?g.topD:cab,o=bgL(zone);return isl?(room?[iov,g.D-DOOR_T]:[DOOR_T,dep]):[o,dep-DOOR_T+o]};
     g.rows.forEach(row=>{const lowerish=row.zone!=='upper';
       rowAll(row).forEach(m=>{curUD=udOf(gi,g,row,m.i);const z=m.tall?'lower':row.zone,[b0,b1]=bv(z),[f0,f1]=fv(z);
-        if(m.epIn){box(P,m.x,m.x+m.w,b0,f1,m.z0,m.z1,none?body:dCol);return}
-        if(isGap(m)&&(m.epL||m.epR)){const eT=RULES.epT;[m.epL?m.x:null,m.epR?m.x+m.w-eT:null].forEach(ex=>{if(ex!=null)box(P,ex,ex+eT,b0,f1,m.z0,m.z1,none?body:dCol)})}
+        if(m.epIn){box(P,m.x,m.x+m.w,b0,f1,m.epZ0??m.z0,m.epZ1??m.z1,none?body:dCol);return}
+        if(isGap(m)&&(m.epL||m.epR)){const eT=RULES.epT;[m.epL?m.x:null,m.epR?m.x+m.w-eT:null].forEach(ex=>{if(ex!=null)box(P,ex,ex+eT,b0,f1,m.epZ0??m.z0,m.epZ1??m.z1,none?body:dCol)})}
+        if(m.epHL||m.epHR){const eT=RULES.epT;if(m.epHL)box(P,m.x-eT,m.x,b0,f1,m.epHZ0,m.epHZ1,none?body:dCol);if(m.epHR)box(P,m.x+m.w,m.x+m.w+eT,b0,f1,m.epHZ0,m.epHZ1,none?body:dCol)}
         if(m.filler){box(P,m.x,m.x+m.w,f0,f1,m.z0,m.z1,none?body:dCol);return}
         if(isMD(g.cat))return;
         if(layout(m).noBox)return;const fs_=m.tall&&m.tk==='fspace'&&!!frNiche(j);
@@ -66,7 +67,7 @@ function build3D(j,open,o3={}){let EPS_=null;const T3=THREE,grp=new T3.Group(),d
     if(!isMD(g.cat)){const EPT=18,epm=d_=>d_&&d_.tex==='wood'?{wood:1}:{};curUD={lab:'마감판넬 (EP)'};
       if(g.mold&&!isl&&g.H>g.Hm){const mc=none?body:dCol,sp={upper:[],lower:[]};g.rows.forEach(row=>{const up=row.zone==='upper'||row.zone==='top';rowAll(row).forEach(m=>{if(isGap(m)||m.ghost||!(up||m.tall||(m.epIn&&m.z1>=g.Hm-1)))return;sp[up?'upper':'lower'].push([m.x,m.x+m.w])})});
         Object.entries(sp).forEach(([z,a])=>{a.sort((p,q)=>p[0]-q[0]);const mg=[];a.forEach(([x0,x1])=>{const l=mg[mg.length-1];if(l&&x0<=l[1]+1)l[1]=Math.max(l[1],x1);else mg.push([x0,x1])});const[,f1]=fv(z),[b0]=bv(z);mg.forEach(([x0,x1])=>box(P,x0,x1,b0,f1,g.Hm,g.Hm+g.moldShow,mc))})}
-      if(!isl){(EPS_||(EPS_=endPanels(j))).filter(e=>e.face===g.face&&!e.gap&&!e.inner).forEach(e=>{const zk=e.zone==='tall'?'lower':e.zone,row=g.rows.find(r_=>r_.zone===e.zone),[b0]=bv(zk),[,f1]=fv(zk),z0=e.zone==='tall'||e.zone==='lower'?0:row?.z0,z1=e.zone==='tall'?g.Hm:e.zone==='lower'?g.ct0:row?.z1;if(z0==null||z1==null)return;
+      if(!isl){(EPS_||(EPS_=endPanels(j))).filter(e=>e.face===g.face&&!e.gap&&!e.inner).forEach(e=>{const zk=e.zone==='tall'?'lower':e.zone,row=g.rows.find(r_=>r_.zone===e.zone),[b0]=bv(zk),[,f1]=fv(zk),z0=e.zone==='tall'||e.zone==='lower'?0:row?.z0,z1=e.zone==='tall'?g.Hm+(g.moldShow||0):e.zone==='lower'?g.ct0:(row?.z1+((row?.z1>=g.Hm-1)?(g.moldShow||0):0));if(z0==null||z1==null)return;
         const ld=none?{color:body}:leafDoor(j,{zone:e.zone,tall:e.zone==='tall'},door),x0=e.side==='L'?((g.sL||0)>=EPT?-EPT:-(g.sL||0)-EPT):((g.sR||0)>=EPT?g.Wm:g.Wm+(g.sR||0));box(P,x0,x0+EPT,b0,f1+(zk==='lower'||zk==='upper'||zk==='top'?0:0),z0,z1,ld.color||body,epm(ld))})}
       else if(j.island?.finish!=='none'){const ld=none?{color:body}:door,c=ld.color||body,v0=room?iov:0,v1=room?g.D:cab;
         box(P,-EPT,0,v0,v1,0,g.ct0,c,epm(ld));box(P,g.Wm,g.Wm+EPT,v0,v1,0,g.ct0,c,epm(ld));
