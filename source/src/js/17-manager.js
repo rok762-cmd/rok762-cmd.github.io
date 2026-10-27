@@ -65,6 +65,7 @@ function openManager(){const lay=$('#layer');const P=catalog.prices,C=catalog.co
     <label class="checks"><label><input type="checkbox" data-change="vat" ${P.vat?'checked':''}> 견적에 부가세 10% 포함</label></label>`}
   if(mgrTab==='backup')body=`<p class="hint">claude.ai에서 열면 도어·플랜·단가가 서버에 저장되어 모든 태블릿이 같이 씁니다. 서버 없이 쓸 때는 이 기기에만 저장됩니다. 다른 기기로 옮기거나 백업하려면 파일로 저장한 뒤 다른 기기에서 불러오세요.</p>
     <div class="toolbar"><button type="button" class="btn" data-act="cat-export" ${DL?'':'disabled'}>제품·단가 파일로 저장</button><label class="btn file-btn">제품·단가 불러오기<input type="file" accept=".json,application/json" data-change="cat-import"></label></div>
+    ${typeof hqCard==='function'?hqCard():''}
     <div class="panel" style="padding:12px 14px;display:grid;gap:8px"><b>전체 백업 · 복원</b><span class="hint" style="margin:0">현장 전부(사진 포함) · 제품·단가 · AS 고객을 파일 하나로 저장합니다. 태블릿 분실·고장에 대비해 주 1회 저장해 두세요. 불러오면 더 최신인 자료만 덮어씁니다. (자료 형식 v${JOB_V} · 예전 파일도 자동 변환)</span>
       <div class="toolbar" style="margin:0"><button type="button" class="btn primary" data-act="backup-all" ${DL?'':'disabled'}>전체 백업 파일 만들기</button><label class="btn file-btn">백업·현장 파일 불러오기<input type="file" accept=".json,application/json" data-change="restore-all"></label></div></div>
     <div class="panel" style="padding:12px 14px;display:grid;gap:8px"><b>사무실 → 태블릿</b><span class="hint" style="margin:0">사무실에서 고친 현재 현장을 태블릿으로 보냅니다. 드라이브 업로드가 설정돼 있으면 드라이브로, 아니면 파일로 만듭니다. 태블릿에서는 ☰ 메뉴 → 드라이브 → ‘사무실에서 받기’ 또는 위 ‘불러오기’로 받습니다.</span>

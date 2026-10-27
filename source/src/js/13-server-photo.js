@@ -63,14 +63,14 @@ function netChip(){const el=$('#netChip');if(!el)return;let c='',t='',tip='';
 addEventListener('offline',()=>{netOn=false;netChip();if(!LOCAL)toast('인터넷이 끊겼습니다. 입력은 태블릿에 임시 저장되고, 연결되면 자동으로 서버에 저장합니다.')});
 addEventListener('online',()=>{netOn=true;netChip();if(autoOK()&&isDirty()){toast('다시 연결됐습니다. 서버에 저장합니다.');setTimeout(autoSave,1500)}});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&autoOK()&&isDirty()&&netOn)autoSave()});
-async function saveJobToServer(status,opt={}){const S=opt.silent,say=m=>{if(!S)toast(m)};if(!DB){say('서버 저장은 claude.ai에서 이 페이지를 열었을 때 쓸 수 있습니다.');return false}
+async function saveJobToServer(status,opt={}){if(typeof TECH!=='undefined'&&TECH.name&&!job.tech&&typeof isSampleJob==='function'&&!isSampleJob())job.tech=TECH.name;const S=opt.silent,say=m=>{if(!S)toast(m)};if(!DB){say('서버 저장은 claude.ai에서 이 페이지를 열었을 때 쓸 수 있습니다.');return false}
   if(!CAN_WRITE){say('서버에 저장할 권한이 없습니다. 공유 설정에서 기여자 이상 권한을 받아야 합니다.');return false}
   if(!netOn&&!S&&!LOCAL){toast('인터넷이 끊겨 있습니다. 연결되면 자동으로 저장합니다.');return false}
   say(status==='sent'?'회사로 발송하는 중…':'서버에 저장하는 중…');
   try{for(const ph of siteAll().flatMap(x=>x.photos||[])){if(!LOCAL&&String(ph.src).startsWith('data:')&&!ph.aid){if(!ASSETS)throw{code:'no_assets'};const r=await ASSETS.upload(dataURLtoBlob(ph.src),{type:'image/jpeg'});ph.aid=r.id}}
     const ref=DB.collection('jobs').doc(job.id),prev=await ref.get(),pd=prev.exists?prev.data():{},me=USER?.id?await USER.id().catch(()=>null):null,q=quote(),now=Date.now();
     const st=status||pd.status||'draft',mapPh=ps=>(ps||[]).map(ph=>ph.aid&&String(ph.src).startsWith('data:')?{...ph,src:'asset:'+ph.aid,aid:undefined}:ph),doc={job:JSON.parse(JSON.stringify({...job,serverStatus:st,photos:mapPh(job.photos),items:job.items?job.items.map(it=>({...it,photos:mapPh(it.photos)})):undefined})),title:job.customer.name||'이름 없는 현장',addr:job.customer.addr||'',cat:job.cat,layout:job.layout,
-      faces:facesSpec(job)+(job.items?.length?` 외 ${job.items.length}품목`:''),total:siteGrand(),items:siteAll().map(it=>itemName(it)),status:st,updatedAt:now,createdAt:pd.createdAt||now,by:pd.by||me||null,sentAt:status==='sent'?now:(pd.sentAt||null)};
+      faces:facesSpec(job)+(job.items?.length?` 외 ${job.items.length}품목`:''),total:siteGrand(),items:siteAll().map(it=>itemName(it)),status:st,updatedAt:now,createdAt:pd.createdAt||now,by:pd.by||me||(typeof TECH!=='undefined'&&(job.tech||TECH.name))||null,sentAt:status==='sent'?now:(pd.sentAt||null)};
     await ref.set(doc);job.serverStatus=st;job.savedAt=now;markClean();if(APP){syCount().then(netChip);syKick(8000)}persist();if(!S){toast(LOCAL?'태블릿에 저장했습니다':status==='sent'?'회사로 발송했습니다. 현장 목록에서 확인할 수 있습니다.':'서버에 저장했습니다');render()}else{renderSide()}return true}
   catch(e){if(S)return false;toast(e?.code==='no_assets'?'사진을 올릴 권한이 없어 저장하지 못했습니다.':e?.code==='not_granted'?'서버 사용이 허용되지 않았습니다.':'서버에 저장하지 못했습니다. 잠시 후 다시 시도하세요.');return false}}
 const fmtTime=t=>{if(!t)return'-';const d=new Date(t);return`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`};
@@ -78,7 +78,7 @@ function openJobs(){$('#layer').innerHTML=`<div class="overlay center"><div clas
 function renderJobs(){const m=$('#jobsModal');if(!m)return;const list=(serverJobs||[]).filter(x=>jobFilter==='all'||x.status===jobFilter);
   const body=!DB?'<p class="hint">현장 목록은 claude.ai에서 이 페이지를 열었을 때 서버와 연결됩니다.</p>':serverJobs===null?'<p class="hint">불러오는 중…</p>':!list.length?`<p class="hint">${jobFilter==='all'?(LOCAL?'아직 이 태블릿에 저장된 현장이 없습니다. 작업하면 자동으로 저장되어 여기에 쌓입니다.':'아직 서버에 저장된 현장이 없습니다. 결과물 단계에서 ‘서버에 저장’이나 ‘회사로 발송’을 누르면 여기에 쌓입니다.'):'이 상태의 현장이 없습니다.'}</p>`
     :`<div class="table-wrap" style="margin:0"><table><thead><tr><th>현장</th><th>품목</th><th class="r">견적</th><th>상태</th><th>수정</th><th></th></tr></thead><tbody>${list.map(x=>`<tr>
-      <td style="white-space:normal;min-width:160px"><b>${esc(x.title)}</b><br><span class="hint">${esc(x.addr||'')}${x.by&&NAMES[x.by]?' · '+esc(NAMES[x.by]):''}</span></td>
+      <td style="white-space:normal;min-width:160px"><b>${esc(x.title)}</b><br><span class="hint">${esc(x.addr||'')}${x.by?' · '+esc(NAMES[x.by]||x.by):''}</span></td>
       <td style="white-space:normal">${x.items&&x.items.length>1?esc(x.items.join(' · ')):(CATS[x.cat]?.name||'')+' · '+(LAYOUTS[x.layout]||'')}<br><span class="hint mono">${esc(x.faces||'')}</span></td><td class="r">${won(x.total||0)}</td>
       <td><select class="input" style="min-height:36px;width:auto" data-change="job-status" data-id="${x.id}" aria-label="상태" ${CAN_WRITE?'':'disabled'}>${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${x.status===k?'selected':''}>${v}</option>`).join('')}</select></td>
       <td class="mono">${fmtTime(x.updatedAt)}</td><td><span style="display:flex;gap:4px"><button type="button" class="btn sm" data-act="job-open" data-id="${x.id}">열기</button>${CAN_WRITE?`<button type="button" class="btn sm quiet danger" data-act="job-del" data-id="${x.id}">삭제</button>`:''}</span></td></tr>`).join('')}</tbody></table></div>`;

@@ -31,7 +31,7 @@ function drawingSVG(j=job,fi=j.fi){const g=gview(j,fi),fc_=j.faces[fi]||j.faces[
   s+=`<line x1="606" y1="694" x2="606" y2="${H-16}" class="fr"/><text x="622" y="${720}" font-size="15" class="hd">특이사항</text>`;
   notes.slice(0,9).forEach((t,i)=>s+=`<text x="622" y="${744+i*22}" font-size="13" class="vl">· ${esc(t.length>34?t.slice(0,33)+'…':t)}</text>`);
   const tb=[['현장',j.customer.addr||'-'],['고객',j.customer.name||'-'],['품목',CATS[g.cat].name],['형태·면',`${LAYOUTS[j.layout]} · ${FACE_NAME(g.face)}`],['플랜',(planById(fc_.planId)?.name||'-')+(fc_.edited?' (수정)':'')],['도어·마감',d.name],
-    ['실측 길이×H×D',`${g.len} × ${g.H} × ${g.D}`],['제작 W×H×D',`${g.Wm} × ${g.Hm} × ${g.Dm}`],['작성',`${catalog.company.name} · ${catalog.company.tel}`]];
+    ['실측 길이×H×D',`${g.len} × ${g.H} × ${g.D}`],['제작 W×H×D',`${g.Wm} × ${g.Hm} × ${g.Dm}`],['작성',`${catalog.company.name}${typeof techOf==='function'&&techOf(j)?' · '+techOf(j)+(techTel(j)?' '+techTel(j):''):''} · ${catalog.company.tel}`]];
   const bx=980;s+=`<line x1="${bx-10}" y1="694" x2="${bx-10}" y2="${H-16}" class="fr"/>`;
   tb.forEach(([a,b],i)=>{const y=706+i*28;s+=`<line x1="${bx-10}" y1="${y+20}" x2="${W-16}" y2="${y+20}" class="fr2"/><text x="${bx}" y="${y+12}" font-size="12" class="lb">${esc(a)}</text><text x="${bx+92}" y="${y+12}" font-size="13" class="vl">${esc(String(b).length>28?String(b).slice(0,27)+'…':b)}</text>`});
   return s+'</svg>'}

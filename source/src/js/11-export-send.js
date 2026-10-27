@@ -92,7 +92,7 @@ const syWifiOK=()=>{const t=syConn();return!SY.wifi||!t||t==='wifi'||t==='ethern
 const syReady=()=>APP&&!!SY.url&&!!SY.key;
 async function syPost(o){const r=await fetch(SY.url,{method:'POST',body:JSON.stringify({key:SY.key,...o}),redirect:'follow'});const j=await r.json().catch(()=>null);if(!j?.ok)throw new Error(j?.error==='key'?'비밀번호(KEY)가 맞지 않습니다':j?.error||'응답 없음');return j}
 const syName=x=>String(x||'').replace(/^예시\)\s*/,'').replace(/[\\/:*?"<>|#'\n]/g,'').trim().slice(0,30);
-function syFolder(d,id){const t=new Date(d.createdAt||d.updatedAt||Date.now()),ds=`${t.getFullYear()}${String(t.getMonth()+1).padStart(2,'0')}${String(t.getDate()).padStart(2,'0')}`;return[ds,syName(d.title)||'이름없음',syName((d.addr||'').split(' ').slice(0,2).join(' ')),id].filter(Boolean).join('_')}
+function syFolder(d,id){const t=new Date(d.createdAt||d.updatedAt||Date.now()),ds=`${t.getFullYear()}${String(t.getMonth()+1).padStart(2,'0')}${String(t.getDate()).padStart(2,'0')}`;return[ds,syName(d.title)||'이름없음',syName((d.addr||'').split(' ').slice(0,2).join(' ')),d.job?.tech?'기술자-'+syName(d.job.tech):'',id].filter(Boolean).join('_')}
 async function syCount(){if(!DB?.dump)return 0;const all=await DB.dump();let n=0;Object.entries(all).forEach(([k,v])=>{if(k.startsWith('jobs/')&&(SY.done[k.slice(5)]||0)<(v.updatedAt||0))n++});const as=asSigNow(all);if(as&&as!==SY.asSig)n++;syPending=n;return n}
 function asSigNow(all){const ks=Object.keys(all).filter(k=>/^(as_|shop_)/.test(k)).sort();if(!ks.length)return'';return ks.length+':'+ks.reduce((s,k)=>Math.max(s,all[k].updatedAt||0),0)}
 async function syncNow(manual){if(!syReady()){if(manual)openSyncSettings();return}if(syBusy)return;
@@ -128,7 +128,7 @@ function openSyncSettings(){const t=syConn();$('#layer').innerHTML=`<div class="
   <p class="hint" style="margin:0">모바일 데이터에서도 올리려면 ‘와이파이에서만’을 끄세요. 꺼 두면 사진이 많은 현장은 데이터를 많이 씁니다. 켜 두어도 ‘지금 올리기’는 바로 올립니다.</p>
   <div class="panel" style="padding:10px 14px;background:var(--surface-2)"><div class="hint" style="margin:0">올릴 것 <b>${syPending}건</b>${SY.last?` · 마지막 업로드 ${fmtTime(SY.last)}`:''}${syErr?` · <span style="color:#C0362C">오류: ${esc(syErr)}</span>`:''}</div>${(SY.log||[]).slice(0,4).map(l=>`<div class="hint" style="margin:0">${fmtTime(l.at)} · ${l.n}건</div>`).join('')}</div>
   <details class="sec"><summary><span>처음 설정하는 방법 (5분)</span><span class="sum"></span></summary><div class="sec-body"><ol style="margin:0;padding-left:20px;display:grid;gap:6px;font-size:14px">
-   <li>PC에서 <b>script.google.com</b> 접속 → <b>새 프로젝트</b></li><li><a href="https://rok762-cmd.github.io/apps-script.gs" target="_blank" rel="noopener"><b>apps-script.gs</b></a>(v3 · 사무실→태블릿 받기 · 드라이브 현장 열기 지원) 내용을 전부 붙여넣고, 맨 위 <b>KEY</b>를 원하는 비밀번호로 바꾼 뒤 저장</li>
+   <li>PC에서 <b>script.google.com</b> 접속 → <b>새 프로젝트</b></li><li><a href="https://rok762-cmd.github.io/apps-script.gs" target="_blank" rel="noopener"><b>apps-script.gs</b></a>(v4 · 사무실→태블릿 받기 · 드라이브 현장 열기 · 본사 단가 배포 지원) 내용을 전부 붙여넣고, 맨 위 <b>KEY</b>를 원하는 비밀번호로 바꾼 뒤 저장</li>
    <li>오른쪽 위 <b>배포 → 새 배포</b> → 유형 <b>웹 앱</b> → 실행 계정 <b>나</b>, 액세스 <b>모든 사용자</b> → 배포 → 권한 허용</li><li>나온 <b>웹 앱 URL</b>을 위 주소 칸에, 비밀번호를 아래 칸에 넣고 <b>연결 테스트</b></li>
    <li>사무실 PC에 <b>Google Drive 데스크톱</b>을 설치하면 ‘실측스튜디오’ 폴더가 PC에 자동으로 생깁니다</li></ol></div></details></div></div></div>`}
 
